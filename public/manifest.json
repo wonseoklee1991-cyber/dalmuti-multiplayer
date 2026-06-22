@@ -1,0 +1,16 @@
+{
+  "short_name": "달무티 멀티",
+  "name": "위대한 달무티 - 실시간 멀티플레이어",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1041/1041865.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#1a1a1a",
+  "theme_color": "#f1c40f",
+  "display": "standalone",
+  "orientation": "landscape"
+}

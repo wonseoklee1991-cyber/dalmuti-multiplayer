@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>위대한 달무티 - 멀티플레이어</title>
+    <!-- PWA 선언 링크 추가 -->
+    <link rel="manifest" href="/manifest.json">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
@@ -15,22 +17,23 @@
         .btn:disabled { background-color: #7f8c8d; box-shadow: 0 4px 0 #555; color: #ccc; transform: none; }
         .screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: rgba(26, 26, 26, 0.98); z-index: 10; }
         
-        /* 로비 인터페이스 */
+        /* ⭐️ 모바일 세로 화면일 때 가로 회전 강제 가이드 오버레이 */
+        #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #111; z-index: 99999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        @media screen and (orientation: portrait) {
+            #orientation-warning { display: flex; }
+        }
+
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 280px; }
         .input-group input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #555; background: #333; color: white; text-align: center; }
         .lobby-buttons { display: flex; gap: 10px; }
 
-        /* 대기방 */
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 300px; max-height: 200px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px;}
-        .player-item:last-child { border-bottom: none; }
 
-        /* 메인 게임 판 */
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 800px; }
         .table-3d { width: 80vw; max-width: 600px; height: 42vh; max-height: 320px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(45deg) translateY(-3vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 10vh; }
         .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; z-index: 2; }
 
-        /* 멀티 플레이어 노드 구도 */
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
         .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 10px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); }
         .ai-node .avatar { width: 32px; height: 32px; font-size: 16px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; }
@@ -40,16 +43,14 @@
         .ai-node.active { border-color: #f1c40f; background: rgba(241, 196, 15, 0.35); --scale: 1.05; }
         .ai-node.passed { opacity: 0.3; }
 
-        /* 무지개 구도 좌표 */
-        .pos-0 { top: 44%; left: max(10px, env(safe-area-inset-left)); } 
-        .pos-1 { top: 26%; left: max(22px, env(safe-area-inset-left)); } 
+        .pos-0 { top: 44%; left: max(10px, env(safe-area-inset-left)); }
+        .pos-1 { top: 26%; left: max(22px, env(safe-area-inset-left)); }
         .pos-2 { top: 15%; left: 31%; --tx: -50%; }
-        .pos-3 { top: 12%; left: 50%; --tx: -50%; } 
-        .pos-4 { top: 15%; left: 69%; --tx: -50%; } 
-        .pos-5 { top: 26%; right: max(22px, env(safe-area-inset-right)); } 
+        .pos-3 { top: 12%; left: 50%; --tx: -50%; }
+        .pos-4 { top: 15%; left: 69%; --tx: -50%; }
+        .pos-5 { top: 26%; right: max(22px, env(safe-area-inset-right)); }
         .pos-6 { top: 44%; right: max(10px, env(safe-area-inset-right)); }
 
-        /* 내 손패 인프라 */
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-top: 15px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 80%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
         .controls { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
         .hand-scroll-area { width: 100%; overflow-x: auto; overflow-y: hidden; padding-top: 20px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
@@ -58,7 +59,6 @@
         .hand .card { margin-left: -12px; flex-shrink: 0; box-shadow: -4px 0px 10px rgba(0,0,0,0.4); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* 카드 커스텀 디자인 */
         .card { width: 48px; height: 70px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 4px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.1s; color: #333;}
         .card.selected { transform: translateY(-18px) !important; border-color: #e74c3c; border-width: 3px; }
         .card .number { font-size: 13px; font-weight: bold; }
@@ -69,9 +69,17 @@
 
         #game-status { position: absolute; top: max(5px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 4px 18px; border-radius: 12px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid #f1c40f; text-align: center; white-space: nowrap;}
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
+        
+        #chat-toast-area { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); width: 85vw; max-width: 400px; max-height: 80px; overflow-y: hidden; text-align: center; font-size: 12px; color: #fff; background: rgba(0,0,0,0.7); border-radius: 6px; padding: 5px; z-index: 99; pointer-events: none; }
     </style>
 </head>
 <body>
+
+    <!-- ⭐️ 회전 경고 레이어 -->
+    <div id="orientation-warning">
+        <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
+        <p style="color: #aaa; font-size: 14px; margin: 0 20px;">스마트폰 제어 센터에서<br>'세로 방향 고정(기기 회전 잠금)'을 해제하신 뒤 고개를 돌려주세요.</p>
+    </div>
 
     <!-- 1. 로그인 및 로비 화면 -->
     <div id="lobby-screen" class="screen">
@@ -98,6 +106,7 @@
     <!-- 3. 메인 게임 보드 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
+        <div id="chat-toast-area" id="chat-box"></div>
         <div id="opponents-container"></div>
         <div class="table-3d">
             <div class="center-area" id="center-area"></div>
@@ -117,17 +126,7 @@
         </div>
     </div>
 
-    <!-- 4. 반란 제안 모달 -->
-    <div id="revolution-modal" class="screen hidden" style="z-index:100; background:rgba(0,0,0,0.9);">
-        <h2 style="color:#e74c3c; font-size:28px;">🔥 반란의 권리가 있습니다!</h2>
-        <p>손패에 조커 2장이 모두 들어왔습니다. 반란을 선포하시겠습니까?</p>
-        <div class="result-buttons" style="display:flex; gap:10px;">
-            <button class="btn" onclick="answerRevolution(true)">반란 일으키기</button>
-            <button class="btn pass" onclick="answerRevolution(false)">조용히 넘어가기</button>
-        </div>
-    </div>
-
-    <!-- 5. 세금 하사 선택 모달 -->
+    <!-- 4. 세금 하사 선택 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
@@ -138,15 +137,14 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 6. 세금 교환 총 요약 모달 -->
+    <!-- 5. 세금 교환 총 요약 모달 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:320px;"></div>
-        <button class="btn" style="margin-top:20px;" id="btn-host-next" class="hidden" onclick="hostStartNextRound()">새 라운드 돌입</button>
-        <p id="client-wait-msg" style="color:#aaa; font-size:12px; margin-top:10px;">방장이 다음 판을 시작하기를 기다리고 있습니다...</p>
+        <button class="btn" style="margin-top:20px;" id="btn-host-next" onclick="requestNextRound()">새 라운드 돌입</button>
     </div>
 
-    <!-- 7. 결과 창 화면 -->
+    <!-- 6. 결과 창 화면 -->
     <div id="result-screen" class="screen hidden" style="z-index:80;">
         <h1 style="color:#f1c40f;">🎉 게임 종료 (순위표)</h1>
         <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:320px; max-height:40vh; overflow-y:auto;"></div>
@@ -165,7 +163,6 @@
         let taxTargetId = null;
         let taxCountRequired = 0;
 
-        // 소켓 기본 고유 세팅
         socket.on('connect', () => { myId = socket.id; });
 
         function createRoom() {
@@ -190,8 +187,6 @@
         });
 
         socket.on('roomUpdated', ({ players }) => {
-            document.getElementById('lobby-screen').classList.add('hidden');
-            document.getElementById('waiting-screen').classList.remove('hidden');
             updateWaitingPlayerList(players);
         });
 
@@ -199,38 +194,26 @@
             const container = document.getElementById('waiting-player-list');
             container.innerHTML = '';
             let me = players.find(p => p.id === socket.id);
-            
-            if(me && me.isHost) {
-                document.getElementById('btn-start-game').classList.remove('hidden');
-            }
+            if(me && me.isHost) document.getElementById('btn-start-game').classList.remove('hidden');
 
             players.forEach((p, idx) => {
                 container.innerHTML += `<div class="player-item"><div>${idx+1}. <strong>${p.name}</strong></div> <div style="font-size:12px; color:#aaa;">${p.isHost ? '방장👑' : '대기 중'}</div></div>`;
             });
         }
 
-        function startGame() {
-            socket.emit('startGame', currentRoomId);
-        }
+        function startGame() { socket.emit('startGame', currentRoomId); }
 
-        // 게임 시작 이벤트 스트림 수신
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
-            
-            // 내 등수 정보 파악 및 배지 생성용 백업 저장
             window.lastRoundRanks = lastRoundRanks;
-            
             renderOpponents(players);
             updateTurnState(currentTurnId);
         });
 
-        socket.on('yourHand', (hand) => {
-            myHand = hand;
-            renderHand();
-        });
+        socket.on('yourHand', (hand) => { myHand = hand; renderHand(); });
 
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
@@ -240,13 +223,9 @@
             if (isClickable) {
                 c.onclick = () => {
                     c.classList.toggle('selected');
-                    let arr = isTaxMode ? selectedIndices : selectedIndices;
-                    if(c.classList.contains('selected')) arr.push(index);
-                    else selectedIndices = arr.filter(i => i !== index);
-                    
-                    if(isTaxMode) {
-                        document.getElementById('btn-submit-tax').disabled = selectedIndices.length !== taxCountRequired;
-                    }
+                    if(c.classList.contains('selected')) selectedIndices.push(index);
+                    else selectedIndices = selectedIndices.filter(i => i !== index);
+                    if(isTaxMode) document.getElementById('btn-submit-tax').disabled = selectedIndices.length !== taxCountRequired;
                 };
             }
             return c;
@@ -254,12 +233,8 @@
 
         function renderHand() {
             const container = document.getElementById('player-hand');
-            container.innerHTML = '';
-            selectedIndices = [];
-            myHand.forEach((rank, idx) => {
-                container.appendChild(createCardHTML(rank, idx, true, false));
-            });
-            
+            container.innerHTML = ''; selectedIndices = [];
+            myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, false)); });
             let rankIdx = window.lastRoundRanks.indexOf(socket.id);
             const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
             document.getElementById('player-name-label').innerText = `${badges[rankIdx] || ''} 나(Player)`;
@@ -268,35 +243,25 @@
         function renderOpponents(players) {
             const container = document.getElementById('opponents-container');
             container.innerHTML = '';
-            
-            // 나를 제외한 플레이어 목록 필터링
             let others = players.filter(p => p.id !== socket.id);
             let posArr = ['pos-0', 'pos-1', 'pos-2', 'pos-3', 'pos-4', 'pos-5', 'pos-6'];
             
             others.forEach((p, idx) => {
                 let rIdx = window.lastRoundRanks.indexOf(p.id);
                 const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-                let badge = badges[rIdx] || '';
-
                 container.innerHTML += `
                     <div class="ai-node ${posArr[idx]}" id="node-${p.id}">
-                        <div class="avatar">👤</div>
+                        <div class="avatar">${p.isAI ? '🤖' : '👤'}</div>
                         <div class="info">
-                            <span class="name">${badge} ${p.name}</span>
+                            <span class="name">${badges[rIdx] || ''} ${p.name}</span>
                             <div class="ai-cards-container">
                                 <div class="ai-mini-cards" id="cards-area-${p.id}"></div>
                                 <span class="ai-count-text" id="count-text-${p.id}">${p.cardCount}장</span>
                             </div>
                         </div>
                     </div>`;
-                
-                // 미니카드 드로잉
                 const cardArea = document.getElementById(`cards-area-${p.id}`);
-                if(cardArea) {
-                    for(let j=0; j<Math.min(p.cardCount, 8); j++) {
-                        cardArea.innerHTML += `<div class="ai-mini-card"></div>`;
-                    }
-                }
+                for(let j=0; j<Math.min(p.cardCount, 8); j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
             });
         }
 
@@ -311,7 +276,7 @@
                 document.getElementById('btn-play').disabled = false;
                 document.getElementById('btn-pass').disabled = false;
             } else {
-                document.getElementById('game-status').innerText = '다른 플레이어의 턴을 기다리는 중...';
+                document.getElementById('game-status').innerText = '다른 플레이어의 턴 대기 중...';
                 document.getElementById('game-status').style.color = '#ecf0f1';
                 document.getElementById('btn-play').disabled = true;
                 document.getElementById('btn-pass').disabled = true;
@@ -319,17 +284,13 @@
         }
 
         socket.on('gameStateUpdated', ({ center, currentTurnId, players }) => {
-            // 중앙 영역 업데이트
             const centerArea = document.getElementById('center-area');
             centerArea.innerHTML = '';
             center.cards.forEach((rank, idx) => {
-                let c = createCardHTML(rank, idx, false);
-                c.style.transform = 'scale(0.85)';
-                if(idx > 0) c.style.marginLeft = '-20px';
-                centerArea.appendChild(c);
+                let c = createCardHTML(rank, idx, false); c.style.transform = 'scale(0.85)';
+                if(idx > 0) c.style.marginLeft = '-20px'; centerArea.appendChild(c);
             });
 
-            // 상대 스탯 카운트 갱신
             players.filter(p => p.id !== socket.id).forEach(p => {
                 const txt = document.getElementById(`count-text-${p.id}`);
                 const node = document.getElementById(`node-${p.id}`);
@@ -339,7 +300,6 @@
                     else node.classList.remove('passed');
                 }
             });
-
             updateTurnState(currentTurnId);
         });
 
@@ -347,10 +307,7 @@
             if(selectedIndices.length === 0) return alert('낼 카드를 선택해 주세요.');
             socket.emit('playCards', { roomId: currentRoomId, indices: selectedIndices });
         }
-
-        function passTurn() {
-            socket.emit('passTurn', currentRoomId);
-        }
+        function passTurn() { socket.emit('passTurn', currentRoomId); }
 
         socket.on('playerPassed', ({ name }) => {
             document.getElementById('game-status').innerText = `${name} 패스`;
@@ -362,63 +319,32 @@
             updateTurnState(currentTurnId);
         });
 
-        socket.on('playerEscaped', ({ name }) => {
-            alert(`🎉 [${name}] 탈출 완료!`);
-        });
+        socket.on('playerEscaped', ({ name }) => { alert(`🎉 [${name}] 탈출 완료!`); });
 
         socket.on('gameOver', ({ finishedPlayers }) => {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
+            const list = document.getElementById('final-rank-list'); list.innerHTML = '';
             
-            const list = document.getElementById('final-rank-list');
-            list.innerHTML = '';
-            
-            // 계급 매칭 문자열 출력
             finishedPlayers.forEach((pId, idx) => {
-                let pName = pId === socket.id ? "나" : "상대방"; // 단순 맵핑 대신 가독성 최적화 가능
                 let rName = "평민"; let icon = "👤";
                 if (idx === 0) { rName = "대달무티"; icon = "👑"; }
                 else if (idx === 1) { rName = "소달무티"; icon = "🥈"; }
                 else if (idx === finishedPlayers.length - 1) { rName = "대농노"; icon = "💩"; }
-                item = document.createElement('div');
-                item.className = 'player-item';
+                let item = document.createElement('div'); item.className = 'player-item';
                 if(pId === socket.id) item.style.color = '#f1c40f';
-                item.innerHTML = `<div>${icon} <strong>${rName}</strong></div>`;
-                list.appendChild(item);
+                item.innerHTML = `<div>${icon} <strong>${rName}</strong></div>`; list.appendChild(item);
             });
-
-            // 호스트 체크하여 다음 판 시작 활성화 제어
-            let amIHost = finishedPlayers[0] === socket.id; // 가칭 단순화
         });
 
-        function requestNextRound() {
-            socket.emit('playNextRound', currentRoomId);
-        }
-
-        // --- 세금 및 혁명 시스템 수신 리스너 ---
-        socket.on('askRevolution', () => {
-            document.getElementById('revolution-modal').classList.remove('hidden');
-        });
-
-        function answerRevolution(isRevolting) {
-            document.getElementById('revolution-modal').classList.add('hidden');
-            socket.emit('answerRevolution', { roomId: currentRoomId, isRevolting });
-        }
+        function requestNextRound() { socket.emit('playNextRound', currentRoomId); }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
             document.getElementById('tax-give-modal').classList.remove('hidden');
-            taxTargetId = targetId;
-            taxCountRequired = count;
-            
-            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게 좋은 카드 <span style="color:#f1c40f; font-weight:bold;">[${cards.join(', ')}]</span> 장을 갈취했습니다!<br>이제 하사할 쓰레기 카드 <strong>${count}장</strong>을 고르세요.`;
-            
-            // 하사용 손패 렌더링
-            const container = document.getElementById('tax-hand');
-            container.innerHTML = '';
-            selectedIndices = [];
-            myHand.forEach((rank, idx) => {
-                container.appendChild(createCardHTML(rank, idx, true, true));
-            });
+            taxTargetId = targetId; taxCountRequired = count;
+            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 좋은 카드 [${cards.join(', ')}]를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
+            const container = document.getElementById('tax-hand'); container.innerHTML = ''; selectedIndices = [];
+            myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, true)); });
         });
 
         function submitTaxHand() {
@@ -428,16 +354,13 @@
 
         socket.on('taxPhaseStarted', ({ taxLogs }) => {
             document.getElementById('tax-summary-modal').classList.remove('hidden');
-            const list = document.getElementById('tax-summary-list');
-            list.innerHTML = '';
-            
-            if(taxLogs.length === 0) {
-                list.innerHTML = '이번 라운드는 반란으로 인해 세금이 면제되었습니다!';
-            } else {
-                taxLogs.forEach(log => {
-                    list.innerHTML += `<div style="font-size:13px; margin-bottom:5px;">[${log.from}] ➡️ [${log.to}] 카드 상납 완료</div>`;
-                });
-            }
+            const list = document.getElementById('tax-summary-list'); list.innerHTML = '';
+            taxLogs.forEach(log => { list.innerHTML += `<div style="font-size:13px; margin-bottom:5px;">[${log.from}] ➡️ [${log.to}] 상납 완료</div>`; });
+        });
+
+        socket.on('chatMsg', (msg) => {
+            const box = document.getElementById('chat-toast-area');
+            box.innerHTML = `<div>${msg}</div>`;
         });
 
         socket.on('errorMsg', (msg) => { alert(msg); });
