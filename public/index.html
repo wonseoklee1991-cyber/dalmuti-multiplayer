@@ -176,17 +176,24 @@
         socket.on('connect', () => { myId = socket.id; });
 
         function createRoom() {
-            const name = document.getElementById('player-name').value.trim();
-            if(!name) return alert('닉네임을 입력해주세요.');
-            socket.emit('createRoom', name);
-        }
+                    const name = document.getElementById('player-name').value.trim();
+                    if(!name) return alert('닉네임을 입력해주세요.');
+                    document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = true); // 클릭 즉시 버튼 잠금
+                    socket.emit('createRoom', name);
+                }
 
-        function joinRoom() {
-            const name = document.getElementById('player-name').value.trim();
-            const code = document.getElementById('room-code-input').value.trim();
-            if(!name || !code) return alert('닉네임과 방 번호 4자리를 입력해주세요.');
-            socket.emit('joinRoom', { roomId: code, playerName: name });
-        }
+                function joinRoom() {
+                    const name = document.getElementById('player-name').value.trim();
+                    const code = document.getElementById('room-code-input').value.trim();
+                    if(!name || !code) return alert('닉네임과 방 번호 4자리를 입력해주세요.');
+                    document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = true); // 클릭 즉시 버튼 잠금
+                    socket.emit('joinRoom', { roomId: code, playerName: name });
+                }
+
+                socket.on('errorMsg', (msg) => {
+                    alert(msg);
+                    document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = false); // 에러 발생 시 버튼 다시 풀기
+                });
 
         socket.on('roomCreated', ({ roomId, players }) => {
             currentRoomId = roomId;
@@ -197,8 +204,11 @@
         });
 
         socket.on('roomUpdated', ({ players }) => {
-            updateWaitingPlayerList(players);
-        });
+                    // ⭐️ 중요: 참가 버튼을 누른 사람도 로비 화면을 숨기고 대기실 화면을 보여주도록 화면 전환 활성화
+                    document.getElementById('lobby-screen').classList.add('hidden');
+                    document.getElementById('waiting-screen').classList.remove('hidden');
+                    updateWaitingPlayerList(players);
+                });
 
         function updateWaitingPlayerList(players) {
             const container = document.getElementById('waiting-player-list');
@@ -372,8 +382,10 @@
             const box = document.getElementById('chat-toast-area');
             box.innerHTML = `<div>${msg}</div>`;
         });
-
-        socket.on('errorMsg', (msg) => { alert(msg); });
+        socket.on('errorMsg', (msg) => {
+            alert(msg);
+            document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = false); // 에러 발생 시 버튼 다시 풀기
+        });socket.on('errorMsg', (msg) => { alert(msg); });
     </script>
 </body>
 </html>

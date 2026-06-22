@@ -39,16 +39,21 @@ io.on('connection', (socket) => {
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
     });
 
-    socket.on('joinRoom', ({ roomId, playerName }) => {
-        const room = rooms[roomId];
-        if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
-        if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
-        if (room.players.filter(p => !p.isAI).length >= 8) return socket.emit('errorMsg', '방이 가득 찼습니다. (최대 8인)');
+    // 방 참가하기 (중복 클릭 및 중복 진입 방지 로직 추가)
+        socket.on('joinRoom', ({ roomId, playerName }) => {
+            const room = rooms[roomId];
+            if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
+            if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
+            
+            // ⭐️ 중요: 연타로 인해 동일한 소켓 ID가 이미 방에 존재한다면 무시하고 리턴합니다.
+            if (room.players.some(p => p.id === socket.id)) return;
 
-        room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
-        socket.join(roomId);
-        io.to(roomId).emit('roomUpdated', { players: room.players.filter(p => !p.isAI) });
-    });
+            if (room.players.filter(p => !p.isAI).length >= 8) return socket.emit('errorMsg', '방이 가득 찼습니다. (최대 8인)');
+
+            room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
+            socket.join(roomId);
+            io.to(roomId).emit('roomUpdated', { players: room.players.filter(p => !p.isAI) });
+        });
 
     socket.on('startGame', (roomId) => {
         const room = rooms[roomId];
