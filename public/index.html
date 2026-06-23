@@ -10,7 +10,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
         .hidden { display: none !important; }
-        .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; margin: 5px; transition: all 0.1s; }
+        .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
         .btn:active { transform: translateY(4px); box-shadow: none; }
         .btn.pass { background-color: #e74c3c; box-shadow: 0 4px 0 #c0392b; color: white; }
         .btn.back { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; color: white; }
@@ -26,29 +26,24 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 450px; max-width: 90vw; max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
-        /* ⭐️ 감정표현 이모티콘 팝업 애니메이션 */
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
-        .emote-popup { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: #000; padding: 4px 8px; border-radius: 12px; font-size: 15px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 50; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
-        .emote-bar { display: flex; gap: 6px; overflow-x: auto; width: 100%; padding: 5px 20px; margin-bottom: 5px; scrollbar-width: none; }
-        .emote-bar::-webkit-scrollbar { display: none; }
-        .emote-bar button { background: rgba(0,0,0,0.7); border: 1px solid #555; color: #fff; border-radius: 15px; padding: 6px 12px; font-size: 13px; cursor: pointer; white-space: nowrap; }
-        .emote-bar button:active { background: #444; }
-
+        .emote-popup-anim { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: #000; padding: 4px 8px; border-radius: 12px; font-size: 15px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 50; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
         .table-3d { width: 85vw; max-width: 700px; height: 40vh; max-height: 320px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
-        .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; }
+        .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; width: 100%; height: 100%; }
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
         .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 12px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); transition: all 0.2s; }
         .ai-node .avatar { width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
         .ai-node .info { display: flex; flex-direction: column; }
         .ai-node .name { font-size: 13px; color: #fff; font-weight: bold; transition: color 0.3s; }
+        .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; }
         
         .ai-node.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); --scale: 1.05; box-shadow: 0 0 15px #2ecc71; }
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
-        /* ⭐️ 부채꼴 형태의 완벽 스태킹 미니 카드 UI */
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
@@ -60,9 +55,28 @@
         .pos-right-mid  { top: 25%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 45%; right: max(15px, env(safe-area-inset-right)); }
 
-        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-top: 5px; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 85%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
-        .controls { display: flex; gap: 12px; margin-bottom: 6px; align-items: center; }
-        .hand-scroll-area { width: 100%; overflow-x: auto; overflow-y: hidden; padding-top: 20px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+        /* ⭐️ UI 분할 개선: HUD 레이어 신설 및 중앙 오픈 */
+        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
+        .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 10px max(15px, env(safe-area-inset-left)); pointer-events: none; }
+        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+        .hud-right { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
+        
+        .btn-emote { background: #34495e; border: 2px solid #555; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
+        .btn-emote:active { transform: scale(0.9); }
+        
+        /* ⭐️ 이모티콘 팝업 커스텀 스타일 */
+        #emote-menu { position: absolute; bottom: 55px; left: 0; background: rgba(26,26,26,0.95); border: 1px solid #444; border-radius: 12px; padding: 12px; width: 240px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); z-index: 100; pointer-events: auto; }
+        .emote-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 10px 0; font-size: 15px; cursor: pointer; transition: background 0.1s;}
+        .emote-grid button:active { background: #555; }
+        .custom-emote-container { border-top: 1px solid #555; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .custom-emote-container input { padding: 8px; border-radius: 6px; border: 1px solid #555; background: #222; color: #fff; width: 100%; font-size: 13px; }
+        .custom-emote-container button { border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size: 13px; padding: 8px 10px; color: #111;}
+        .save-btn { background: #2ecc71; }
+        .edit-btn { background: #7f8c8d; color: #fff !important; width: 60px;}
+        .custom-btn { background: #3498db !important; color: #fff !important; flex:1; text-align: center;}
+
+        .hand-scroll-area { width: 100%; overflow-x: auto; overflow-y: hidden; padding-top: 10px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
         .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
@@ -89,7 +103,7 @@
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
         #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 33%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        #chat-toast-area { position: absolute; bottom: 38%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
     </style>
 </head>
@@ -122,7 +136,6 @@
                 </select>
             </div>
             
-            <!-- ⭐️ 판돈 설정 추가 -->
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
                 <span style="font-size:14px; color:#aaa; font-weight:bold;">판돈 (1판):</span>
                 <input type="number" id="bet-amount" value="1000" style="width:100px; padding:6px; border-radius:6px; background:#333; color:#f1c40f; border:1px solid #555; text-align:right;">
@@ -162,7 +175,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- 게임 화면 -->
+    <!-- ⭐️ 게임 화면 (분할 HUD 적용) -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -170,32 +183,58 @@
         <div class="table-3d">
             <div class="center-area" id="center-area"></div>
         </div>
+        
         <div class="player-ui">
-            <!-- ⭐️ 이모티콘 바 추가 -->
-            <div class="emote-bar">
-                <button onclick="sendEmote('빨리!')">빨리!</button>
-                <button onclick="sendEmote('스겜!')">스겜!</button>
-                <button onclick="sendEmote('🤬')">🤬</button>
-                <button onclick="sendEmote('💖')">💖</button>
-                <button onclick="sendEmote('🤮')">🤮</button>
-                <button onclick="sendEmote('😵‍💫')">😵‍💫</button>
-                <button onclick="sendEmote('👏')">👏</button>
-            </div>
-            <div class="controls">
-                <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                    <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.3s; position:relative;">🧑‍💻</div>
-                    <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s;">나</span>
+            <!-- 좌/우 분할 조작 레이어 -->
+            <div class="hud-layer">
+                <div class="hud-left">
+                    <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
+                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
+                        <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s;">나</span>
+                    </div>
+                    
+                    <div style="position:relative;">
+                        <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
+                        
+                        <!-- 커스텀 이모티콘 팝업 메뉴 -->
+                        <div id="emote-menu" class="hidden">
+                            <div class="emote-grid">
+                                <button onclick="sendEmote('빨리!')">빨리!</button>
+                                <button onclick="sendEmote('스겜!')">스겜!</button>
+                                <button onclick="sendEmote('🤬')">🤬</button>
+                                <button onclick="sendEmote('💖')">💖</button>
+                                <button onclick="sendEmote('🤮')">🤮</button>
+                                <button onclick="sendEmote('😵‍💫')">😵‍💫</button>
+                                <button onclick="sendEmote('👏')">👏</button>
+                                <button onclick="sendEmote('👀')">👀</button>
+                            </div>
+                            <div class="custom-emote-container">
+                                <div id="custom-emote-display" class="hidden" style="display:flex; gap:5px;">
+                                    <button id="btn-use-custom" class="custom-btn" onclick="sendCustomEmote()"></button>
+                                    <button class="edit-btn" onclick="editCustomEmote()">✏️수정</button>
+                                </div>
+                                <div id="custom-emote-input-area" style="display:flex; gap:5px;">
+                                    <input type="text" id="custom-emote-input" placeholder="직접 입력..." maxlength="10">
+                                    <button class="save-btn" onclick="saveCustomEmote()">저장</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button class="btn" id="btn-play" onclick="playCards()" disabled>카드 내기</button>
-                <button class="btn pass" id="btn-pass" onclick="passTurn()" disabled>패스</button>
+                
+                <div class="hud-right">
+                    <button class="btn" id="btn-play" style="margin:0; padding:12px 20px;" onclick="playCards()" disabled>카드 내기</button>
+                    <button class="btn pass" id="btn-pass" style="margin:0; padding:12px 20px;" onclick="passTurn()" disabled>패스</button>
+                </div>
             </div>
+            
             <div class="hand-scroll-area">
                 <div id="player-hand" class="hand"></div>
             </div>
         </div>
     </div>
 
-    <!-- 4. 세금 하사 모달 (방장용) -->
+    <!-- 세금 하사 모달 (방장용) -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
@@ -206,7 +245,7 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- ⭐️ 5. 세금 교환 개인화 애니메이션 모달 (평민, 농노용) -->
+    <!-- 세금 교환 개인화 애니메이션 모달 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:85; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:10px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:20px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
@@ -217,7 +256,7 @@
         </div>
     </div>
 
-    <!-- 6. 결과 창 -->
+    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; overflow-y:auto; padding-top:20px; padding-bottom:30px;">
         <h1 style="color:#f1c40f; margin-bottom:10px;">🎉 게임 종료 (순위표)</h1>
         <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; width:340px;"></div>
@@ -244,6 +283,21 @@
         let taxCountRequired = 0;
         let currentPlayerName = "";
         window.currentFinishedPlayers = [];
+
+        // ⭐️ 커스텀 이모티콘 초기화
+        function initCustomEmote() {
+            let saved = localStorage.getItem('customDalmutiEmote');
+            if(saved) {
+                document.getElementById('custom-emote-display').style.display = 'flex';
+                document.getElementById('custom-emote-input-area').style.display = 'none';
+                document.getElementById('btn-use-custom').innerText = saved;
+            } else {
+                document.getElementById('custom-emote-display').style.display = 'none';
+                document.getElementById('custom-emote-input-area').style.display = 'flex';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initCustomEmote);
 
         socket.on('connect', () => { myId = socket.id; });
 
@@ -291,7 +345,32 @@
 
         function toggleReady() { socket.emit('toggleReady'); }
         function startGame() { socket.emit('startGame'); }
-        function sendEmote(emote) { socket.emit('sendEmote', emote); }
+
+        // ⭐️ 이모티콘 팝업 및 전송 로직
+        function toggleEmoteMenu() { document.getElementById('emote-menu').classList.toggle('hidden'); }
+        
+        function saveCustomEmote() {
+            let val = document.getElementById('custom-emote-input').value.trim();
+            if(!val) return;
+            localStorage.setItem('customDalmutiEmote', val);
+            initCustomEmote();
+        }
+
+        function editCustomEmote() {
+            document.getElementById('custom-emote-display').style.display = 'none';
+            document.getElementById('custom-emote-input-area').style.display = 'flex';
+            document.getElementById('custom-emote-input').value = localStorage.getItem('customDalmutiEmote') || '';
+        }
+
+        function sendCustomEmote() {
+            let val = localStorage.getItem('customDalmutiEmote');
+            if(val) sendEmote(val);
+        }
+
+        function sendEmote(emote) {
+            socket.emit('sendEmote', emote);
+            document.getElementById('emote-menu').classList.add('hidden');
+        }
 
         function unlockLobbyButtons() { document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = false); }
 
@@ -332,7 +411,6 @@
             let me = players.find(p => p.id === socket.id || p.id === myId);
             let humanCount = players.filter(p => !p.isAI).length;
             
-            // ⭐️ 레디 버튼 텍스트 변경
             let readyBtn = document.getElementById('btn-ready-toggle');
             if (readyPlayers.includes(me.id)) {
                 readyBtn.innerText = '준비 완료 취소';
@@ -346,7 +424,7 @@
 
             if(me && me.isHost) {
                 document.getElementById('btn-start-game').classList.remove('hidden');
-                readyBtn.classList.add('hidden'); // 방장은 레디 대신 게임 시작 버튼이 있음
+                readyBtn.classList.add('hidden');
                 if (readyPlayers.length >= humanCount - 1) {
                     document.getElementById('btn-start-game').disabled = false;
                     document.getElementById('btn-start-game').innerText = '게임 시작하기';
@@ -442,9 +520,8 @@
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
-            // ⭐️ 라운드 시작 시 모든 탈출 딱지 이펙트 확실히 제거
             document.getElementById('my-avatar').style.border = 'none';
-            document.getElementById('my-avatar').style.boxShadow = 'none';
+            document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
             document.getElementById('player-name-label').style.color = '#fff';
 
             let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
@@ -482,7 +559,6 @@
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, false)); });
         });
 
-        // ⭐️ 1번 UI 개편: 남은 개수만큼 정확한 각도로 회전 스태킹 부채꼴 생성
         function renderOpponents(players) {
             const container = document.getElementById('opponents-container');
             container.innerHTML = '';
@@ -519,7 +595,6 @@
             const cardArea = document.getElementById(`cards-area-${playerId}`);
             if (!cardArea) return;
             cardArea.innerHTML = '';
-            // 스태킹 각도 계산 (최대 60도 범위 안에서 카드를 펼침)
             let maxAngle = 60;
             let step = count > 1 ? maxAngle / (count - 1) : 0;
             let startAngle = -maxAngle / 2;
@@ -574,7 +649,7 @@
                 const node = document.getElementById(`node-${p.id}`);
 
                 if(txt) txt.innerText = `${p.cardCount}장`;
-                renderMiniCards(p.id, p.cardCount); // ⭐️ 스태킹 미니카드 실시간 업데이트
+                renderMiniCards(p.id, p.cardCount);
 
                 if(node) {
                     if(p.isEscaped) {
@@ -628,7 +703,7 @@
             let target = document.getElementById(id === socket.id || id === myId ? 'my-avatar' : `node-${id}`);
             if (target) {
                 let el = document.createElement('div');
-                el.className = 'emote-popup';
+                el.className = 'emote-popup-anim';
                 el.innerText = emote;
                 target.appendChild(el);
                 setTimeout(() => el.remove(), 2500);
@@ -699,7 +774,6 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
         }
 
-        // ⭐️ 세금 개인화 애니메이션 전송 로직
         socket.on('taxPhasePersonalResults', ({ taxLogs }) => {
             const myIdReal = myId || socket.id;
             let myGive = taxLogs.find(l => l.fromId === myIdReal);
