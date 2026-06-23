@@ -32,12 +32,15 @@
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
         .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 12px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); transition: all 0.2s; }
-        .ai-node .avatar { width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; }
+        .ai-node .avatar { width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; transition: all 0.3s; }
         .ai-node .info { display: flex; flex-direction: column; }
-        .ai-node .name { font-size: 13px; color: #fff; font-weight: bold; }
+        .ai-node .name { font-size: 13px; color: #fff; font-weight: bold; transition: color 0.3s; }
         .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; }
+        
         .ai-node.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); --scale: 1.05; box-shadow: 0 0 15px #2ecc71; }
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
+        /* ⭐️ 탈출 시 노란 테두리 적용을 위한 CSS 추가 */
+        .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
         .ai-cards-container { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
         .ai-mini-cards { display: flex; gap: 2px; }
@@ -59,14 +62,12 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* 👑 고해상도 카드 아키텍처 인덱스 보강 */
         .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
         .card.selected { transform: translateY(-22px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); }
         .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
 
-        /* 선 뽑기 뒷면 전용 테두리 디자인 */
         .card.card-back { background: radial-gradient(circle, #c0392b, #2c3e50); border: 3px solid #f1c40f; color: transparent; }
         .card.card-back::after { content: "❔"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; display: block; color: #f1c40f; }
 
@@ -144,8 +145,8 @@
         <div class="player-ui">
             <div class="controls">
                 <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                    <div class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">🧑‍💻</div>
-                    <span id="player-name-label" style="font-size:13px; font-weight:bold;">나</span>
+                    <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.3s;">🧑‍💻</div>
+                    <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s;">나</span>
                 </div>
                 <button class="btn" id="btn-play" onclick="playCards()" disabled>카드 내기</button>
                 <button class="btn pass" id="btn-pass" onclick="passTurn()" disabled>패스</button>
@@ -189,6 +190,7 @@
         let taxTargetId = null;
         let taxCountRequired = 0;
         let currentPlayerName = "";
+        window.currentFinishedPlayers = [];
 
         socket.on('connect', () => { myId = socket.id; });
 
@@ -258,6 +260,7 @@
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
+            document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
@@ -277,7 +280,6 @@
             });
         }
 
-        // 🃏 ⭐️ 수동형 선 뽑기 드로우 대기실 연출 모드 진입 리스너
         socket.on('seonDrawPhaseInit', ({ totalPlayers }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('seon-winner-announcement').innerText = '';
@@ -290,20 +292,17 @@
             const container = document.getElementById('seon-cards-container');
             container.innerHTML = '';
 
-            // 방 유저 인원수만큼 뒷면 셔플 카드들을 나란히 배치 생성
             for(let i=0; i<totalPlayers; i++) {
                 let backCard = document.createElement('div');
                 backCard.className = "card card-back";
                 backCard.style.transform = "scale(1.2)";
                 backCard.id = `seon-card-idx-${i}`;
                 
-                // 손가락으로 누르는 순간 서버에 인덱스 정보 패키지 전송 및 단일 락 체결
                 backCard.onclick = () => {
                     backCard.style.borderColor = "#2ecc71";
                     document.getElementById('seon-pick-guide').innerText = "⏳ 다른 플레이어들이 뽑을 때까지 대기 중입니다...";
                     document.getElementById('seon-pick-guide').style.background = "#34495e";
                     
-                    // 전 카드 터치 금지 레이어 락락
                     document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
                     socket.emit('pickSeonCard', { cardIndex: i });
                 };
@@ -311,7 +310,6 @@
             }
         });
 
-        // 타 유저 선택 현황 카운터 업데이트
         socket.on('seonPickProgress', ({ count }) => {
             const guide = document.getElementById('seon-pick-guide');
             if(guide.innerText.includes("대기 중")) {
@@ -319,7 +317,6 @@
             }
         });
 
-        // 🃏 ⭐️ 동기화된 선 뽑기 카드들의 패 정량 대칭 일제히 오픈 리스너
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container');
             container.innerHTML = '';
@@ -348,7 +345,7 @@
             });
 
             setTimeout(() => {
-                document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 최고 계급 카드를 뽑아 첫 턴(선)을 확득했습니다!`;
+                document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 최고 계급 카드를 뽑아 첫 턴(선)을 획득했습니다!`;
             }, 600);
 
             setTimeout(() => { document.getElementById('seon-draw-screen').classList.add('hidden'); }, 4400);
@@ -361,11 +358,16 @@
             document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
+            
+            // 본인 라벨 초기화
+            document.getElementById('my-avatar').style.border = 'none';
+            document.getElementById('my-avatar').style.boxShadow = 'none';
+            document.getElementById('player-name-label').style.color = '#fff';
+
             renderOpponents(players);
             updateTurnState(currentTurnId);
         });
 
-        // ⭐️ Bug 1 해결: rank-12 그라데이션 및 상하단 숫자/조커 J 완벽 분기 복구 구조화
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
@@ -391,7 +393,10 @@
             let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
             if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
             const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-            document.getElementById('player-name-label').innerText = `${badges[rankIdx] || ''} 나(Player)`;
+            let label = document.getElementById('player-name-label');
+            if (!label.innerText.includes('탈출')) {
+                label.innerText = `${badges[rankIdx] || ''} 나(Player)`;
+            }
         });
 
         function renderOpponents(players) {
@@ -452,7 +457,9 @@
         
         function passTurn() { socket.emit('passTurn'); }
 
-        socket.on('gameStateUpdated', ({ center, currentTurnId, players }) => {
+        socket.on('gameStateUpdated', ({ center, currentTurnId, players, finishedPlayers }) => {
+            window.currentFinishedPlayers = finishedPlayers; // 순위 계산을 위해 저장
+            
             const centerArea = document.getElementById('center-area');
             if (centerArea) {
                 centerArea.innerHTML = '';
@@ -466,15 +473,41 @@
                 });
             }
 
+            // ⭐️ 알림창 삭제 반영 및 탈출 플레이어 노란 테두리 + 실시간 등수 UI 적용
             players.filter(p => p.id !== socket.id && p.id !== myId).forEach(p => {
                 const txt = document.getElementById(`count-text-${p.id}`);
                 const node = document.getElementById(`node-${p.id}`);
                 if(txt) txt.innerText = `${p.cardCount}장`;
                 if(node) {
-                    if(p.hasPassed || p.isEscaped) node.classList.add('passed');
-                    else node.classList.remove('passed');
+                    if(p.isEscaped) {
+                        node.classList.add('escaped-player');
+                        let rankNum = finishedPlayers.indexOf(p.id) + 1;
+                        let nameEl = node.querySelector('.name');
+                        if (!nameEl.innerText.includes('등')) {
+                            nameEl.innerText = `${rankNum === 1 ? '👑1등' : rankNum + '등'} ` + nameEl.innerText.replace(/^[0-9]+️⃣ /, '');
+                            nameEl.style.color = '#f1c40f';
+                        }
+                    } else if(p.hasPassed) {
+                        node.classList.add('passed');
+                    } else {
+                        node.classList.remove('passed');
+                    }
                 }
             });
+
+            // 내 상태창도 탈출 시 화려하게 변경
+            let me = players.find(p => p.id === socket.id || p.id === myId);
+            if (me && me.isEscaped) {
+                let rankNum = finishedPlayers.indexOf(me.id) + 1;
+                let label = document.getElementById('player-name-label');
+                if (!label.innerText.includes('탈출')) {
+                    label.innerText = `🎉 ${rankNum}등 탈출! (대기 중)`;
+                    label.style.color = '#f1c40f';
+                    document.getElementById('my-avatar').style.border = '3px solid #f1c40f';
+                    document.getElementById('my-avatar').style.boxShadow = '0 0 10px #f1c40f';
+                }
+            }
+
             updateTurnState(currentTurnId);
         });
 
@@ -483,13 +516,22 @@
             document.getElementById('game-status').style.color = '#e74c3c';
         });
 
+        // ⭐️ 오해 방지! 새 라운드 시작 시 중앙 화면에 내가 선(Start Player)임을 명확히 안내
         socket.on('newRound', ({ currentTurnId }) => {
             const centerArea = document.getElementById('center-area');
             if (centerArea) centerArea.innerHTML = '';
             updateTurnState(currentTurnId);
+            
+            if (currentTurnId === socket.id || currentTurnId === myId) {
+                const box = document.getElementById('chat-toast-area');
+                if (box) {
+                    box.innerText = "📯 필드가 초기화되었습니다. 당신이 선입니다!";
+                    box.classList.remove('hidden');
+                    clearTimeout(window.chatTimeout);
+                    window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3000);
+                }
+            }
         });
-
-        socket.on('playerEscaped', ({ name }) => { alert(`🎉 [${name}] 탈출 완료!`); });
 
         socket.on('gameOver', ({ finishedPlayers }) => {
             document.getElementById('game-screen').classList.add('hidden');
@@ -510,6 +552,7 @@
         function requestNextRound() { socket.emit('playNextRound'); }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
+            document.getElementById('tax-summary-modal').classList.add('hidden'); // 충돌 방지
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
             document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 좋은 카드 [${cards.join(', ')}]를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
@@ -523,7 +566,10 @@
         }
 
         socket.on('taxPhaseStarted', ({ taxLogs }) => {
-            document.getElementById('tax-summary-modal').classList.remove('hidden');
+            // 왕이 세금을 하사하고 있는 창이 안 떠 있을 때만 요약 모달 표시
+            if (document.getElementById('tax-give-modal').classList.contains('hidden')) {
+                document.getElementById('tax-summary-modal').classList.remove('hidden');
+            }
             const list = document.getElementById('tax-summary-list'); list.innerHTML = '';
             taxLogs.forEach(log => { list.innerHTML += `<div style="font-size:13px; margin-bottom:5px;">[${log.from}] ➡️ [${log.to}] 상납 완료</div>`; });
         });

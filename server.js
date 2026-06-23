@@ -280,9 +280,9 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
     room.center = { cards: selectedCards, count: selectedCards.length, rank: eRank, ownerId: player.id };
     io.to(roomId).emit('chatMsg', `♣️ ${player.name}이(가) [${eRank === JOKER ? 'J' : eRank}] ${selectedCards.length}장을 냈습니다.`);
 
+    // ⭐️ 팝업 제거: 순수하게 로직 데이터만 추가합니다. UI는 gameStateUpdated에서 처리합니다.
     if (player.hand.length === 0 && !room.finishedPlayers.includes(player.id)) {
         room.finishedPlayers.push(player.id);
-        io.to(roomId).emit('playerEscaped', { name: player.name });
     }
     if (room.finishedPlayers.length >= room.players.length - 1) {
         room.status = 'ended';
@@ -295,46 +295,34 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
     handleAITurnIfNeeded(roomId, room);
 }
 
-// ⭐️ 여기서 트릭 주인(승자) 증발 버그와 순서 계산 오류를 완벽히 해결했습니다!
 function executePassLogic(roomId, room, player) {
     player.hasPassed = true;
     io.to(roomId).emit('playerPassed', { name: player.name });
 
     let activePlayers = room.players.filter(p => !p.hasPassed && !room.finishedPlayers.includes(p.id));
     if (activePlayers.length === 0 || (activePlayers.length === 1 && activePlayers[0].id === room.center.ownerId)) {
-        
-        // 1. 테이블 카드를 치우기 전에 주인을 먼저 안전하게 기록해둡니다.
         let trickWinnerId = room.center.ownerId;
-        
-        // 2. 테이블 비우기 및 유저 패스 상태 초기화
         room.center = { cards: [], count: 0, rank: 99, ownerId: null };
         room.players.forEach(p => p.hasPassed = false);
 
-        // 3. 승자가 다음 턴(선)을 잡습니다.
         let nextTurnId = trickWinnerId;
-
-        // 만약 승자가 이번 턴에 카드를 다 털고 승리(탈출)해버렸다면?
         if (!nextTurnId || room.finishedPlayers.includes(nextTurnId)) {
-            // 공식 달무티 룰에 따라 탈출한 사람의 바로 '다음 순서(왼쪽)' 유저에게 선을 넘깁니다.
             let winnerIdx = room.players.findIndex(p => p.id === trickWinnerId);
-            if (winnerIdx === -1) winnerIdx = 0; // 안전 장치
+            if (winnerIdx === -1) winnerIdx = 0;
 
             let nextIdx = (winnerIdx + 1) % room.players.length;
-            // 다음 사람도 탈출한 상태면 그 다음 사람을 찾을 때까지 건너뜀
             while (room.finishedPlayers.includes(room.players[nextIdx].id)) {
                 nextIdx = (nextIdx + 1) % room.players.length;
             }
             nextTurnId = room.players[nextIdx].id;
         }
-
+        
         const targetIdx = room.players.findIndex(p => p.id === nextTurnId);
         room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
-        
         io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
     } else {
         advanceTurn(room);
     }
-    
     broadcastGameState(roomId, room);
     handleAITurnIfNeeded(roomId, room);
 }
@@ -358,6 +346,7 @@ function broadcastGameState(roomId, room) {
     io.to(roomId).emit('gameStateUpdated', {
         center: room.center,
         currentTurnId: room.players[room.currentTurnIdx].id,
+        finishedPlayers: room.finishedPlayers, // ⭐️ 클라이언트가 순위를 계산할 수 있도록 배열 전송
         players: room.players.map(p => ({
             id: p.id, name: p.name, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
         }))
@@ -371,6 +360,8 @@ function executeTaxPhase(roomId, room) {
     else if (total === 8) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 }); taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 }); }
 
     let humanTaxWaiting = false;
+
+    // 1. 농노가 왕에게 좋은 카드를 상납하는 처리 완료
     taxRules.forEach(rule => {
         let hId = room.lastRoundRanks[rule.highRank]; let lId = room.lastRoundRanks[rule.lowRank]; let count = rule.count;
         let lowPlayer = room.players.find(p => p.id === lId); let highPlayer = room.players.find(p => p.id === hId);
@@ -379,6 +370,15 @@ function executeTaxPhase(roomId, room) {
         bestCards.forEach(c => lowPlayer.hand.splice(lowPlayer.hand.indexOf(c), 1));
         highPlayer.hand.push(...bestCards);
         room.taxLogs.push({ from: lowPlayer.name, to: highPlayer.name, cards: bestCards });
+    });
+
+    // ⭐️ 2. 세금 징수가 끝난 완벽한 손패를 전원(왕 포함)에게 우선적으로 확실히 동기화 전송 (빈 카드 모달 버그 해결!)
+    room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+
+    // 3. 왕이 하사할 차례 로직 실행
+    taxRules.forEach(rule => {
+        let hId = room.lastRoundRanks[rule.highRank]; let lId = room.lastRoundRanks[rule.lowRank]; let count = rule.count;
+        let lowPlayer = room.players.find(p => p.id === lId); let highPlayer = room.players.find(p => p.id === hId);
 
         if (highPlayer.isAI) {
             highPlayer.hand.sort((a,b)=>a-b);
@@ -387,14 +387,17 @@ function executeTaxPhase(roomId, room) {
             room.taxLogs.push({ from: highPlayer.name, to: lowPlayer.name, cards: worstCards });
         } else {
             humanTaxWaiting = true;
-            io.to(hId).emit('taxReceived', { cards: bestCards, count, targetName: lowPlayer.name, targetId: lId });
+            let log = room.taxLogs.find(l => l.to === highPlayer.name && l.from === lowPlayer.name);
+            io.to(hId).emit('taxReceived', { cards: log.cards, count, targetName: lowPlayer.name, targetId: lId });
         }
     });
 
-    room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
     io.to(roomId).emit('taxPhaseStarted', { taxLogs: room.taxLogs });
 
-    if (!humanTaxWaiting) { startNormalRound(roomId, room); }
+    if (!humanTaxWaiting) {
+        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        startNormalRound(roomId, room);
+    }
 }
 
 function startNormalRound(roomId, room) {
