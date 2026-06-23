@@ -66,8 +66,8 @@ io.on('connection', (socket) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
-            maxPlayers: 4, // 기본값
-            betAmount: 1000, // 기본값
+            maxPlayers: 4,
+            betAmount: 1000,
             players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
@@ -96,14 +96,11 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
-    // ⭐️ 방장이 대기실에서 설정 변경 시 즉시 동기화
     socket.on('updateRoomSettings', ({ maxPlayers, betAmount }) => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
         const player = room.players.find(p => p.id === socket.id);
         if (!player || !player.isHost) return;
-        
-        // 누군가 레디했으면 변경 불가 방어막
         if (room.readyPlayers.length > 0) return;
 
         room.maxPlayers = parseInt(maxPlayers) || 4;
@@ -187,6 +184,9 @@ io.on('connection', (socket) => {
                 
                 distributeCards(room);
                 room.currentTurnIdx = 0;
+
+                // ⭐️ 시작할 때 손패가 무조건 한 번만, 그리고 100% 정렬된 상태로 전송되도록 일원화
+                room.players.forEach(p => p.hand.sort((a,b)=>a-b));
 
                 io.to(room.id).emit('gameStarted', {
                     players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
@@ -288,7 +288,7 @@ io.on('connection', (socket) => {
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
             setTimeout(() => {
-                room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+                // ⭐️ 서버에서 완벽히 정렬을 끝낸 뒤 startNormalRound를 통해 한 번에 발송되도록 꼬임 제거
                 startNormalRound(room.id, room);
             }, 3500);
         }
@@ -447,7 +447,6 @@ function distributeCards(room) {
         room.players[p].hand.push(deck.pop());
         p = (p + 1) % room.players.length;
     }
-    room.players.forEach(pl => pl.hand.sort((a, b) => a - b));
 }
 
 function broadcastGameState(roomId, room) {
@@ -470,7 +469,6 @@ function executeTaxPhase(roomId, room) {
     else if (total >= 8) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 }); taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 }); }
 
     if (taxRules.length === 0) {
-        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
         return;
     }
@@ -505,19 +503,19 @@ function executeTaxPhase(roomId, room) {
     });
 
     if (!humanTaxWaiting) {
-        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs }); // 노예 대기창
+        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
         io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
         setTimeout(() => {
-            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
         }, 3500);
     } else {
-        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs }); // 노예 대기창 띄워줌
+        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
     }
 }
 
 function startNormalRound(roomId, room) {
     room.status = 'playing';
+    // ⭐️ 여기서 전원의 손패를 100% 정렬한 뒤 화면으로 쏴줍니다!
     room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.currentTurnIdx = 0;
     
@@ -526,6 +524,9 @@ function startNormalRound(roomId, room) {
         currentTurnId: room.players[0].id,
         lastRoundRanks: room.lastRoundRanks
     });
+
+    // ⭐️ 손패 동기화 배포
+    room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     handleAITurnIfNeeded(roomId, room);
 }
