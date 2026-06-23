@@ -50,10 +50,12 @@ io.on('connection', (socket) => {
 
             if (room.players.filter(p => !p.isAI).length >= 8) return socket.emit('errorMsg', '방이 가득 찼습니다. (최대 8인)');
 
-            room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
-            socket.join(roomId);
-            io.to(roomId).emit('roomUpdated', { players: room.players.filter(p => !p.isAI) });
-        });
+            // server.js 파일 안의 socket.on('joinRoom', ...) 끝자락 부분 수정
+                room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
+                socket.join(roomId);
+                
+                // ⭐️ 핵심: 브로드캐스트할 때 roomId를 함께 실어서 방에 입장한 클라이언트들이 동기화할 수 있도록 처리
+                io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI) });
 
     socket.on('startGame', (roomId) => {
         const room = rooms[roomId];

@@ -25,52 +25,63 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 450px; max-width: 90vw; max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px;}
 
-        #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 800px; }
-        .table-3d { width: 80vw; max-width: 600px; height: 42vh; max-height: 320px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(45deg) translateY(-3vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 10vh; }
-        .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center; z-index: 2; }
+        #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
+        .table-3d { width: 85vw; max-width: 700px; height: 42vh; max-height: 340px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
+        .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; }
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
-        .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 10px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); }
-        .ai-node .avatar { width: 32px; height: 32px; font-size: 16px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; }
+        .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 12px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); transition: all 0.2s; }
+        .ai-node .avatar { width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; }
         .ai-node .info { display: flex; flex-direction: column; }
-        .ai-node .name { font-size: 12px; color: #fff; font-weight: bold; }
-        .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; margin-top: 2px;}
-        .ai-node.active { border-color: #f1c40f; background: rgba(241, 196, 15, 0.35); --scale: 1.05; }
-        .ai-node.passed { opacity: 0.3; }
+        .ai-node .name { font-size: 13px; color: #fff; font-weight: bold; }
+        .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; }
+        .ai-node.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); --scale: 1.05; box-shadow: 0 0 15px #2ecc71; }
+        .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
         
-        .ai-cards-container { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .ai-cards-container { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
         .ai-mini-cards { display: flex; gap: 2px; }
-        .ai-mini-card { width: 6px; height: 9px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .ai-mini-card { width: 7px; height: 10px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
-        /* 완벽 대칭 정렬 좌표 */
-        .pos-left-low   { top: 44%; left: max(10px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 26%; left: max(22px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 15%; left: 31%; --tx: -50%; }
-        .pos-center-top { top: 12%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 15%; left: 69%; --tx: -50%; }
-        .pos-right-mid  { top: 26%; right: max(22px, env(safe-area-inset-right)); }
-        .pos-right-low  { top: 44%; right: max(10px, env(safe-area-inset-right)); }
+        /* 배치 위치 오프셋 */
+        .pos-left-low   { top: 45%; left: max(15px, env(safe-area-inset-left)); }
+        .pos-left-mid   { top: 25%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 13%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 10%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 13%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 25%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-right-low  { top: 45%; right: max(15px, env(safe-area-inset-right)); }
 
-        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-top: 15px; padding-bottom: max(10px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 80%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
-        .controls { display: flex; gap: 10px; margin-bottom: 5px; align-items: center; }
+        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-top: 15px; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 85%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
+        .controls { display: flex; gap: 12px; margin-bottom: 6px; align-items: center; }
         .hand-scroll-area { width: 100%; overflow-x: auto; overflow-y: hidden; padding-top: 20px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
-        .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 30px; }
-        .hand .card { margin-left: -12px; flex-shrink: 0; box-shadow: -4px 0px 10px rgba(0,0,0,0.4); }
+        .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
+        .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* 복구된 아름다운 카드 디자인 */
-        .card { width: 48px; height: 70px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 4px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.1s; color: #333;}
-        .card.selected { transform: translateY(-18px) !important; border-color: #e74c3c; border-width: 3px; }
+        /* 👑 ⭐️ PC 대화면 해상도 대응 카드 디자인 스케일업 아키텍처 */
+        .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
+        .card.selected { transform: translateY(-22px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); }
         .card .number { font-size: 13px; font-weight: bold; }
-        .card .number.bottom { align-self: flex-end; transform: rotate(180deg); } /* 하단 숫자 반전 복구 */
-        .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 900; }
-        
-        .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #333); color: #e74c3c; border: 2px solid #e74c3c; }
+        .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
+        .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
 
-        /* 수정된 상태 창(캡슐형 플로팅) 및 로그 창(하단 배치) */
-        #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 6px 20px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 26%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 400px; background: rgba(0,0,0,0.7); color: #fff; padding: 8px 15px; border-radius: 12px; text-align: center; font-size: 13px; z-index: 99; pointer-events: none; }
+        /* 모니터(PC) 브라우저 환경 전용 가로 해상도 확장 쿼리 */
+        @media screen and (min-width: 1024px) {
+            .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
+            .card { width: 72px; height: 105px; border-radius: 8px; padding: 7px; }
+            .card .number { font-size: 16px; }
+            .card .center-content { font-size: 38px; }
+            .hand .card { margin-left: -22px; }
+            .ai-node .name { font-size: 14px; }
+            .ai-node .count { font-size: 13px; }
+        }
+        
+        /* 등급별 유려한 고급 색상 그라데이션 라인업 */
+        .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
+
+        #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        #chat-toast-area { position: absolute; bottom: 27%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
     </style>
 </head>
@@ -78,7 +89,7 @@
 
     <div id="orientation-warning">
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
-        <p style="color: #aaa; font-size: 14px; margin: 0 20px;">스마트폰 제어 센터에서<br>'세로 방향 고정'을 해제하신 뒤 돌려주세요.</p>
+        <p style="color: #aaa; font-size: 14px; margin: 0 20px;">스마트폰 제어 센터에서 기기 회전 잠금을 해제해 주세요.</p>
     </div>
 
     <div id="lobby-screen" class="screen">
@@ -103,16 +114,16 @@
 
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
-        <div id="chat-toast-area"></div>
+        <div id="chat-toast-area" class="hidden"></div>
         <div id="opponents-container"></div>
         <div class="table-3d">
             <div class="center-area" id="center-area"></div>
         </div>
         <div class="player-ui">
             <div class="controls">
-                <div class="player-info-container">
-                    <div class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px;">🧑‍💻</div>
-                    <span id="player-name-label" style="font-size:12px; font-weight:bold;">나</span>
+                <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
+                    <div class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px;">🧑‍💻</div>
+                    <span id="player-name-label" style="font-size:13px; font-weight:bold;">나</span>
                 </div>
                 <button class="btn" id="btn-play" onclick="playCards()" disabled>카드 내기</button>
                 <button class="btn pass" id="btn-pass" onclick="passTurn()" disabled>패스</button>
@@ -166,13 +177,17 @@
             socket.emit('createRoom', name);
         }
 
+        // ⭐️ 핵심 수정: 일반 참여 플레이어도 동기적으로 방 번호 코드를 완벽 세팅 보장
         function joinRoom() {
             const name = document.getElementById('player-name').value.trim();
             const code = document.getElementById('room-code-input').value.trim();
             if(!name || !code) return alert('닉네임과 방 번호 4자리를 입력해주세요.');
+            currentRoomId = code;
             document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = true);
             socket.emit('joinRoom', { roomId: code, playerName: name });
         }
+
+        function startGame() { socket.emit('startGame', currentRoomId); }
 
         socket.on('roomCreated', ({ roomId, players }) => {
             currentRoomId = roomId;
@@ -182,7 +197,8 @@
             updateWaitingPlayerList(players);
         });
 
-        socket.on('roomUpdated', ({ players }) => {
+        socket.on('roomUpdated', ({ roomId, players }) => {
+            if(roomId) currentRoomId = roomId;
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             updateWaitingPlayerList(players);
@@ -199,8 +215,6 @@
             });
         }
 
-        function startGame() { socket.emit('startGame', currentRoomId); }
-
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
@@ -211,7 +225,7 @@
             updateTurnState(currentTurnId);
         });
 
-        // ⭐️ 복구 완료: 고퀄리티 카드 렌더링 함수
+        // ⭐️ 복구 완료: 고해상도 그래픽 반전 텍스트 지원 카드 생성기
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
@@ -242,7 +256,6 @@
         function renderOpponents(players) {
             const container = document.getElementById('opponents-container');
             container.innerHTML = '';
-            
             let others = players.filter(p => p.id !== socket.id);
             let totalOthers = others.length;
             
@@ -276,7 +289,7 @@
             });
         }
 
-        // ⭐️ 핵심 복구 완료: 내 턴일 때만 버튼 활성화 및 카드 제출 서버 전송
+        // ⭐️ 복구 완료: 액티브 테두리 가시성 복구 및 완전 독립적 턴 제어
         function updateTurnState(currentTurnId) {
             document.querySelectorAll('.ai-node').forEach(n => n.classList.remove('active'));
             const activeNode = document.getElementById(`node-${currentTurnId}`);
@@ -296,6 +309,7 @@
             selectedIndices = [];
             document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
         }
+        
         function passTurn() { socket.emit('passTurn', currentRoomId); }
 
         socket.on('gameStateUpdated', ({ center, currentTurnId, players }) => {
@@ -303,8 +317,13 @@
             if (centerArea) {
                 centerArea.innerHTML = '';
                 center.cards.forEach((rank, idx) => {
-                    let c = createCardHTML(rank, idx, false); c.style.transform = 'scale(0.85)';
-                    if(idx > 0) c.style.marginLeft = '-20px'; centerArea.appendChild(c);
+                    let c = createCardHTML(rank, idx, false);
+                    if(idx > 0) {
+                        // 3D 테이블 중앙 누적 패 겹침 마진 스케일 차등 분기
+                        let gap = window.innerWidth >= 1024 ? '-35px' : '-20px';
+                        c.style.marginLeft = gap;
+                    }
+                    centerArea.appendChild(c);
                 });
             }
 
@@ -373,10 +392,10 @@
         socket.on('chatMsg', (msg) => {
             const box = document.getElementById('chat-toast-area');
             if (box) {
-                box.innerHTML = `<div>${msg}</div>`;
-                box.style.display = 'block';
+                box.innerText = msg;
+                box.classList.remove('hidden');
                 clearTimeout(window.chatTimeout);
-                window.chatTimeout = setTimeout(() => { box.innerHTML = ''; }, 3000);
+                window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3200);
             }
         });
 
