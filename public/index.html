@@ -41,9 +41,10 @@
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
+        /* ⭐️ 5번 해결: 미니 카드가 줄바꿈 되면서 남은 카드 개수만큼 정확히 그려지도록 디자인 세팅 */
         .ai-cards-container { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-        .ai-mini-cards { display: flex; gap: 2px; }
-        .ai-mini-card { width: 7px; height: 10px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .ai-mini-cards { display: flex; gap: 2px; flex-wrap: wrap; max-width: 65px; justify-content: flex-start; }
+        .ai-mini-card { width: 5px; height: 8px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
         .pos-left-low   { top: 45%; left: max(15px, env(safe-area-inset-left)); }
         .pos-left-mid   { top: 25%; left: max(25px, env(safe-area-inset-left)); }
@@ -166,7 +167,6 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- ⭐️ 농노를 위한 세금 요약 및 대기 모달 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
@@ -350,6 +350,7 @@
             setTimeout(() => { document.getElementById('seon-draw-screen').classList.add('hidden'); }, 4400);
         });
 
+        // ⭐️ 4번 해결: 게임 진입 시 나의 UI 스타일과 다음 라운드 버튼을 완벽하게 초기 상태로 강제 복구시킴
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.add('hidden');
@@ -359,9 +360,19 @@
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
+            // 내 아바타 탈출 상태 100% 리셋
             document.getElementById('my-avatar').style.border = 'none';
             document.getElementById('my-avatar').style.boxShadow = 'none';
             document.getElementById('player-name-label').style.color = '#fff';
+
+            let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
+            if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
+            const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+            document.getElementById('player-name-label').innerText = `${badges[rankIdx] || ''} 나(Player)`;
+
+            // 2번 해결 짝꿍: 버튼 텍스트도 원상 복구
+            document.getElementById('btn-next-round').disabled = false;
+            document.getElementById('btn-next-round').innerText = '다음 라운드 진행';
 
             renderOpponents(players);
             updateTurnState(currentTurnId);
@@ -388,14 +399,6 @@
             const container = document.getElementById('player-hand');
             container.innerHTML = ''; selectedIndices = [];
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, false)); });
-            
-            let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
-            if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
-            const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-            let label = document.getElementById('player-name-label');
-            if (!label.innerText.includes('탈출')) {
-                label.innerText = `${badges[rankIdx] || ''} 나(Player)`;
-            }
         });
 
         function renderOpponents(players) {
@@ -421,15 +424,15 @@
                         <div class="avatar">${p.isAI ? '🤖' : '👤'}</div>
                         <div class="info">
                             <span class="name">${badges[rIdx] || ''} ${p.name}</span>
-                            <div class="ai-cards-container">
-                                <div class="ai-mini-cards" id="cards-area-${p.id}"></div>
-                                <span class="ai-count-text" id="count-text-${p.id}">${p.cardCount}장</span>
-                            </div>
+                            <div class="ai-cards-container" id="cards-area-${p.id}"></div>
+                            <span class="ai-count-text" id="count-text-${p.id}">${p.cardCount}장</span>
                         </div>
                     </div>`;
+                
+                // ⭐️ 5번 해결: 미니 카드를 카드 개수만큼 정확히 그림
                 const cardArea = document.getElementById(`cards-area-${p.id}`);
                 if (cardArea) {
-                    for(let j=0; j<Math.min(p.cardCount, 8); j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
+                    for(let j=0; j<p.cardCount; j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
                 }
             });
         }
@@ -475,7 +478,16 @@
             players.filter(p => p.id !== socket.id && p.id !== myId).forEach(p => {
                 const txt = document.getElementById(`count-text-${p.id}`);
                 const node = document.getElementById(`node-${p.id}`);
+                const cardArea = document.getElementById(`cards-area-${p.id}`); // ⭐️ 5번 짝꿍
+
                 if(txt) txt.innerText = `${p.cardCount}장`;
+                
+                // ⭐️ 5번: 게임 도중에도 남은 카드가 변하면 미니 카드를 다시 정량대로 그려줌
+                if(cardArea) {
+                    cardArea.innerHTML = '';
+                    for(let j=0; j<p.cardCount; j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
+                }
+
                 if(node) {
                     if(p.isEscaped) {
                         node.classList.add('escaped-player');
@@ -517,14 +529,28 @@
             const centerArea = document.getElementById('center-area');
             if (centerArea) centerArea.innerHTML = '';
             updateTurnState(currentTurnId);
+            
+            if (currentTurnId === socket.id || currentTurnId === myId) {
+                const box = document.getElementById('chat-toast-area');
+                if (box) {
+                    box.innerText = "📯 필드가 초기화되었습니다. 당신이 선입니다!";
+                    box.classList.remove('hidden');
+                    clearTimeout(window.chatTimeout);
+                    window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3000);
+                }
+            }
         });
 
-        // ⭐️ 결과창 열기 전 방해 금지: 누군가 버튼을 누르면 즉시 결과창 닫기 명령 수신
+        // ⭐️ 결과창 열려있을 때 타인이 레디하면 결과창을 치워줌
         socket.on('hideResultScreen', () => {
             document.getElementById('result-screen').classList.add('hidden');
         });
 
-        // ⭐️ 3. 직관적인 랭크 및 닉네임 표시 적용
+        // ⭐️ 2번 해결: 누가 다음 라운드 준비를 누르면 브로드캐스트 받는 리스너
+        socket.on('waitingForNextRound', () => {
+            // 버튼 상태를 바꿉니다. (자신이 눌렀을 때도 서버 경유해서 바로 바뀜)
+        });
+
         socket.on('gameOver', ({ finishedPlayers, playersData }) => {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
@@ -548,7 +574,12 @@
             });
         });
 
-        function requestNextRound() { socket.emit('playNextRound'); }
+        // ⭐️ 2번: 자신이 누르면 버튼을 대기로 바꾸고 서버에 통보!
+        function requestNextRound() {
+            document.getElementById('btn-next-round').disabled = true;
+            document.getElementById('btn-next-round').innerText = '다른 유저 대기 중...';
+            socket.emit('playNextRound');
+        }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
             document.getElementById('tax-summary-modal').classList.add('hidden');
@@ -564,7 +595,6 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
         }
 
-        // ⭐️ 2. 세금 징수 대기 중 애니메이션 알림창 (농노, 평민용)
         socket.on('taxPhaseWaiting', ({ taxLogs }) => {
             if (document.getElementById('tax-give-modal').classList.contains('hidden')) {
                 document.getElementById('tax-summary-modal').classList.remove('hidden');
@@ -577,15 +607,20 @@
             list.innerHTML += `<div style="margin-top:20px; padding:10px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold; animation: pulse 1s infinite;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...</div>`;
         });
 
-        // 세금 교환 완료 시 3초 뒤 자동 시작 UI 표출 (버튼 삭제)
         socket.on('taxPhaseResults', ({ taxLogs }) => {
             document.getElementById('tax-summary-modal').classList.remove('hidden');
             const list = document.getElementById('tax-summary-list');
             list.innerHTML = '';
-            taxLogs.forEach(log => {
-                list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.from}] ➡️ [${log.to}] 교환 완료</div>`;
-            });
-            list.innerHTML += `<div style="margin-top:20px; padding:10px; border-radius:8px; text-align:center; color:#2ecc71; background:#222; font-weight:bold;">✅ 모든 교환 완료!<br>곧 새 라운드가 시작됩니다.</div>`;
+            
+            if(taxLogs.length === 0) {
+                // 4인 이하일 때 스킵 처리 멘트
+                list.innerHTML += `<div style="margin-top:10px; padding:10px; text-align:center; color:#ccc;">(4인 이하는 세금 교환을 진행하지 않습니다.)</div>`;
+            } else {
+                taxLogs.forEach(log => {
+                    list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.from}] ➡️ [${log.to}] 교환 완료</div>`;
+                });
+            }
+            list.innerHTML += `<div style="margin-top:20px; padding:10px; border-radius:8px; text-align:center; color:#2ecc71; background:#222; font-weight:bold;">✅ 모든 준비 완료!<br>곧 새 라운드가 시작됩니다.</div>`;
         });
 
         socket.on('chatMsg', (msg) => {

@@ -68,7 +68,8 @@ io.on('connection', (socket) => {
             finishedPlayers: [],
             lastRoundRanks: [],
             taxLogs: [],
-            seonPickedData: {}
+            seonPickedData: {},
+            readyForNextRound: [] // ⭐️ 새 라운드 준비된 사람 저장소
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -195,21 +196,35 @@ io.on('connection', (socket) => {
         executePassLogic(room.id, room, player);
     });
 
-    // ⭐️ 다음 라운드 진행 중복 클릭 방지 및 완벽 제어
+    // ⭐️ 2번 해결: 모두가 다음 라운드를 눌러야만 게임이 진행되는 만장일치 레디 시스템
     socket.on('playNextRound', () => {
         const room = getRoomBySocket(socket.id);
-        if (!room || room.status !== 'ended') return; // 이미 진행 중이면 무시
+        if (!room || room.status !== 'ended') return;
         
-        room.status = 'tax_phase'; // 상태를 즉시 바꿔 연타 방지
-        io.to(room.id).emit('hideResultScreen'); // 전원 결과창 닫기 명령
+        if (!room.readyForNextRound) room.readyForNextRound = [];
+        if (!room.readyForNextRound.includes(socket.id)) {
+            room.readyForNextRound.push(socket.id);
+        }
+
+        const playerReady = room.players.find(p => p.id === socket.id);
+        io.to(room.id).emit('chatMsg', `✅ [${playerReady.name}] 님이 다음 라운드 준비를 완료했습니다.`);
+
+        const humanPlayers = room.players.filter(p => !p.isAI);
         
-        room.lastRoundRanks = [...room.finishedPlayers];
-        room.finishedPlayers = [];
-        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
-        room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
-        
-        distributeCards(room);
-        executeTaxPhase(room.id, room);
+        // 전원 다 눌렀을 때만 발동!
+        if (room.readyForNextRound.length >= humanPlayers.length) {
+            room.status = 'tax_phase';
+            io.to(room.id).emit('hideResultScreen');
+            
+            room.lastRoundRanks = [...room.finishedPlayers];
+            room.finishedPlayers = [];
+            room.readyForNextRound = [];
+            room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+            room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
+            
+            distributeCards(room);
+            executeTaxPhase(room.id, room);
+        }
     });
 
     socket.on('submitTaxHand', ({ targetId, indices }) => {
@@ -225,12 +240,11 @@ io.on('connection', (socket) => {
         
         socket.emit('yourHand', giver.hand);
         
-        // 세금 하사가 모두 끝났는지 검증 후 게임 자동 시작
         let expectedLogs = 0;
         let total = room.players.length;
-        if (total === 4 || total === 5) expectedLogs = 2;
+        if (total === 5) expectedLogs = 2; // (AI 포함 5명이면 1장씩 쌍방 교환 = 로그 2개)
         else if (total === 6 || total === 7) expectedLogs = 4;
-        else if (total === 8) expectedLogs = 6;
+        else if (total >= 8) expectedLogs = 6;
 
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhaseResults', { taxLogs: room.taxLogs });
@@ -305,7 +319,6 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         room.status = 'ended';
         room.players.forEach(p => { if(!room.finishedPlayers.includes(p.id)) room.finishedPlayers.push(p.id); });
         
-        // ⭐️ 순위표에 닉네임 표시를 위해 이름 데이터 매핑해서 함께 전송
         let playersData = room.players.map(p => ({ id: p.id, name: p.name }));
         io.to(roomId).emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData });
         return;
@@ -340,7 +353,6 @@ function executePassLogic(roomId, room, player) {
         const targetIdx = room.players.findIndex(p => p.id === nextTurnId);
         room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
         
-        // ⭐️ 선을 잡은 플레이어 안내 메시지 브로드캐스트
         let nextPlayer = room.players.find(p => p.id === nextTurnId);
         if (nextPlayer) {
             io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
@@ -381,9 +393,27 @@ function broadcastGameState(roomId, room) {
 
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
-    if (total === 4 || total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
-    else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
-    else if (total === 8) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 }); taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 }); }
+    
+    // ⭐️ 1번 해결: 4인 이하(4명) 일 때는 세금 교환 없이 바로 즉시 시작 스킵!
+    if (total <= 4) {
+        taxRules = [];
+    } else if (total === 5) {
+        taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
+    } else if (total === 6 || total === 7) {
+        taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 });
+        taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 });
+    } else if (total >= 8) {
+        taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 });
+        taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 });
+        taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 });
+    }
+
+    // 4명이면 아예 이 로직을 안 타고 바로 startNormalRound로 넘어감.
+    if (taxRules.length === 0) {
+        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        startNormalRound(roomId, room);
+        return;
+    }
 
     let humanTaxWaiting = false;
 
@@ -415,7 +445,6 @@ function executeTaxPhase(roomId, room) {
         }
     });
 
-    // ⭐️ 모두 세금 처리가 끝났는지 분기 확인 후 대기창 또는 결과창 띄우기
     if (!humanTaxWaiting) {
         io.to(roomId).emit('taxPhaseResults', { taxLogs: room.taxLogs });
         setTimeout(() => {
@@ -438,6 +467,9 @@ function startNormalRound(roomId, room) {
         currentTurnId: firstPlayerId,
         lastRoundRanks: room.lastRoundRanks
     });
+
+    // ⭐️ 3번 해결: AI가 새로운 판의 선이 되었을 때 잠수타지 않고 바로 카드를 내도록 호출 부활!
+    handleAITurnIfNeeded(roomId, room);
 }
 
 const PORT = process.env.PORT || 3000;
