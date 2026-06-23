@@ -57,10 +57,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    socket.on('createRoom', (playerName) => {
+    // ⭐️ 1. 방 만들 때 maxPlayers(총 인원 수) 변수 받아서 저장
+    socket.on('createRoom', ({ playerName, maxPlayers }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
+            maxPlayers: parseInt(maxPlayers) || 4, // 기본 4인
             players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
@@ -69,7 +71,10 @@ io.on('connection', (socket) => {
             lastRoundRanks: [],
             taxLogs: [],
             seonPickedData: {},
-            readyForNextRound: [] // ⭐️ 새 라운드 준비된 사람 저장소
+            readyForNextRound: [],
+            // ⭐️ 2. 누적 정산 현황 데이터 저장소
+            balances: {},
+            transactions: []
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -80,7 +85,11 @@ io.on('connection', (socket) => {
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
         if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
         if (room.players.some(p => p.id === socket.id)) return;
-        if (room.players.filter(p => !p.isAI).length >= 8) return socket.emit('errorMsg', '방이 가득 찼습니다. (최대 8인)');
+        
+        // 정해진 maxPlayers 인원까지만 입장 가능
+        if (room.players.filter(p => !p.isAI).length >= room.maxPlayers) {
+            return socket.emit('errorMsg', `방이 가득 찼습니다. (최대 ${room.maxPlayers}인)`);
+        }
 
         room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
         socket.join(roomId);
@@ -92,8 +101,10 @@ io.on('connection', (socket) => {
         if (!room) return socket.emit('errorMsg', '방 세션 오류');
 
         const humanPlayers = room.players.filter(p => !p.isAI);
-        if (humanPlayers.length < 4) {
-            const botsNeeded = 4 - humanPlayers.length;
+        
+        // ⭐️ 3. 모자란 인원수는 방장이 세팅한 maxPlayers에 도달할 때까지 AI로 꽉꽉 채워넣음!
+        if (room.players.length < room.maxPlayers) {
+            const botsNeeded = room.maxPlayers - room.players.length;
             for (let i = 1; i <= botsNeeded; i++) {
                 room.players.push({ id: `ai_${i}_${Date.now()}`, name: `🤖 AI 봇 ${i}`, hand: [], hasPassed: false, isHost: false, isAI: true });
             }
@@ -196,7 +207,6 @@ io.on('connection', (socket) => {
         executePassLogic(room.id, room, player);
     });
 
-    // ⭐️ 2번 해결: 모두가 다음 라운드를 눌러야만 게임이 진행되는 만장일치 레디 시스템
     socket.on('playNextRound', () => {
         const room = getRoomBySocket(socket.id);
         if (!room || room.status !== 'ended') return;
@@ -211,7 +221,6 @@ io.on('connection', (socket) => {
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         
-        // 전원 다 눌렀을 때만 발동!
         if (room.readyForNextRound.length >= humanPlayers.length) {
             room.status = 'tax_phase';
             io.to(room.id).emit('hideResultScreen');
@@ -242,7 +251,7 @@ io.on('connection', (socket) => {
         
         let expectedLogs = 0;
         let total = room.players.length;
-        if (total === 5) expectedLogs = 2; // (AI 포함 5명이면 1장씩 쌍방 교환 = 로그 2개)
+        if (total === 5) expectedLogs = 2;
         else if (total === 6 || total === 7) expectedLogs = 4;
         else if (total >= 8) expectedLogs = 6;
 
@@ -319,8 +328,36 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         room.status = 'ended';
         room.players.forEach(p => { if(!room.finishedPlayers.includes(p.id)) room.finishedPlayers.push(p.id); });
         
+        // ⭐️ 4. 게임 종료 시 누적 정산 계산 (사람 대 사람 한정)
+        const humanFinished = room.finishedPlayers.filter(id => {
+            const p = room.players.find(pl => pl.id === id);
+            return p && !p.isAI;
+        });
+
+        let roundLog = null;
+        if (humanFinished.length >= 2) {
+            const firstHumanId = humanFinished[0];
+            const lastHumanId = humanFinished[humanFinished.length - 1];
+            const firstHuman = room.players.find(p => p.id === firstHumanId);
+            const lastHuman = room.players.find(p => p.id === lastHumanId);
+
+            roundLog = { from: lastHuman.name, to: firstHuman.name, amount: 1000 };
+            room.transactions.push(roundLog);
+
+            // 잔액 업데이트
+            if (!room.balances[firstHuman.name]) room.balances[firstHuman.name] = 0;
+            if (!room.balances[lastHuman.name]) room.balances[lastHuman.name] = 0;
+            room.balances[firstHuman.name] += 1000;
+            room.balances[lastHuman.name] -= 1000;
+        }
+
         let playersData = room.players.map(p => ({ id: p.id, name: p.name }));
-        io.to(roomId).emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData });
+        io.to(roomId).emit('gameOver', {
+            finishedPlayers: room.finishedPlayers,
+            playersData,
+            balances: room.balances,
+            roundLog
+        });
         return;
     }
     advanceTurn(room);
@@ -394,7 +431,6 @@ function broadcastGameState(roomId, room) {
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
     
-    // ⭐️ 1번 해결: 4인 이하(4명) 일 때는 세금 교환 없이 바로 즉시 시작 스킵!
     if (total <= 4) {
         taxRules = [];
     } else if (total === 5) {
@@ -408,7 +444,6 @@ function executeTaxPhase(roomId, room) {
         taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 });
     }
 
-    // 4명이면 아예 이 로직을 안 타고 바로 startNormalRound로 넘어감.
     if (taxRules.length === 0) {
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
@@ -468,7 +503,6 @@ function startNormalRound(roomId, room) {
         lastRoundRanks: room.lastRoundRanks
     });
 
-    // ⭐️ 3번 해결: AI가 새로운 판의 선이 되었을 때 잠수타지 않고 바로 카드를 내도록 호출 부활!
     handleAITurnIfNeeded(roomId, room);
 }
 

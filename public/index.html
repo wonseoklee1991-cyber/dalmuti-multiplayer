@@ -41,10 +41,10 @@
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
-        /* ⭐️ 5번 해결: 미니 카드가 줄바꿈 되면서 남은 카드 개수만큼 정확히 그려지도록 디자인 세팅 */
-        .ai-cards-container { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-        .ai-mini-cards { display: flex; gap: 2px; flex-wrap: wrap; max-width: 65px; justify-content: flex-start; }
-        .ai-mini-card { width: 5px; height: 8px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        /* ⭐️ 1번 UI 개편: 완벽한 카드 부채꼴 스태킹 형태 */
+        .ai-cards-container { display: flex; align-items: center; gap: 0; margin-top: 2px; }
+        .ai-mini-cards { display: flex; flex-wrap: wrap; justify-content: flex-start; max-width: 90px; padding-left: 5px; }
+        .ai-mini-card { width: 10px; height: 15px; background: #fff; border-radius: 2px; border: 1px solid #999; margin-left: -5px; margin-top: 2px; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); position: relative; }
 
         .pos-left-low   { top: 45%; left: max(15px, env(safe-area-inset-left)); }
         .pos-left-mid   { top: 25%; left: max(25px, env(safe-area-inset-left)); }
@@ -104,6 +104,18 @@
 
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
+            
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                <span style="font-size:14px; color:#aaa; font-weight:bold;">게임 인원 설정:</span>
+                <select id="max-players" style="padding:6px; border-radius:6px; background:#333; color:#fff; border:1px solid #555; font-weight:bold; outline:none;">
+                    <option value="4">4인 (세금 면제)</option>
+                    <option value="5">5인 (세금 1장)</option>
+                    <option value="6">6인 (세금 2,1장)</option>
+                    <option value="7">7인 (세금 2,1장)</option>
+                    <option value="8">8인 (세금 3,2,1장)</option>
+                </select>
+            </div>
+
             <button class="btn" onclick="createRoom()">새로운 방 만들기</button>
             <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9; color:#fff;" onclick="goToStep3()">기존 방 참가하기</button>
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
@@ -172,10 +184,18 @@
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
-    <div id="result-screen" class="screen hidden" style="z-index:80;">
-        <h1 style="color:#f1c40f;">🎉 게임 종료 (순위표)</h1>
-        <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:340px; max-height:40vh; overflow-y:auto;"></div>
-        <div class="result-buttons" style="margin-top:20px; display:flex; gap:10px;">
+    <div id="result-screen" class="screen hidden" style="z-index:80; overflow-y:auto; padding-top:20px;">
+        <h1 style="color:#f1c40f; margin-bottom:10px;">🎉 게임 종료 (순위표)</h1>
+        <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; width:340px;"></div>
+        
+        <div id="ledger-section" style="background:#2c3e50; padding:15px; border-radius:10px; width:340px; margin-top:15px; text-align:center;">
+            <h3 style="color:#2ecc71; margin-top:0; margin-bottom:10px;">💰 사람 유저 정산소 (1,000원 빵)</h3>
+            <div id="round-log" style="font-size:14px; margin-bottom:10px; color:#fff;"></div>
+            <hr style="border:0; border-top:1px solid #555; margin:10px 0;">
+            <div id="cumulative-balances" style="font-size:15px; font-weight:bold; color:#f1c40f;"></div>
+        </div>
+
+        <div class="result-buttons" style="margin-top:20px; display:flex; gap:10px; margin-bottom:30px;">
             <button class="btn" id="btn-next-round" onclick="requestNextRound()">다음 라운드 진행</button>
             <button class="btn pass" onclick="location.reload()">아예 게임 끄기</button>
         </div>
@@ -215,8 +235,9 @@
         }
 
         function createRoom() {
+            const maxP = document.getElementById('max-players').value;
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
-            socket.emit('createRoom', currentPlayerName);
+            socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: maxP });
         }
 
         function joinRoom() {
@@ -350,7 +371,6 @@
             setTimeout(() => { document.getElementById('seon-draw-screen').classList.add('hidden'); }, 4400);
         });
 
-        // ⭐️ 4번 해결: 게임 진입 시 나의 UI 스타일과 다음 라운드 버튼을 완벽하게 초기 상태로 강제 복구시킴
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.add('hidden');
@@ -360,7 +380,7 @@
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
-            // 내 아바타 탈출 상태 100% 리셋
+            // ⭐️ 4. 내 아바타 스타일 및 모든 적들의 UI 탈출 상태 100% 강제 리셋
             document.getElementById('my-avatar').style.border = 'none';
             document.getElementById('my-avatar').style.boxShadow = 'none';
             document.getElementById('player-name-label').style.color = '#fff';
@@ -370,7 +390,6 @@
             const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
             document.getElementById('player-name-label').innerText = `${badges[rankIdx] || ''} 나(Player)`;
 
-            // 2번 해결 짝꿍: 버튼 텍스트도 원상 복구
             document.getElementById('btn-next-round').disabled = false;
             document.getElementById('btn-next-round').innerText = '다음 라운드 진행';
 
@@ -429,7 +448,6 @@
                         </div>
                     </div>`;
                 
-                // ⭐️ 5번 해결: 미니 카드를 카드 개수만큼 정확히 그림
                 const cardArea = document.getElementById(`cards-area-${p.id}`);
                 if (cardArea) {
                     for(let j=0; j<p.cardCount; j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
@@ -478,11 +496,10 @@
             players.filter(p => p.id !== socket.id && p.id !== myId).forEach(p => {
                 const txt = document.getElementById(`count-text-${p.id}`);
                 const node = document.getElementById(`node-${p.id}`);
-                const cardArea = document.getElementById(`cards-area-${p.id}`); // ⭐️ 5번 짝꿍
+                const cardArea = document.getElementById(`cards-area-${p.id}`);
 
                 if(txt) txt.innerText = `${p.cardCount}장`;
                 
-                // ⭐️ 5번: 게임 도중에도 남은 카드가 변하면 미니 카드를 다시 정량대로 그려줌
                 if(cardArea) {
                     cardArea.innerHTML = '';
                     for(let j=0; j<p.cardCount; j++) { cardArea.innerHTML += `<div class="ai-mini-card"></div>`; }
@@ -501,6 +518,7 @@
                         node.classList.add('passed');
                     } else {
                         node.classList.remove('passed');
+                        node.classList.remove('escaped-player'); // ⭐️ 4번: 새판 시작 때 지워주기 위해 확실한 리무브
                     }
                 }
             });
@@ -541,17 +559,12 @@
             }
         });
 
-        // ⭐️ 결과창 열려있을 때 타인이 레디하면 결과창을 치워줌
         socket.on('hideResultScreen', () => {
             document.getElementById('result-screen').classList.add('hidden');
         });
 
-        // ⭐️ 2번 해결: 누가 다음 라운드 준비를 누르면 브로드캐스트 받는 리스너
-        socket.on('waitingForNextRound', () => {
-            // 버튼 상태를 바꿉니다. (자신이 눌렀을 때도 서버 경유해서 바로 바뀜)
-        });
-
-        socket.on('gameOver', ({ finishedPlayers, playersData }) => {
+        // ⭐️ 3. 정산 현황판 렌더링 로직
+        socket.on('gameOver', ({ finishedPlayers, playersData, balances, roundLog }) => {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
             const list = document.getElementById('final-rank-list'); list.innerHTML = '';
@@ -572,12 +585,32 @@
                 item.innerHTML = `<div style="font-size:16px;"><strong>${rankNum}등</strong> ${icon} ${rName} - ${pName}</div>`;
                 list.appendChild(item);
             });
+
+            // 💰 이번 라운드 정산 로그 작성
+            const logEl = document.getElementById('round-log');
+            if (roundLog) {
+                logEl.innerHTML = `이번 판 결제: <span style="color:#e74c3c;">${roundLog.from}</span> ➡️ <span style="color:#2ecc71;">${roundLog.to}</span> (1,000원)`;
+            } else {
+                logEl.innerHTML = `<span style="color:#aaa;">참여한 사람 유저가 2명 미만이거나<br>정산이 발생하지 않았습니다.</span>`;
+            }
+
+            // 💰 누적 넷 잔액 로그 작성
+            const balEl = document.getElementById('cumulative-balances');
+            balEl.innerHTML = '현재까지의 누적 넷(Net) 수익:<br>';
+            let hasBalances = false;
+            for (let pName in balances) {
+                hasBalances = true;
+                let amt = balances[pName];
+                let color = amt > 0 ? '#2ecc71' : (amt < 0 ? '#e74c3c' : '#aaa');
+                let sign = amt > 0 ? '+' : '';
+                balEl.innerHTML += `<div style="margin-top:6px; color:${color}; font-size:16px;">${pName} : ${sign}${amt.toLocaleString()}원</div>`;
+            }
+            if(!hasBalances) balEl.innerHTML += `<span style="font-size:13px; color:#aaa;">아직 누적 기록이 없습니다.</span>`;
         });
 
-        // ⭐️ 2번: 자신이 누르면 버튼을 대기로 바꾸고 서버에 통보!
         function requestNextRound() {
             document.getElementById('btn-next-round').disabled = true;
-            document.getElementById('btn-next-round').innerText = '다른 유저 대기 중...';
+            document.getElementById('btn-next-round').innerText = '다른 유저들의 대기를 기다리는 중...';
             socket.emit('playNextRound');
         }
 
@@ -613,8 +646,7 @@
             list.innerHTML = '';
             
             if(taxLogs.length === 0) {
-                // 4인 이하일 때 스킵 처리 멘트
-                list.innerHTML += `<div style="margin-top:10px; padding:10px; text-align:center; color:#ccc;">(4인 이하는 세금 교환을 진행하지 않습니다.)</div>`;
+                list.innerHTML += `<div style="margin-top:10px; padding:10px; text-align:center; color:#aaa;">(4인 이하는 세금 교환을 면제합니다.)</div>`;
             } else {
                 taxLogs.forEach(log => {
                     list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.from}] ➡️ [${log.to}] 교환 완료</div>`;
