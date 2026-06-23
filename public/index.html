@@ -39,7 +39,6 @@
         
         .ai-node.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); --scale: 1.05; box-shadow: 0 0 15px #2ecc71; }
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
-        /* ⭐️ 탈출 시 노란 테두리 적용을 위한 CSS 추가 */
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
         .ai-cards-container { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
@@ -167,15 +166,15 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
+    <!-- ⭐️ 농노를 위한 세금 요약 및 대기 모달 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 결과</h2>
-        <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:320px;"></div>
-        <button class="btn" style="margin-top:20px;" id="btn-host-next" onclick="requestNextRound()">새 라운드 돌입</button>
+        <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
     <div id="result-screen" class="screen hidden" style="z-index:80;">
         <h1 style="color:#f1c40f;">🎉 게임 종료 (순위표)</h1>
-        <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:320px; max-height:40vh; overflow-y:auto;"></div>
+        <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:340px; max-height:40vh; overflow-y:auto;"></div>
         <div class="result-buttons" style="margin-top:20px; display:flex; gap:10px;">
             <button class="btn" id="btn-next-round" onclick="requestNextRound()">다음 라운드 진행</button>
             <button class="btn pass" onclick="location.reload()">아예 게임 끄기</button>
@@ -356,10 +355,10 @@
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
+            document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
-            // 본인 라벨 초기화
             document.getElementById('my-avatar').style.border = 'none';
             document.getElementById('my-avatar').style.boxShadow = 'none';
             document.getElementById('player-name-label').style.color = '#fff';
@@ -458,7 +457,7 @@
         function passTurn() { socket.emit('passTurn'); }
 
         socket.on('gameStateUpdated', ({ center, currentTurnId, players, finishedPlayers }) => {
-            window.currentFinishedPlayers = finishedPlayers; // 순위 계산을 위해 저장
+            window.currentFinishedPlayers = finishedPlayers;
             
             const centerArea = document.getElementById('center-area');
             if (centerArea) {
@@ -473,7 +472,6 @@
                 });
             }
 
-            // ⭐️ 알림창 삭제 반영 및 탈출 플레이어 노란 테두리 + 실시간 등수 UI 적용
             players.filter(p => p.id !== socket.id && p.id !== myId).forEach(p => {
                 const txt = document.getElementById(`count-text-${p.id}`);
                 const node = document.getElementById(`node-${p.id}`);
@@ -495,7 +493,6 @@
                 }
             });
 
-            // 내 상태창도 탈출 시 화려하게 변경
             let me = players.find(p => p.id === socket.id || p.id === myId);
             if (me && me.isEscaped) {
                 let rankNum = finishedPlayers.indexOf(me.id) + 1;
@@ -516,43 +513,45 @@
             document.getElementById('game-status').style.color = '#e74c3c';
         });
 
-        // ⭐️ 오해 방지! 새 라운드 시작 시 중앙 화면에 내가 선(Start Player)임을 명확히 안내
         socket.on('newRound', ({ currentTurnId }) => {
             const centerArea = document.getElementById('center-area');
             if (centerArea) centerArea.innerHTML = '';
             updateTurnState(currentTurnId);
-            
-            if (currentTurnId === socket.id || currentTurnId === myId) {
-                const box = document.getElementById('chat-toast-area');
-                if (box) {
-                    box.innerText = "📯 필드가 초기화되었습니다. 당신이 선입니다!";
-                    box.classList.remove('hidden');
-                    clearTimeout(window.chatTimeout);
-                    window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3000);
-                }
-            }
         });
 
-        socket.on('gameOver', ({ finishedPlayers }) => {
+        // ⭐️ 결과창 열기 전 방해 금지: 누군가 버튼을 누르면 즉시 결과창 닫기 명령 수신
+        socket.on('hideResultScreen', () => {
+            document.getElementById('result-screen').classList.add('hidden');
+        });
+
+        // ⭐️ 3. 직관적인 랭크 및 닉네임 표시 적용
+        socket.on('gameOver', ({ finishedPlayers, playersData }) => {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
             const list = document.getElementById('final-rank-list'); list.innerHTML = '';
             
             finishedPlayers.forEach((pId, idx) => {
+                let p = playersData.find(pl => pl.id === pId);
+                let pName = p ? p.name : '알 수 없음';
+                let rankNum = idx + 1;
                 let rName = "평민"; let icon = "👤";
+                
                 if (idx === 0) { rName = "대달무티"; icon = "👑"; }
                 else if (idx === 1) { rName = "소달무티"; icon = "🥈"; }
                 else if (idx === finishedPlayers.length - 1) { rName = "대농노"; icon = "💩"; }
+                else if (idx === finishedPlayers.length - 2) { rName = "소농노"; icon = "🧹"; }
+                
                 let item = document.createElement('div'); item.className = 'player-item';
                 if(pId === socket.id || pId === myId) item.style.color = '#f1c40f';
-                item.innerHTML = `<div>${icon} <strong>${rName}</strong></div>`; list.appendChild(item);
+                item.innerHTML = `<div style="font-size:16px;"><strong>${rankNum}등</strong> ${icon} ${rName} - ${pName}</div>`;
+                list.appendChild(item);
             });
         });
 
         function requestNextRound() { socket.emit('playNextRound'); }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
-            document.getElementById('tax-summary-modal').classList.add('hidden'); // 충돌 방지
+            document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
             document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 좋은 카드 [${cards.join(', ')}]를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
@@ -565,13 +564,28 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
         }
 
-        socket.on('taxPhaseStarted', ({ taxLogs }) => {
-            // 왕이 세금을 하사하고 있는 창이 안 떠 있을 때만 요약 모달 표시
+        // ⭐️ 2. 세금 징수 대기 중 애니메이션 알림창 (농노, 평민용)
+        socket.on('taxPhaseWaiting', ({ taxLogs }) => {
             if (document.getElementById('tax-give-modal').classList.contains('hidden')) {
                 document.getElementById('tax-summary-modal').classList.remove('hidden');
             }
-            const list = document.getElementById('tax-summary-list'); list.innerHTML = '';
-            taxLogs.forEach(log => { list.innerHTML += `<div style="font-size:13px; margin-bottom:5px;">[${log.from}] ➡️ [${log.to}] 상납 완료</div>`; });
+            const list = document.getElementById('tax-summary-list');
+            list.innerHTML = '';
+            taxLogs.forEach(log => {
+                list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.from}] ➡️ [${log.to}] 상납 완료</div>`;
+            });
+            list.innerHTML += `<div style="margin-top:20px; padding:10px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold; animation: pulse 1s infinite;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...</div>`;
+        });
+
+        // 세금 교환 완료 시 3초 뒤 자동 시작 UI 표출 (버튼 삭제)
+        socket.on('taxPhaseResults', ({ taxLogs }) => {
+            document.getElementById('tax-summary-modal').classList.remove('hidden');
+            const list = document.getElementById('tax-summary-list');
+            list.innerHTML = '';
+            taxLogs.forEach(log => {
+                list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.from}] ➡️ [${log.to}] 교환 완료</div>`;
+            });
+            list.innerHTML += `<div style="margin-top:20px; padding:10px; border-radius:8px; text-align:center; color:#2ecc71; background:#222; font-weight:bold;">✅ 모든 교환 완료!<br>곧 새 라운드가 시작됩니다.</div>`;
         });
 
         socket.on('chatMsg', (msg) => {
