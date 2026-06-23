@@ -1,9 +1,7 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
-const io = require('socket.io')(http, {
-    cors: { origin: "*" }
-});
+const io = require('socket.io')(http, { cors: { origin: "*" } });
 const path = require('path');
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -69,7 +67,8 @@ io.on('connection', (socket) => {
             status: 'lobby',
             finishedPlayers: [],
             lastRoundRanks: [],
-            taxLogs: []
+            taxLogs: [],
+            seonPickedData: {} // 유저들이 선택한 선 뽑기 임시 저장소
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
@@ -87,10 +86,10 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI) });
     });
 
-    // 🃏 ⭐️ 핵심 신기능: 게임 시작 시 선 뽑기 카드 드로우 시뮬레이션 적용
+    // 🃏 방장이 시작을 누르면 유저들이 직접 카드를 뽑는 페이즈로 전환
     socket.on('startGame', () => {
         const room = getRoomBySocket(socket.id);
-        if (!room) return socket.emit('errorMsg', '방을 식별할 수 없습니다.');
+        if (!room) return socket.emit('errorMsg', '방 세션 오류');
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         if (humanPlayers.length < 4) {
@@ -101,52 +100,84 @@ io.on('connection', (socket) => {
         }
 
         room.status = 'seon_drawing';
-        
-        // 각 플레이어별로 1~12 사이의 난수 카드 1장씩 분배 계산
-        let drawResults = room.players.map(p => {
-            return { id: p.id, name: p.name, card: Math.floor(Math.random() * 12) + 1 };
+        room.seonPickedData = {};
+
+        // 🤖 AI 봇들은 시작하자마자 무작위로 카드를 미리 골라둠
+        room.players.forEach(p => {
+            if (p.isAI) {
+                room.seonPickedData[p.id] = { name: p.name, card: Math.floor(Math.random() * 12) + 1, isAI: true };
+            }
         });
 
-        // 가장 낮은 숫자(높은 계급)를 뽑은 플레이어가 선(대달무티) 점유
-        let sortedDraw = [...drawResults].sort((a, b) => a.card - b.card);
-        let winnerId = sortedDraw[0].id;
-        let winnerName = sortedDraw[0].name;
+        // 클라이언트 전원에게 수동 카드 선택 대기창 오픈 브로드캐스트
+        io.to(room.id).emit('seonDrawPhaseInit', { totalPlayers: room.players.length });
+    });
 
-        // 클라이언트에 선 뽑기 연출 트리거 브로드캐스트
-        io.to(room.id).emit('seonDrawPhase', { drawResults, winnerId, winnerName });
+    // 🃏 유저가 화면에서 특정 카드 번호를 터치했을 때 서버로 인입되는 이벤트
+    socket.on('pickSeonCard', ({ cardIndex }) => {
+        const room = getRoomBySocket(socket.id);
+        if (!room || room.status !== 'seon_drawing') return;
+        if (room.seonPickedData[socket.id]) return; // 이미 선택한 유저는 중복 불가
 
-        // 4초 간의 연출 대기 스케줄러 가동 후 정식 카드 배분 진입
-        setTimeout(() => {
-            if (!rooms[room.id] || rooms[room.id].status !== 'seon_drawing') return;
-            
-            room.status = 'playing';
-            room.finishedPlayers = [];
-            room.lastRoundRanks = room.players.map(p => p.id);
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) return;
 
-            distributeCards(room);
-            // 선을 잡은 플레이어의 인덱스를 최초 턴으로 확정 지정
-            room.currentTurnIdx = room.players.findIndex(p => p.id === winnerId);
+        // 터치한 행위에 따라 난수 매핑 (1~12 대칭 분산 값 연산)
+        const generatedCard = Math.floor(Math.random() * 12) + 1;
+        room.seonPickedData[socket.id] = { name: player.name, card: generatedCard, isAI: false };
 
-            io.to(room.id).emit('gameStarted', {
-                players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
-                currentTurnId: winnerId,
-                lastRoundRanks: room.lastRoundRanks
-            });
+        // 현재 방 인원이 전부 카드를 골랐는지 체크
+        if (Object.keys(room.seonPickedData).length === room.players.length) {
+            // 결과 정렬 처리 (가장 작은 숫자가 선)
+            let sortedResults = Object.keys(room.seonPickedData).map(id => ({
+                id,
+                name: room.seonPickedData[id].name,
+                card: room.seonPickedData[id].card
+            })).sort((a, b) => a.card - b.card);
 
-            room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-            handleAITurnIfNeeded(room.id, room);
-        }, 4200);
+            const winnerId = sortedResults[0].id;
+            const winnerName = sortedResults[0].name;
+
+            // 전원에게 뒤집기 연출 결과 데이터 전송
+            io.to(room.id).emit('seonDrawResults', { drawResults: sortedResults, winnerId, winnerName });
+
+            // 4초 후 본 게임 세션 체인 링크 작동
+            setTimeout(() => {
+                if (!rooms[room.id] || rooms[room.id].status !== 'seon_drawing') return;
+
+                room.status = 'playing';
+                room.finishedPlayers = [];
+                room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+                room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
+
+                room.lastRoundRanks = room.players.map(p => p.id);
+                distributeCards(room);
+
+                // ⭐️ 중요: 선을 완벽하게 동기화 고정하기 위해 인덱스를 수학적으로 추적 후 대입
+                const targetIdx = room.players.findIndex(p => p.id === winnerId);
+                room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
+
+                io.to(room.id).emit('gameStarted', {
+                    players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
+                    currentTurnId: room.players[room.currentTurnIdx].id,
+                    lastRoundRanks: room.lastRoundRanks
+                });
+
+                room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+                handleAITurnIfNeeded(room.id, room);
+            }, 4500);
+        } else {
+            // 아직 다 안 골랐으면 현재까지 몇 명이 골랐는지 대기 스크린 업데이트
+            io.to(room.id).emit('seonPickProgress', { count: Object.keys(room.seonPickedData).length });
+        }
     });
 
     socket.on('playCards', ({ indices }) => {
         const room = getRoomBySocket(socket.id);
-        if (!room) return socket.emit('errorMsg', '방 세션이 유효하지 않습니다.');
-        if (room.status !== 'playing') return socket.emit('errorMsg', '현재 게임 진행 중이 아닙니다.');
+        if (!room || room.status !== 'playing') return;
         
         const player = room.players[room.currentTurnIdx];
-        if (player.id !== socket.id) {
-            return socket.emit('errorMsg', `지금은 당신의 턴이 아닙니다. (현재 턴: ${player.name})`);
-        }
+        if (player.id !== socket.id) return socket.emit('errorMsg', '당신의 차례가 아닙니다.');
 
         indices.sort((a, b) => b - a);
         let selectedCards = indices.map(i => player.hand[i]);
@@ -159,20 +190,20 @@ io.on('connection', (socket) => {
         }
 
         indices.forEach(i => player.hand.splice(i, 1));
+        
+        // ⭐️ 손패 차감 반영 버그 해결: 카드를 내자마자 차감된 패 데이터를 해당 플레이어에게 즉시 재동기화 전송
+        socket.emit('yourHand', player.hand);
+        
         executePlayLogic(room.id, room, player, selectedCards, eRank);
     });
 
-    // ⭐️ 패스 먹통 버그 해결 및 원인 추적 피드백 바인딩
     socket.on('passTurn', () => {
         const room = getRoomBySocket(socket.id);
-        if (!room) return socket.emit('errorMsg', '방 세션이 존재하지 않습니다.');
-        if (room.status !== 'playing') return socket.emit('errorMsg', '게임 상태가 아닙니다.');
+        if (!room || room.status !== 'playing') return;
         
         const player = room.players[room.currentTurnIdx];
-        if (player.id !== socket.id) {
-            return socket.emit('errorMsg', `지금은 당신의 턴이 아닙니다. (현재 턴: ${player.name})`);
-        }
-        if (room.center.count === 0) return socket.emit('errorMsg', '선 플레이어는 패스할 수 없습니다. 패를 제출하세요.');
+        if (player.id !== socket.id) return socket.emit('errorMsg', '당신의 차례가 아닙니다.');
+        if (room.center.count === 0) return socket.emit('errorMsg', '선 플레이어는 패스할 수 없습니다.');
 
         executePassLogic(room.id, room, player);
     });
@@ -201,6 +232,7 @@ io.on('connection', (socket) => {
         receiver.hand.push(...taxCards);
         room.taxLogs.push({ from: giver.name, to: receiver.name, cards: taxCards });
         
+        socket.emit('yourHand', giver.hand); // 세금 낸 후 손패 즉시 업데이트
         startNormalRound(room.id, room);
     });
 });
@@ -288,7 +320,9 @@ function executePassLogic(roomId, room, player) {
         if (room.finishedPlayers.includes(nextTurnId)) {
             nextTurnId = room.lastRoundRanks.find(id => !room.finishedPlayers.includes(id));
         }
-        room.currentTurnIdx = room.players.findIndex(p => p.id === nextTurnId);
+        // ⭐️ 선(대달무티 등) 유저 턴 인덱스 고정 보장 패치 적용
+        const targetIdx = room.players.findIndex(p => p.id === nextTurnId);
+        room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
         io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
     } else {
         advanceTurn(room);

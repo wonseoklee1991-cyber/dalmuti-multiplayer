@@ -59,11 +59,16 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
+        /* 👑 고해상도 카드 아키텍처 인덱스 보강 */
         .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
         .card.selected { transform: translateY(-22px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); }
         .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
+
+        /* 선 뽑기 뒷면 전용 테두리 디자인 */
+        .card.card-back { background: radial-gradient(circle, #c0392b, #2c3e50); border: 3px solid #f1c40f; color: transparent; }
+        .card.card-back::after { content: "❔"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; display: block; color: #f1c40f; }
 
         @media screen and (min-width: 1024px) {
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
@@ -88,17 +93,14 @@
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
     </div>
 
-    <!-- ⭐️ 1. 직관적으로 개편된 3단계 로비 화면 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
-        <!-- Step 1: 닉네임 입력 -->
         <div id="step-1-nickname" class="input-group">
             <input type="text" id="player-name" placeholder="사용할 닉네임 입력" maxlength="8">
             <button class="btn" onclick="goToStep2()">입장하기</button>
         </div>
 
-        <!-- Step 2: 액션 선택 (만들기 / 참가하기) -->
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoom()">새로운 방 만들기</button>
@@ -106,7 +108,6 @@
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
         </div>
 
-        <!-- Step 3: 방 코드 입력 -->
         <div id="step-3-join" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">방 코드를 입력하세요</h3>
             <input type="text" id="room-code-input" placeholder="초대 코드 4자리 입력" maxlength="4">
@@ -115,7 +116,6 @@
         </div>
     </div>
 
-    <!-- 2. 대기방 화면 (⭐️ 버튼 엉킴 방지를 위해 버튼 그룹 분리) -->
     <div id="waiting-screen" class="screen hidden">
         <h2 style="color: #f1c40f;">🏠 대기실</h2>
         <h3 style="background:#333; padding:8px 20px; border-radius:8px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
@@ -127,14 +127,13 @@
         </div>
     </div>
 
-    <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.96);">
+    <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
-        <p style="color: #95a5a6; font-size: 14px; margin-bottom: 35px;">가장 낮은 숫자(가장 높은 계급)를 뽑는 유저가 선을 선점합니다.</p>
-        <div id="seon-cards-container" style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 85vw; margin-bottom: 30px;"></div>
-        <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 22px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
+        <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
+        <div id="seon-cards-container" style="display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; max-width: 85vw; margin-bottom: 30px;"></div>
+        <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- 3. 메인 게임 보드 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -157,7 +156,6 @@
         </div>
     </div>
 
-    <!-- 4. 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
@@ -168,14 +166,12 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 5. 세금 교환 총 요약 모달 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:320px;"></div>
         <button class="btn" style="margin-top:20px;" id="btn-host-next" onclick="requestNextRound()">새 라운드 돌입</button>
     </div>
 
-    <!-- 6. 결과 창 화면 -->
     <div id="result-screen" class="screen hidden" style="z-index:80;">
         <h1 style="color:#f1c40f;">🎉 게임 종료 (순위표)</h1>
         <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:320px; max-height:40vh; overflow-y:auto;"></div>
@@ -196,7 +192,6 @@
 
         socket.on('connect', () => { myId = socket.id; });
 
-        // ⭐️ 로비 화면 3단계 Flow 제어 함수
         function goToStep2() {
             const nameInput = document.getElementById('player-name').value.trim();
             if(!nameInput) return alert('닉네임을 먼저 입력해주세요.');
@@ -234,12 +229,11 @@
             socket.emit('leaveRoom');
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
-            goToStep2(); // 방을 나가면 바로 방 선택 화면으로 복귀
+            goToStep2();
         }
 
         function startGame() { socket.emit('startGame'); }
 
-        // 통신 성공 시 모든 버튼 락 해제
         function unlockLobbyButtons() {
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = false);
         }
@@ -275,55 +269,89 @@
             container.innerHTML = '';
             let me = players.find(p => p.id === socket.id || p.id === myId);
             
-            // ⭐️ 방장이면 무조건 게임 시작 버튼 활성화, 일반인은 숨김
-            if(me && me.isHost) {
-                document.getElementById('btn-start-game').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-start-game').classList.add('hidden');
-            }
+            if(me && me.isHost) document.getElementById('btn-start-game').classList.remove('hidden');
+            else document.getElementById('btn-start-game').classList.add('hidden');
 
             players.forEach((p, idx) => {
                 container.innerHTML += `<div class="player-item"><div>${idx+1}. <strong>${p.name}</strong></div> <div style="font-size:12px; color:#aaa;">${p.isHost ? '방장👑' : '대기 중'}</div></div>`;
             });
         }
 
-        socket.on('seonDrawPhase', ({ drawResults, winnerId, winnerName }) => {
+        // 🃏 ⭐️ 수동형 선 뽑기 드로우 대기실 연출 모드 진입 리스너
+        socket.on('seonDrawPhaseInit', ({ totalPlayers }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
+            document.getElementById('seon-winner-announcement').innerText = '';
+            document.getElementById('seon-pick-guide').innerText = "👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!";
+            document.getElementById('seon-pick-guide').style.background = "#c0392b";
+            
             const screen = document.getElementById('seon-draw-screen');
             screen.classList.remove('hidden');
-            
+
             const container = document.getElementById('seon-cards-container');
             container.innerHTML = '';
-            document.getElementById('seon-winner-announcement').innerText = '';
+
+            // 방 유저 인원수만큼 뒷면 셔플 카드들을 나란히 배치 생성
+            for(let i=0; i<totalPlayers; i++) {
+                let backCard = document.createElement('div');
+                backCard.className = "card card-back";
+                backCard.style.transform = "scale(1.2)";
+                backCard.id = `seon-card-idx-${i}`;
+                
+                // 손가락으로 누르는 순간 서버에 인덱스 정보 패키지 전송 및 단일 락 체결
+                backCard.onclick = () => {
+                    backCard.style.borderColor = "#2ecc71";
+                    document.getElementById('seon-pick-guide').innerText = "⏳ 다른 플레이어들이 뽑을 때까지 대기 중입니다...";
+                    document.getElementById('seon-pick-guide').style.background = "#34495e";
+                    
+                    // 전 카드 터치 금지 레이어 락락
+                    document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
+                    socket.emit('pickSeonCard', { cardIndex: i });
+                };
+                container.appendChild(backCard);
+            }
+        });
+
+        // 타 유저 선택 현황 카운터 업데이트
+        socket.on('seonPickProgress', ({ count }) => {
+            const guide = document.getElementById('seon-pick-guide');
+            if(guide.innerText.includes("대기 중")) {
+                guide.innerText = `⏳ 다른 플레이어들이 뽑을 때까지 대기 중입니다... (${count}명 선택 완료)`;
+            }
+        });
+
+        // 🃏 ⭐️ 동기화된 선 뽑기 카드들의 패 정량 대칭 일제히 오픈 리스너
+        socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
+            const container = document.getElementById('seon-cards-container');
+            container.innerHTML = '';
+            document.getElementById('seon-pick-guide').innerText = "🎉 주사위는 던져졌습니다! 카드 대공개!";
+            document.getElementById('seon-pick-guide').style.background = "#27ae60";
 
             drawResults.forEach((res, idx) => {
-                setTimeout(() => {
-                    let cardBox = document.createElement('div');
-                    cardBox.style.display = 'flex';
-                    cardBox.style.flexDirection = 'column';
-                    cardBox.style.alignItems = 'center';
-                    cardBox.style.gap = '8px';
+                let cardBox = document.createElement('div');
+                cardBox.style.display = 'flex';
+                cardBox.style.flexDirection = 'column';
+                cardBox.style.alignItems = 'center';
+                cardBox.style.gap = '8px';
 
-                    let cardEl = createCardHTML(res.card, idx, false);
-                    cardEl.style.transform = 'scale(1.15)';
-                    
-                    let nameEl = document.createElement('div');
-                    nameEl.style.fontSize = '13px';
-                    nameEl.style.fontWeight = 'bold';
-                    nameEl.innerText = res.name;
-                    if(res.id === socket.id || res.id === myId) nameEl.style.color = '#f1c40f';
+                let cardEl = createCardHTML(res.card, idx, false);
+                cardEl.style.transform = 'scale(1.15)';
+                
+                let nameEl = document.createElement('div');
+                nameEl.style.fontSize = '13px';
+                nameEl.style.fontWeight = 'bold';
+                nameEl.innerText = res.name;
+                if(res.id === socket.id || res.id === myId) nameEl.style.color = '#f1c40f';
 
-                    cardBox.appendChild(cardEl);
-                    cardBox.appendChild(nameEl);
-                    container.appendChild(cardBox);
-                }, idx * 300);
+                cardBox.appendChild(cardEl);
+                cardBox.appendChild(nameEl);
+                container.appendChild(cardBox);
             });
 
             setTimeout(() => {
-                document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 최고 계급 카드를 뽑아 첫 턴(선)을 획득했습니다!`;
-            }, drawResults.length * 300 + 400);
+                document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 최고 계급 카드를 뽑아 첫 턴(선)을 확득했습니다!`;
+            }, 600);
 
-            setTimeout(() => { screen.classList.add('hidden'); }, 4100);
+            setTimeout(() => { document.getElementById('seon-draw-screen').classList.add('hidden'); }, 4400);
         });
 
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
@@ -337,6 +365,7 @@
             updateTurnState(currentTurnId);
         });
 
+        // ⭐️ Bug 1 해결: rank-12 그라데이션 및 상하단 숫자/조커 J 완벽 분기 복구 구조화
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
@@ -511,7 +540,7 @@
 
         socket.on('errorMsg', (msg) => {
             alert(msg);
-            unlockLobbyButtons(); // 에러 시 로비 버튼 다시 활성화
+            unlockLobbyButtons();
         });
     </script>
 </body>
