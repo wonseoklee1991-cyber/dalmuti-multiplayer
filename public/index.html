@@ -31,13 +31,13 @@
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
-        .emote-popup-anim { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f;}
-        
-        /* ⭐️ 로딩 스핀 애니메이션 추가 */
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .emote-popup-anim { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f;}
 
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
-        .table-3d { width: 85vw; max-width: 700px; height: 38vh; max-height: 300px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
+        
+        /* ⭐️ 중앙 테이블 크기 약간 줄이고 위로 살짝 올려서 공간 창출 */
+        .table-3d { width: 85vw; max-width: 700px; height: 35vh; max-height: 280px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 6vh; }
         .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; width: 100%; height: 100%; }
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
@@ -54,13 +54,14 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        .pos-left-low   { top: 40%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 22%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 15%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: 10%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 15%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 22%; right: max(25px, env(safe-area-inset-right)); }
-        .pos-right-low  { top: 40%; right: max(15px, env(safe-area-inset-right)); }
+        /* ⭐️ 1. 좌우 하단 아바타들 무조건 위로 훅 끌어올림! (HUD 조작부와 절대 안 겹침) */
+        .pos-left-low   { top: 22%; left: max(15px, env(safe-area-inset-left)); }
+        .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 1%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 1%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 1%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-right-low  { top: 22%; right: max(15px, env(safe-area-inset-right)); }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
         .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -5px; z-index: 20; }
@@ -103,8 +104,12 @@
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
-        #game-status { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 15px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
-        #chat-toast-area { position: absolute; bottom: 33%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        /* ⭐️ 2. 상단 상태창을 아바타와 테이블 사이 빈 공간으로 이동 */
+        #game-status { position: absolute; top: 16%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        
+        /* ⭐️ 3. 하단 로그창을 내 패 바로 위 빈 공간으로 하강 */
+        #chat-toast-area { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -122,6 +127,7 @@
     <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
+        
         <div id="step-1-nickname" class="input-group">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">내 캐릭터 선택</h3>
             <div class="avatar-selector">
@@ -134,12 +140,14 @@
             <input type="text" id="player-name" placeholder="사용할 닉네임 입력" maxlength="8">
             <button class="btn" onclick="goToStep2()">입장하기</button>
         </div>
+
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
             <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9; color:#fff;" onclick="goToStep3()">기존 방 참가하기</button>
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
         </div>
+
         <div id="step-3-join" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">방 코드를 입력하세요</h3>
             <input type="text" id="room-code-input" placeholder="초대 코드 4자리 입력" maxlength="4">
@@ -198,7 +206,7 @@
         <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
     </div>
 
-    <!-- ⭐️ 빈 화면 방지용 공용 로딩 스크린 -->
+    <!-- 라운드 로딩 스크린 -->
     <div id="round-loading-screen" class="screen hidden" style="z-index: 110; background: rgba(17,17,17,0.95);">
         <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
             <div style="font-size: 50px; margin-bottom: 20px; animation: spin 1.5s linear infinite; display: inline-block;">⏳</div>
@@ -255,24 +263,26 @@
         </div>
     </div>
 
-    <!-- 세금 하사 모달 (방장용) -->
+    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
+        
         <div class="hand-scroll-area" style="pointer-events: auto; padding-top:20px; padding-bottom:15px; margin-bottom:10px;">
             <div id="tax-hand" class="hand"></div>
         </div>
+        
         <p style="color:#aaa; font-size:13px; margin-top:0; margin-bottom:10px;">(조커 카드는 세금으로 하사할 수 없습니다)</p>
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 교환 대기 화면 -->
+    <!-- 세금 대기 화면 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 현황</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
-    <!-- 세금 개인 애니메이션 모달 -->
+    <!-- 세금 애니메이션 모달 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
@@ -599,7 +609,6 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
             
-            // ⭐️ 게임 시작 시 로딩 스크린 해제
             document.getElementById('round-loading-screen').classList.add('hidden');
             
             document.getElementById('btn-vote-keep').style.opacity = '1';
@@ -637,7 +646,6 @@
             
             setTimeout(() => {
                 revScreen.classList.add('hidden');
-                // ⭐️ 혁명 팝업 후 1.5초간 남는 딜레이 동안 로딩 화면 표출
                 document.getElementById('round-loading-screen').classList.remove('hidden');
             }, 5500);
         });
@@ -962,7 +970,6 @@
                 if(myRecv) document.getElementById('tax-recv-log').innerHTML = `<div style="margin-bottom:8px;">📥 [${myRecv.fromName}]님에게서 하사받음</div>` + generateMiniCardsHTML(myRecv.cards);
                 else document.getElementById('tax-recv-log').innerHTML = '';
             } else {
-                // ⭐️ 세금 당사자가 아니면 로딩 스크린 표출
                 document.getElementById('round-loading-screen').classList.remove('hidden');
             }
         });
