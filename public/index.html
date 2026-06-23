@@ -23,6 +23,11 @@
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 280px; }
         .input-group input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #555; background: #333; color: white; text-align: center; margin-bottom: 5px; }
         
+        /* ⭐️ 내 아바타 커스텀 선택 영역 */
+        .avatar-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        .avatar-opt { width: 40px; height: 40px; font-size: 20px; display: flex; justify-content: center; align-items: center; background: #2c3e50; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;}
+        .avatar-opt.selected { border-color: #f1c40f; background: rgba(241, 196, 15, 0.2); transform: scale(1.1);}
+
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 450px; max-width: 90vw; max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
@@ -47,14 +52,14 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        /* ⭐️ 1. 시야 확보를 위해 적 아바타들 전체 상승 */
-        .pos-left-low   { top: 25%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 1%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: max(2%, env(safe-area-inset-top)); left: 50%; --tx: -50%; }
-        .pos-right-high { top: 1%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
-        .pos-right-low  { top: 25%; right: max(15px, env(safe-area-inset-right)); }
+        /* ⭐️ 1번 패치: 잘림 현상 방지를 위해 상단 마진 대폭 하강 (top: 15% 시작) */
+        .pos-left-low   { top: 40%; left: max(15px, env(safe-area-inset-left)); }
+        .pos-left-mid   { top: 22%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 15%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 10%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 15%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 22%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-right-low  { top: 40%; right: max(15px, env(safe-area-inset-right)); }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
         .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -5px; z-index: 20; }
@@ -70,7 +75,7 @@
         .emote-grid button:active { background: #555; }
         .chat-input-container { border-top: 1px solid #555; padding-top: 10px; display: flex; gap: 6px; }
 
-        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 40px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
+        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 50px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
         .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
@@ -97,9 +102,10 @@
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
-        /* ⭐️ 1. 알림창 위치 완벽 조정 (테이블 절대 안가림) */
-        #game-status { position: absolute; top: max(5px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        /* ⭐️ 1번 패치: 알림창들 테이블 중앙으로 위치 완전 이동 (다른 아바타나 카드 안가리게) */
+        #game-status { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 15px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        
+        #chat-toast-area { position: absolute; bottom: 33%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
@@ -118,16 +124,27 @@
     <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
+        
         <div id="step-1-nickname" class="input-group">
+            <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">내 캐릭터 선택</h3>
+            <div class="avatar-selector">
+                <div class="avatar-opt selected" onclick="selectAvatar(this, '🧑‍💻')">🧑‍💻</div>
+                <div class="avatar-opt" onclick="selectAvatar(this, '🦊')">🦊</div>
+                <div class="avatar-opt" onclick="selectAvatar(this, '🐰')">🐰</div>
+                <div class="avatar-opt" onclick="selectAvatar(this, '🐶')">🐶</div>
+                <div class="avatar-opt" onclick="selectAvatar(this, '🐸')">🐸</div>
+            </div>
             <input type="text" id="player-name" placeholder="사용할 닉네임 입력" maxlength="8">
             <button class="btn" onclick="goToStep2()">입장하기</button>
         </div>
+
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
             <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9; color:#fff;" onclick="goToStep3()">기존 방 참가하기</button>
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
         </div>
+
         <div id="step-3-join" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">방 코드를 입력하세요</h3>
             <input type="text" id="room-code-input" placeholder="초대 코드 4자리 입력" maxlength="4">
@@ -171,7 +188,6 @@
         </div>
     </div>
 
-    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -179,7 +195,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- ⭐️ 혁명 애니메이션 전용 스크린 -->
+    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
@@ -217,7 +233,7 @@
                 <div class="hud-left">
                     <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
+                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
                         <span id="player-name-label" style="font-size:14px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
                     </div>
                 </div>
@@ -234,20 +250,22 @@
         </div>
     </div>
 
-    <!-- 세금 하사 모달 (방장용) -->
+    <!-- ⭐️ 2번. 세금 하사 모달 디자인 및 스크롤 영역 최적화 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
-        <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
-        <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
-        <p>농노에게 하사할 불필요한 카드를 정량만큼 골라주세요.</p>
-        <div class="hand-scroll-area" style="pointer-events: auto;">
+        <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
+        <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
+        
+        <div class="hand-scroll-area" style="pointer-events: auto; padding-top:20px; padding-bottom:15px; margin-bottom:10px;">
             <div id="tax-hand" class="hand"></div>
         </div>
+        
+        <p style="color:#aaa; font-size:13px; margin-top:0; margin-bottom:10px;">(조커 카드는 세금으로 하사할 수 없습니다)</p>
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- ⭐️ 세금 교환 대기 화면 (빈 화면 방지) -->
+    <!-- ⭐️ 3번. 세금 대기 화면에 명확한 안내 문구 삽입 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
-        <h2 style="color:#f1c40f;">📜 세금 징수 대기 및 결과</h2>
+        <h2 style="color:#f1c40f;">📜 세금 징수 대기 현황</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
@@ -262,7 +280,7 @@
         </div>
     </div>
 
-    <!-- 결과 창 전면 개편 (투표 변경 가능토록 수정) -->
+    <!-- 결과 창 전면 개편 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -306,21 +324,14 @@
         let taxTargetId = null;
         let taxCountRequired = 0;
         let currentPlayerName = "";
+        let currentAvatar = "🧑‍💻"; // ⭐️ 4. 내 아바타 기본값
         window.currentFinishedPlayers = [];
 
-        function initCustomEmote() {
-            let saved = localStorage.getItem('customDalmutiEmote');
-            if(saved) {
-                document.getElementById('custom-emote-display').style.display = 'flex';
-                document.getElementById('custom-emote-input-area').style.display = 'none';
-                document.getElementById('btn-use-custom').innerText = saved;
-            } else {
-                document.getElementById('custom-emote-display').style.display = 'none';
-                document.getElementById('custom-emote-input-area').style.display = 'flex';
-            }
+        function selectAvatar(el, emoji) {
+            document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+            currentAvatar = emoji;
         }
-        
-        document.addEventListener('DOMContentLoaded', initCustomEmote);
 
         socket.on('connect', () => { myId = socket.id; });
 
@@ -329,6 +340,10 @@
             if(!nameInput) return alert('닉네임을 먼저 입력해주세요.');
             currentPlayerName = nameInput;
             document.getElementById('display-nickname').innerText = currentPlayerName;
+            
+            // 내 아바타 로고 세팅
+            document.getElementById('my-avatar').innerText = currentAvatar;
+
             document.getElementById('step-1-nickname').classList.add('hidden');
             document.getElementById('step-2-action').classList.remove('hidden');
             document.getElementById('step-3-join').classList.add('hidden');
@@ -863,7 +878,6 @@
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
             
-            // ⭐️ 왕이 볼 세금 징수 명세서도 카드로 표시되게 업그레이드
             let displayCardsHTML = generateMiniCardsHTML(cards);
             document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 좋은 카드를 징수했습니다.<br>${displayCardsHTML}<br>하사할 불필요한 카드 <strong>${count}장</strong>을 고르세요.<br><span style="font-size:12px; color:#aaa;">(조커는 세금으로 하사할 수 없습니다)</span>`;
             
@@ -875,6 +889,7 @@
             socket.emit('submitTaxHand', { targetId: taxTargetId, indices: selectedIndices });
             document.getElementById('tax-give-modal').classList.add('hidden');
             
+            // ⭐️ 3. 왕도 카드를 낸 직후 빈 화면 방지
             document.getElementById('tax-summary-modal').classList.remove('hidden');
             document.getElementById('tax-summary-list').innerHTML = `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#2ecc71; background:#333; font-weight:bold; animation: pulse 1s infinite;">✅ 카드 하사 완료!<br>다른 플레이어들의 세금 교환을<br>기다리고 있습니다...</div>`;
         }
@@ -885,10 +900,16 @@
             }
             const list = document.getElementById('tax-summary-list');
             list.innerHTML = '';
-            taxLogs.forEach(log => {
-                list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`;
-            });
-            list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold; animation: pulse 1s infinite;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(잠시 대기해 주세요)</span></div>`;
+            
+            // ⭐️ 3. 아무것도 안 하는 사람(평민 등)을 위한 친절한 설명
+            if(taxLogs.length === 0) {
+                 list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#fff; background:#333; font-weight:bold; animation: pulse 1s infinite;">⏳ 다른 플레이어들이 세금 교환을<br>진행 중입니다...<br><span style="font-size:12px; color:#aaa;">(당신은 이번 판 세금 교환 대상자가 아닙니다)</span></div>`;
+            } else {
+                taxLogs.forEach(log => {
+                    list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`;
+                });
+                list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(잠시 대기해 주세요)</span></div>`;
+            }
         });
 
         function generateMiniCardsHTML(cards) {
