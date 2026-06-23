@@ -10,7 +10,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
         .hidden { display: none !important; }
-        .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
+        .btn { padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
         .btn:active { transform: translateY(4px); box-shadow: none; }
         .btn.pass { background-color: #e74c3c; box-shadow: 0 4px 0 #c0392b; color: white; }
         .btn.back { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; color: white; }
@@ -26,12 +26,12 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 450px; max-width: 90vw; max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
-        /* ⭐️ 이모티콘 팝업 위치 및 z-index 최상단 적용 */
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
-        .emote-popup-anim { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: #000; padding: 4px 8px; border-radius: 12px; font-size: 15px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 2000; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        /* ⭐️ 4. 채팅 팝업 위치 고정 및 최상단 배치 */
+        .emote-popup-anim { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f;}
         
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
-        .table-3d { width: 85vw; max-width: 700px; height: 40vh; max-height: 320px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
+        .table-3d { width: 85vw; max-width: 700px; height: 38vh; max-height: 300px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
         .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; width: 100%; height: 100%; }
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
@@ -48,39 +48,38 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        /* ⭐️ 3번 뷰 개선: 모든 AI의 높이를 위로 10%씩 올려서 내 버튼들을 가리지 않게 수정 */
-        .pos-left-low   { top: 38%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 18%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 5%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: 3%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 5%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 18%; right: max(25px, env(safe-area-inset-right)); }
-        .pos-right-low  { top: 38%; right: max(15px, env(safe-area-inset-right)); }
+        /* ⭐️ 3. 적 아바타들 좌표 일제히 위로 상승! (밑에 절대 안 가려짐) */
+        .pos-left-low   { top: 32%; left: max(15px, env(safe-area-inset-left)); }
+        .pos-left-mid   { top: 12%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 2%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 0%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 2%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 12%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-right-low  { top: 32%; right: max(15px, env(safe-area-inset-right)); }
 
-        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(15px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
+        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
         .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -5px; z-index: 20; }
-        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 5px 12px 5px 5px; border-radius: 30px; border: 1px solid #444;}
+        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.7); padding: 6px 12px 6px 6px; border-radius: 30px; border: 1px solid #555;}
         .hud-right { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
         
-        .btn-emote { background: #34495e; border: 2px solid #555; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
+        .btn-emote { background: #34495e; border: 2px solid #f1c40f; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-emote:active { transform: scale(0.9); }
         
-        /* ⭐️ 4번: 이모티콘 메뉴에 다이렉트 채팅창 추가 및 최상단 배치 */
-        #emote-menu { position: absolute; bottom: 85px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.95); border: 1px solid #444; border-radius: 12px; padding: 12px; width: 260px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.8); z-index: 2000; pointer-events: auto; }
+        #emote-menu { position: absolute; bottom: 85px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.98); border: 2px solid #555; border-radius: 12px; padding: 15px; width: 280px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); z-index: 9999; pointer-events: auto; }
         .emote-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-        .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 10px 0; font-size: 15px; cursor: pointer; transition: background 0.1s;}
+        .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 12px 0; font-size: 16px; cursor: pointer; transition: background 0.1s;}
         .emote-grid button:active { background: #555; }
         .chat-input-container { border-top: 1px solid #555; padding-top: 10px; display: flex; gap: 6px; }
 
-        /* ⭐️ 2번: 카드가 선택되어 올라갈 때 윗부분이 잘리지 않도록 padding-top 대폭 증가 */
-        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 40px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
+        /* ⭐️ 1. 내 카드 상단 패딩 대폭 늘려서 선택해도 절대 안 잘리게 방어막 구축! */
+        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 50px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
         .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
         .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
-        .card.selected { transform: translateY(-26px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); z-index: 10; }
+        .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); z-index: 10; }
         .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
@@ -95,13 +94,13 @@
             .card .center-content { font-size: 38px; }
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
-            .hand-scroll-area { padding-top: 45px; }
+            .hand-scroll-area { padding-top: 60px; }
         }
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
         #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 35%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        #chat-toast-area { position: absolute; bottom: 42%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -145,7 +144,6 @@
         <h2 style="color: #f1c40f; margin-bottom:5px;">🏠 대기실</h2>
         <h3 style="background:#333; padding:8px 20px; border-radius:8px; margin-top:0; margin-bottom:10px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
         
-        <!-- 방장 전용 세팅 패널 -->
         <div id="host-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 340px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <span style="font-size:13px; color:#aaa; font-weight:bold;">총 인원 설정:</span>
@@ -164,7 +162,6 @@
             <div id="settings-lock-msg" style="color:#e74c3c; font-size:11px; text-align:center; margin-top:6px; display:none;">누군가 준비하여 설정이 잠겼습니다.</div>
         </div>
 
-        <!-- 손님 전용 정보 패널 -->
         <div id="guest-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 340px; text-align:center;">
             <p style="color:#2ecc71; font-weight:bold; font-size:14px; margin:0;">[ <span id="display-max-players">4</span>인 방 / 판돈 <span id="display-bet-amount">1000</span>원 ]</p>
         </div>
@@ -194,7 +191,7 @@
             <div class="center-area" id="center-area"></div>
         </div>
         
-        <!-- ⭐️ 다이렉트 채팅이 포함된 이모티콘 메뉴 -->
+        <!-- 커스텀 이모티콘 팝업 메뉴 -->
         <div id="emote-menu" class="hidden">
             <div class="emote-grid">
                 <button onclick="sendEmote('빨리!')">빨리!</button>
@@ -207,25 +204,24 @@
                 <button onclick="sendEmote('👀')">👀</button>
             </div>
             <div class="chat-input-container">
-                <input type="text" id="chat-input" placeholder="직접 대화 입력..." maxlength="20" style="flex:1; padding:8px; border-radius:6px; background:#222; color:#fff; border:1px solid #555; font-size:13px;" onkeypress="if(event.keyCode===13) sendCustomChat()">
-                <button onclick="sendCustomChat()" style="background:#3498db; border:none; border-radius:6px; color:#fff; padding:0 12px; font-weight:bold; font-size:13px; cursor:pointer;">전송</button>
+                <input type="text" id="chat-input" placeholder="직접 대화 입력..." maxlength="20" style="flex:1; padding:10px; border-radius:6px; background:#222; color:#fff; border:1px solid #f1c40f; font-size:14px;" onkeypress="if(event.keyCode===13) sendCustomChat()">
+                <button onclick="sendCustomChat()" style="background:#2ecc71; border:none; border-radius:6px; color:#fff; padding:0 15px; font-weight:bold; font-size:14px; cursor:pointer;">전송</button>
             </div>
         </div>
 
         <div class="player-ui">
-            <!-- 좌/우 분할 조작 레이어 -->
             <div class="hud-layer">
                 <div class="hud-left">
                     <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                        <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
-                        <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
+                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
+                        <span id="player-name-label" style="font-size:14px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
                     </div>
                 </div>
                 
                 <div class="hud-right">
-                    <button class="btn" id="btn-play" style="margin:0; padding:10px 18px;" onclick="playCards()" disabled>카드 내기</button>
-                    <button class="btn pass" id="btn-pass" style="margin:0; padding:10px 18px;" onclick="passTurn()" disabled>패스</button>
+                    <button class="btn" id="btn-play" style="margin:0; padding:12px 20px;" onclick="playCards()" disabled>카드 내기</button>
+                    <button class="btn pass" id="btn-pass" style="margin:0; padding:12px 20px;" onclick="passTurn()" disabled>패스</button>
                 </div>
             </div>
             
@@ -246,7 +242,7 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 교환 대기 화면 (왕이 선택 중일 때 블랙스크린 방지) -->
+    <!-- 세금 교환 대기 화면 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 및 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
@@ -263,22 +259,43 @@
         </div>
     </div>
 
-    <!-- 결과 창 -->
-    <div id="result-screen" class="screen hidden" style="z-index:80; overflow-y:auto; padding-top:20px; padding-bottom:30px;">
-        <h1 style="color:#f1c40f; margin-bottom:10px;">🎉 게임 종료 (순위표)</h1>
-        <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; width:340px;"></div>
+    <!-- ⭐️ 4. 결과 창 전면 개편: 가로 분할 뷰 및 투표/채팅 패널 -->
+    <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
-        <div id="ledger-section" style="background:#2c3e50; padding:15px; border-radius:10px; width:340px; margin-top:15px; text-align:center;">
-            <h3 style="color:#2ecc71; margin-top:0; margin-bottom:10px;">💰 사람 유저 정산소 (<span id="ledger-bet-amount"></span>원)</h3>
-            <div id="round-log" style="font-size:14px; margin-bottom:10px; color:#fff;"></div>
-            <hr style="border:0; border-top:1px solid #555; margin:10px 0;">
-            <div id="cumulative-balances" style="font-size:15px; font-weight:bold; color:#f1c40f;"></div>
+        <!-- 좌측 패널: 결과, 정산, 다음행동 투표 -->
+        <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
+            <h1 style="color:#f1c40f; margin-bottom:10px; text-align:center; font-size:26px;">🎉 게임 종료 (순위표)</h1>
+            <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; margin-bottom:15px;"></div>
+            
+            <div id="ledger-section" style="background:#2c3e50; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px;">
+                <h3 style="color:#2ecc71; margin-top:0; margin-bottom:10px;">💰 사람 유저 정산소 (<span id="ledger-bet-amount"></span>원)</h3>
+                <div id="round-log" style="font-size:14px; margin-bottom:10px; color:#fff;"></div>
+                <hr style="border:0; border-top:1px solid #555; margin:10px 0;">
+                <div id="cumulative-balances" style="font-size:15px; font-weight:bold; color:#f1c40f;"></div>
+            </div>
+
+            <div id="vote-panel" style="background:#111; padding:15px; border-radius:10px; text-align:center; border: 1px solid #444;">
+                <h3 style="color:#fff; margin-top:0; margin-bottom:10px; font-size:16px;">다음 라운드 진행 방식 선택</h3>
+                <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
+                    <button class="btn" id="btn-vote-keep" onclick="submitVote('keep')" style="flex:1; font-size:14px; padding:10px;">▶ 그대로 진행<br><span style="font-size:11px; font-weight:normal;">(나간 유저는 AI 대체)</span></button>
+                    <button class="btn pass" id="btn-vote-lobby" onclick="submitVote('lobby')" style="flex:1; font-size:14px; padding:10px;">⚙️ 대기실 이동<br><span style="font-size:11px; font-weight:normal;">(인원 재정비)</span></button>
+                </div>
+                <div id="vote-status-list" style="font-size:13px; color:#aaa; text-align:left; background:#222; padding:10px; border-radius:8px; min-height:40px;">
+                    <!-- 투표 현황 -->
+                </div>
+            </div>
         </div>
 
-        <div class="result-buttons" style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
-            <button class="btn" id="btn-next-round" onclick="requestNextRound()">다음 라운드 진행</button>
-            <button class="btn pass" onclick="location.reload()">아예 게임 끄기</button>
+        <!-- 우측 패널: 라이브 채팅방 -->
+        <div id="result-right-panel" style="width: 320px; display:flex; flex-direction:column; background:#222; border: 1px solid #444; border-radius: 12px; padding: 15px;">
+            <h3 style="color:#f1c40f; margin-top:0; margin-bottom:10px; text-align:center;">💬 대기 대화방</h3>
+            <div id="result-chat-log" style="flex:1; overflow-y:auto; font-size:14px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; padding-right:5px; border-bottom:1px solid #444; padding-bottom:10px;"></div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="result-chat-input" placeholder="메시지 입력..." maxlength="30" style="flex:1; padding:10px; border-radius:6px; background:#111; color:#fff; border:1px solid #555; font-size:14px;" onkeypress="if(event.keyCode===13) sendResultChat()">
+                <button onclick="sendResultChat()" style="background:#3498db; border:none; border-radius:6px; color:#fff; padding:0 15px; font-weight:bold; font-size:14px; cursor:pointer;">전송</button>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -316,7 +333,7 @@
 
         function createRoomReq() {
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
-            socket.emit('createRoom', { playerName: currentPlayerName });
+            socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: 4, betAmount: 1000 });
         }
 
         function joinRoom() {
@@ -344,7 +361,6 @@
 
         function toggleEmoteMenu() { document.getElementById('emote-menu').classList.toggle('hidden'); }
         
-        // ⭐️ 4번: 다이렉트 채팅 전송 함수 추가
         function sendCustomChat() {
             let val = document.getElementById('chat-input').value.trim();
             if(val) {
@@ -352,10 +368,23 @@
                 document.getElementById('chat-input').value = '';
             }
         }
+        function sendResultChat() {
+            let val = document.getElementById('result-chat-input').value.trim();
+            if(val) {
+                sendEmote(val);
+                document.getElementById('result-chat-input').value = '';
+            }
+        }
 
         function sendEmote(emote) {
             socket.emit('sendEmote', emote);
             document.getElementById('emote-menu').classList.add('hidden');
+        }
+
+        function submitVote(type) {
+            document.getElementById('btn-vote-keep').disabled = true;
+            document.getElementById('btn-vote-lobby').disabled = true;
+            socket.emit('submitVote', type);
         }
 
         function unlockLobbyButtons() { document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = false); }
@@ -395,6 +424,8 @@
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
+            document.getElementById('btn-vote-keep').disabled = false;
+            document.getElementById('btn-vote-lobby').disabled = false;
             updateWaitingPlayerList(players, []);
         });
 
@@ -521,6 +552,10 @@
             document.getElementById('personal-tax-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
+            
+            document.getElementById('btn-vote-keep').disabled = false;
+            document.getElementById('btn-vote-lobby').disabled = false;
+            
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
@@ -532,9 +567,6 @@
             if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
             const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
             document.getElementById('player-name-label').innerText = `나(Player) ${badges[rankIdx] || ''}`;
-
-            document.getElementById('btn-next-round').disabled = false;
-            document.getElementById('btn-next-round').innerText = '다음 라운드 진행';
 
             renderOpponents(players);
             updateTurnState(currentTurnId);
@@ -703,7 +735,7 @@
             document.getElementById('result-screen').classList.add('hidden');
         });
 
-        socket.on('playerEmoted', ({ id, emote }) => {
+        socket.on('playerEmoted', ({ id, name, emote }) => {
             let target = document.getElementById(id === socket.id || id === myId ? 'my-avatar' : `node-${id}`);
             if (target) {
                 let el = document.createElement('div');
@@ -712,11 +744,25 @@
                 target.appendChild(el);
                 setTimeout(() => el.remove(), 2500);
             }
+            
+            // 결과창 열려있으면 채팅로그에도 쌓기
+            if (!document.getElementById('result-screen').classList.contains('hidden')) {
+                const logArea = document.getElementById('result-chat-log');
+                let div = document.createElement('div');
+                div.innerHTML = `<span style="color:#f1c40f;">${name}:</span> <span style="color:#fff;">${emote}</span>`;
+                logArea.appendChild(div);
+                logArea.scrollTop = logArea.scrollHeight;
+            }
         });
 
         socket.on('gameOver', ({ finishedPlayers, playersData, balances, roundLog }) => {
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
+            
+            // 투표 리스트 초기화
+            document.getElementById('vote-status-list').innerHTML = '';
+            document.getElementById('result-chat-log').innerHTML = '';
+
             const list = document.getElementById('final-rank-list'); list.innerHTML = '';
             
             finishedPlayers.forEach((pId, idx) => {
@@ -759,11 +805,26 @@
             if(!hasBalances) balEl.innerHTML += `<span style="font-size:13px; color:#aaa;">아직 누적 기록이 없습니다.</span>`;
         });
 
-        function requestNextRound() {
-            document.getElementById('btn-next-round').disabled = true;
-            document.getElementById('btn-next-round').innerText = '만장일치 동의 대기 중...';
-            socket.emit('playNextRound');
-        }
+        // ⭐️ 투표 현황 렌더링 리스너
+        socket.on('voteStatusUpdated', ({ votes, playersData }) => {
+            const list = document.getElementById('vote-status-list');
+            list.innerHTML = '';
+            
+            let allVoters = [...votes.keep, ...votes.lobby];
+            if(allVoters.length === 0) {
+                list.innerHTML = "아직 투표한 사람이 없습니다.";
+                return;
+            }
+
+            votes.keep.forEach(id => {
+                let p = playersData.find(pl => pl.id === id);
+                if(p) list.innerHTML += `<div style="color:#2ecc71; margin-bottom:4px;">▶ [${p.name}] - 그대로 진행</div>`;
+            });
+            votes.lobby.forEach(id => {
+                let p = playersData.find(pl => pl.id === id);
+                if(p) list.innerHTML += `<div style="color:#e74c3c; margin-bottom:4px;">⚙️ [${p.name}] - 대기실 이동</div>`;
+            });
+        });
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
             document.getElementById('tax-summary-modal').classList.add('hidden');

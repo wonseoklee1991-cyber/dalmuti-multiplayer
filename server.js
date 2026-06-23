@@ -26,32 +26,48 @@ function createDeck() {
 }
 
 io.on('connection', (socket) => {
+    
+    // ⭐️ 누군가 튕겼을 때 방을 터뜨리지 않고 즉시 AI로 대체하는 로직으로 변경
     function handlePlayerExit() {
         for (const roomId in rooms) {
             const room = rooms[roomId];
             const pIdx = room.players.findIndex(p => p.id === socket.id);
             if (pIdx !== -1) {
-                room.players.splice(pIdx, 1);
+                const pName = room.players[pIdx].name;
                 socket.leave(roomId);
-                
-                if (room.readyPlayers.includes(socket.id)) {
-                    room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
-                }
 
-                if (room.players.filter(p => !p.isAI).length === 0) {
-                    delete rooms[roomId];
-                } else {
-                    if (!room.players.some(p => p.isHost)) {
-                        const newHost = room.players.find(p => !p.isAI);
+                if (room.status === 'playing' || room.status === 'tax_phase' || room.status === 'ended') {
+                    io.to(roomId).emit('chatMsg', `⚠️ [${pName}] 님이 나갔습니다. AI가 자리를 대체합니다.`);
+                    room.players[pIdx].id = `ai_replace_${Date.now()}`;
+                    room.players[pIdx].name = `🤖 AI (대체)`;
+                    room.players[pIdx].isAI = true;
+                    
+                    if (!room.players.some(p => p.isHost && !p.isAI)) {
+                        let newHost = room.players.find(p => !p.isAI);
                         if (newHost) newHost.isHost = true;
                     }
-                    if (room.status === 'lobby' || room.status === 'seon_drawing') {
-                        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
+
+                    if (room.status === 'playing') broadcastGameState(roomId, room);
+                    if (room.status === 'ended') {
+                        if (room.votes) {
+                            room.votes.keep = room.votes.keep.filter(id => id !== socket.id);
+                            room.votes.lobby = room.votes.lobby.filter(id => id !== socket.id);
+                            io.to(roomId).emit('voteStatusUpdated', { votes: room.votes, playersData: room.players });
+                        }
+                    }
+                } else {
+                    room.players.splice(pIdx, 1);
+                    if (room.readyPlayers.includes(socket.id)) {
+                        room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
+                    }
+                    if (room.players.filter(p => !p.isAI).length === 0) {
+                        delete rooms[roomId];
                     } else {
-                        room.status = 'lobby';
-                        room.players = room.players.filter(p => !p.isAI);
-                        io.to(roomId).emit('chatMsg', '플레이어가 퇴장하여 대기실로 리셋되었습니다.');
-                        io.to(roomId).emit('forceLobby', { roomId: roomId, players: room.players });
+                        if (!room.players.some(p => p.isHost)) {
+                            let newHost = room.players.find(p => !p.isAI);
+                            if (newHost) newHost.isHost = true;
+                        }
+                        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
                     }
                 }
                 break;
@@ -62,12 +78,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    socket.on('createRoom', ({ playerName }) => {
+    socket.on('createRoom', ({ playerName, maxPlayers, betAmount }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
-            maxPlayers: 4,
-            betAmount: 1000,
+            maxPlayers: parseInt(maxPlayers) || 4,
+            betAmount: parseInt(betAmount) || 0,
             players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
@@ -78,7 +94,8 @@ io.on('connection', (socket) => {
             seonPickedData: {},
             readyPlayers: [],
             balances: {},
-            transactions: []
+            transactions: [],
+            votes: { keep: [], lobby: [] }
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players, betAmount: rooms[roomId].betAmount, maxPlayers: rooms[roomId].maxPlayers });
@@ -119,9 +136,13 @@ io.on('connection', (socket) => {
         io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
+    // ⭐️ 텍스트 채팅 공용 라우터 (결과창에서도 쓴다)
     socket.on('sendEmote', (emote) => {
         const room = getRoomBySocket(socket.id);
-        if (room) io.to(room.id).emit('playerEmoted', { id: socket.id, emote });
+        if (room) {
+            const p = room.players.find(pl => pl.id === socket.id);
+            if(p) io.to(room.id).emit('playerEmoted', { id: socket.id, name: p.name, emote });
+        }
     });
 
     socket.on('startGame', () => {
@@ -184,8 +205,6 @@ io.on('connection', (socket) => {
                 
                 distributeCards(room);
                 room.currentTurnIdx = 0;
-
-                // ⭐️ 시작할 때 손패가 무조건 한 번만, 그리고 100% 정렬된 상태로 전송되도록 일원화
                 room.players.forEach(p => p.hand.sort((a,b)=>a-b));
 
                 io.to(room.id).emit('gameStarted', {
@@ -236,23 +255,33 @@ io.on('connection', (socket) => {
         executePassLogic(room.id, room, player);
     });
 
-    socket.on('playNextRound', () => {
+    // ⭐️ 4. 결과창 만장일치 투표 시스템 추가
+    socket.on('submitVote', (voteType) => {
         const room = getRoomBySocket(socket.id);
         if (!room || room.status !== 'ended') return;
         
-        if (!room.readyPlayers.includes(socket.id)) room.readyPlayers.push(socket.id);
-        const playerReady = room.players.find(p => p.id === socket.id);
-        io.to(room.id).emit('chatMsg', `✅ [${playerReady.name}] 다음 라운드 레디!`);
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) return;
+
+        room.votes = room.votes || { keep: [], lobby: [] };
+        room.votes.keep = room.votes.keep.filter(id => id !== socket.id);
+        room.votes.lobby = room.votes.lobby.filter(id => id !== socket.id);
+        
+        if (voteType === 'keep') room.votes.keep.push(socket.id);
+        else if (voteType === 'lobby') room.votes.lobby.push(socket.id);
+
+        io.to(room.id).emit('voteStatusUpdated', { votes: room.votes, playersData: room.players });
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         
-        if (room.readyPlayers.length >= humanPlayers.length) {
+        // 만장일치로 '그대로 진행' 선택 시
+        if (room.votes.keep.length >= humanPlayers.length) {
             room.status = 'tax_phase';
             io.to(room.id).emit('hideResultScreen');
             
             room.lastRoundRanks = [...room.finishedPlayers];
             room.finishedPlayers = [];
-            room.readyPlayers = [];
+            room.votes = { keep: [], lobby: [] };
             room.center = { cards: [], count: 0, rank: 99, ownerId: null };
             room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
             
@@ -265,6 +294,15 @@ io.on('connection', (socket) => {
             distributeCards(room);
             executeTaxPhase(room.id, room);
         }
+        // 만장일치로 '대기실로 이동' 선택 시
+        else if (room.votes.lobby.length >= humanPlayers.length) {
+            room.status = 'lobby';
+            room.finishedPlayers = [];
+            room.votes = { keep: [], lobby: [] };
+            room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+            room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
+            io.to(room.id).emit('forceLobby', { players: room.players.filter(p=>!p.isAI) });
+        }
     });
 
     socket.on('submitTaxHand', ({ targetId, indices }) => {
@@ -276,8 +314,11 @@ io.on('connection', (socket) => {
         indices.sort((a,b) => b-a);
         let taxCards = indices.map(i => giver.hand.splice(i, 1)[0]);
         receiver.hand.push(...taxCards);
-        room.taxLogs.push({ fromId: giver.id, toId: receiver.id, fromName: giver.name, toName: receiver.name, cards: taxCards });
         
+        // ⭐️ 2. 세금을 받은 왕의 손패를 이 시점에서 무조건 오름차순으로 정렬 처리!!
+        receiver.hand.sort((a,b) => a-b);
+        
+        room.taxLogs.push({ fromId: giver.id, toId: receiver.id, fromName: giver.name, toName: receiver.name, cards: taxCards });
         socket.emit('yourHand', giver.hand);
         
         let expectedLogs = 0; let total = room.players.length;
@@ -288,7 +329,6 @@ io.on('connection', (socket) => {
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
             setTimeout(() => {
-                // ⭐️ 서버에서 완벽히 정렬을 끝낸 뒤 startNormalRound를 통해 한 번에 발송되도록 꼬임 제거
                 startNormalRound(room.id, room);
             }, 3500);
         }
@@ -411,7 +451,7 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         }
 
         let playersData = room.players.map(p => ({ id: p.id, name: p.name }));
-        io.to(roomId).emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData, balances: room.balances, roundLog });
+        io.to(roomId).emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData, balances: room.balances, roundLog, votes: room.votes });
         return;
     }
 
@@ -481,6 +521,10 @@ function executeTaxPhase(roomId, room) {
         let bestCards = lowPlayer.hand.filter(c => c !== JOKER).sort((a,b)=>a-b).slice(0, count);
         bestCards.forEach(c => lowPlayer.hand.splice(lowPlayer.hand.indexOf(c), 1));
         highPlayer.hand.push(...bestCards);
+        
+        // ⭐️ 2. 세금 징수 즉시 왕의 손패 정렬 보장!
+        highPlayer.hand.sort((a,b)=>a-b);
+        
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
@@ -491,7 +535,6 @@ function executeTaxPhase(roomId, room) {
         let lowPlayer = room.players.find(p => p.id === lId); let highPlayer = room.players.find(p => p.id === hId);
 
         if (highPlayer.isAI) {
-            highPlayer.hand.sort((a,b)=>a-b);
             let worstCards = highPlayer.hand.splice(highPlayer.hand.length - count, count);
             lowPlayer.hand.push(...worstCards);
             room.taxLogs.push({ fromId: highPlayer.id, toId: lowPlayer.id, fromName: highPlayer.name, toName: lowPlayer.name, cards: worstCards });
@@ -515,7 +558,9 @@ function executeTaxPhase(roomId, room) {
 
 function startNormalRound(roomId, room) {
     room.status = 'playing';
-    // ⭐️ 여기서 전원의 손패를 100% 정렬한 뒤 화면으로 쏴줍니다!
+    // ⭐️ 1. 다음 라운드 시작 전 무조건 테이블 초기화 다시 한 번 보장 (가장 중요!)
+    room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+    
     room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.currentTurnIdx = 0;
     
@@ -525,9 +570,7 @@ function startNormalRound(roomId, room) {
         lastRoundRanks: room.lastRoundRanks
     });
 
-    // ⭐️ 손패 동기화 배포
     room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-
     handleAITurnIfNeeded(roomId, room);
 }
 
