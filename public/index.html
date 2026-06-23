@@ -13,6 +13,7 @@
         .btn { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; margin: 5px; }
         .btn:active { transform: translateY(4px); box-shadow: none; }
         .btn.pass { background-color: #e74c3c; box-shadow: 0 4px 0 #c0392b; color: white; }
+        .btn.back { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; color: white; }
         .btn:disabled { background-color: #7f8c8d; box-shadow: 0 4px 0 #555; color: #ccc; transform: none; }
         .screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: rgba(26, 26, 26, 0.98); z-index: 10; }
         
@@ -21,7 +22,7 @@
 
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; width: 280px; }
         .input-group input { padding: 12px; font-size: 16px; border-radius: 8px; border: 1px solid #555; background: #333; color: white; text-align: center; }
-        .lobby-buttons { display: flex; gap: 10px; }
+        .lobby-buttons { display: flex; gap: 10px; justify-content: center; }
         .player-list { background: rgba(0,0,0,0.4); padding: 15px; border-radius: 10px; width: 450px; max-width: 90vw; max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #444;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px;}
 
@@ -42,7 +43,6 @@
         .ai-mini-cards { display: flex; gap: 2px; }
         .ai-mini-card { width: 7px; height: 10px; background: #fff; border-radius: 1px; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 
-        /* 배치 위치 오프셋 */
         .pos-left-low   { top: 45%; left: max(15px, env(safe-area-inset-left)); }
         .pos-left-mid   { top: 25%; left: max(25px, env(safe-area-inset-left)); }
         .pos-left-high  { top: 13%; left: 30%; --tx: -50%; }
@@ -59,14 +59,12 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* 👑 ⭐️ PC 대화면 해상도 대응 카드 디자인 스케일업 아키텍처 */
         .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
         .card.selected { transform: translateY(-22px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); }
         .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
 
-        /* 모니터(PC) 브라우저 환경 전용 가로 해상도 확장 쿼리 */
         @media screen and (min-width: 1024px) {
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
             .card { width: 72px; height: 105px; border-radius: 8px; padding: 7px; }
@@ -77,7 +75,6 @@
             .ai-node .count { font-size: 13px; }
         }
         
-        /* 등급별 유려한 고급 색상 그라데이션 라인업 */
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
         #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
@@ -89,9 +86,9 @@
 
     <div id="orientation-warning">
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
-        <p style="color: #aaa; font-size: 14px; margin: 0 20px;">스마트폰 제어 센터에서 기기 회전 잠금을 해제해 주세요.</p>
     </div>
 
+    <!-- 1. 로그인 및 로비 화면 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 20px;">👑 위대한 달무티 멀티</h1>
         <div class="input-group">
@@ -104,14 +101,19 @@
         </div>
     </div>
 
+    <!-- 2. 대기방 화면 -->
     <div id="waiting-screen" class="screen hidden">
         <h2 style="color: #f1c40f;">🏠 대기실</h2>
         <h3 style="background:#333; padding:8px 20px; border-radius:8px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
         <p style="color:#aaa;">참가 중인 플레이어 목록</p>
         <div class="player-list" id="waiting-player-list"></div>
-        <button class="btn hidden" id="btn-start-game" onclick="startGame()">게임 시작하기</button>
+        <div class="lobby-buttons">
+            <button class="btn hidden" id="btn-start-game" onclick="startGame()">게임 시작하기</button>
+            <button class="btn back" onclick="leaveLobby()">메인으로 나가기</button>
+        </div>
     </div>
 
+    <!-- 3. 메인 게임 보드 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -134,6 +136,7 @@
         </div>
     </div>
 
+    <!-- 4. 세금 하사 선택 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
@@ -144,24 +147,25 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
+    <!-- 5. 세금 교환 총 요약 모달 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:320px;"></div>
         <button class="btn" style="margin-top:20px;" id="btn-host-next" onclick="requestNextRound()">새 라운드 돌입</button>
     </div>
 
+    <!-- 6. 결과 창 화면 -->
     <div id="result-screen" class="screen hidden" style="z-index:80;">
         <h1 style="color:#f1c40f;">🎉 게임 종료 (순위표)</h1>
         <div class="rank-list" id="final-rank-list" style="background:#222; padding:20px; border-radius:10px; width:320px; max-height:40vh; overflow-y:auto;"></div>
         <div class="result-buttons" style="margin-top:20px; display:flex; gap:10px;">
             <button class="btn" id="btn-next-round" onclick="requestNextRound()">다음 라운드 진행</button>
-            <button class="btn pass" onclick="location.reload()">방 나가기</button>
+            <button class="btn pass" onclick="location.reload()">아예 게임 끄기</button>
         </div>
     </div>
 
     <script>
         const socket = io();
-        let currentRoomId = null;
         let myId = null;
         let myHand = [];
         let selectedIndices = [];
@@ -177,20 +181,25 @@
             socket.emit('createRoom', name);
         }
 
-        // ⭐️ 핵심 수정: 일반 참여 플레이어도 동기적으로 방 번호 코드를 완벽 세팅 보장
         function joinRoom() {
             const name = document.getElementById('player-name').value.trim();
             const code = document.getElementById('room-code-input').value.trim();
             if(!name || !code) return alert('닉네임과 방 번호 4자리를 입력해주세요.');
-            currentRoomId = code;
             document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = true);
             socket.emit('joinRoom', { roomId: code, playerName: name });
         }
 
-        function startGame() { socket.emit('startGame', currentRoomId); }
+        // ⭐️ 추가: 대기실에서 다시 메인 로비로 빠져나가는 함수
+        function leaveLobby() {
+            socket.emit('leaveRoom');
+            document.getElementById('waiting-screen').classList.add('hidden');
+            document.getElementById('lobby-screen').classList.remove('hidden');
+            document.querySelectorAll('.lobby-buttons .btn').forEach(b => b.disabled = false);
+        }
+
+        function startGame() { socket.emit('startGame'); }
 
         socket.on('roomCreated', ({ roomId, players }) => {
-            currentRoomId = roomId;
             document.getElementById('room-id-display').innerText = roomId;
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
@@ -198,7 +207,16 @@
         });
 
         socket.on('roomUpdated', ({ roomId, players }) => {
-            if(roomId) currentRoomId = roomId;
+            document.getElementById('lobby-screen').classList.add('hidden');
+            document.getElementById('waiting-screen').classList.remove('hidden');
+            updateWaitingPlayerList(players);
+        });
+
+        // ⭐️ 강제로 로비로 리셋시키는 이벤트
+        socket.on('forceLobby', ({ players }) => {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             updateWaitingPlayerList(players);
@@ -209,6 +227,7 @@
             container.innerHTML = '';
             let me = players.find(p => p.id === socket.id);
             if(me && me.isHost) document.getElementById('btn-start-game').classList.remove('hidden');
+            else document.getElementById('btn-start-game').classList.add('hidden'); // 방장이 아니면 숨김
 
             players.forEach((p, idx) => {
                 container.innerHTML += `<div class="player-item"><div>${idx+1}. <strong>${p.name}</strong></div> <div style="font-size:12px; color:#aaa;">${p.isHost ? '방장👑' : '대기 중'}</div></div>`;
@@ -225,7 +244,6 @@
             updateTurnState(currentTurnId);
         });
 
-        // ⭐️ 복구 완료: 고해상도 그래픽 반전 텍스트 지원 카드 생성기
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
@@ -289,7 +307,6 @@
             });
         }
 
-        // ⭐️ 복구 완료: 액티브 테두리 가시성 복구 및 완전 독립적 턴 제어
         function updateTurnState(currentTurnId) {
             document.querySelectorAll('.ai-node').forEach(n => n.classList.remove('active'));
             const activeNode = document.getElementById(`node-${currentTurnId}`);
@@ -303,14 +320,15 @@
             document.getElementById('game-status').style.color = isMyTurn ? '#2ecc71' : '#ecf0f1';
         }
 
+        // ⭐️ 서버가 소켓으로 알아서 방을 찾도록 indices 정보만 전송
         function playCards() {
             if(selectedIndices.length === 0) return alert('낼 카드를 선택해 주세요.');
-            socket.emit('playCards', { roomId: currentRoomId, indices: selectedIndices });
+            socket.emit('playCards', { indices: selectedIndices });
             selectedIndices = [];
             document.querySelectorAll('.card.selected').forEach(c => c.classList.remove('selected'));
         }
         
-        function passTurn() { socket.emit('passTurn', currentRoomId); }
+        function passTurn() { socket.emit('passTurn'); }
 
         socket.on('gameStateUpdated', ({ center, currentTurnId, players }) => {
             const centerArea = document.getElementById('center-area');
@@ -319,7 +337,6 @@
                 center.cards.forEach((rank, idx) => {
                     let c = createCardHTML(rank, idx, false);
                     if(idx > 0) {
-                        // 3D 테이블 중앙 누적 패 겹침 마진 스케일 차등 분기
                         let gap = window.innerWidth >= 1024 ? '-35px' : '-20px';
                         c.style.marginLeft = gap;
                     }
@@ -368,7 +385,7 @@
             });
         });
 
-        function requestNextRound() { socket.emit('playNextRound', currentRoomId); }
+        function requestNextRound() { socket.emit('playNextRound'); }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
             document.getElementById('tax-give-modal').classList.remove('hidden');
@@ -379,7 +396,7 @@
         });
 
         function submitTaxHand() {
-            socket.emit('submitTaxHand', { roomId: currentRoomId, targetId: taxTargetId, indices: selectedIndices });
+            socket.emit('submitTaxHand', { targetId: taxTargetId, indices: selectedIndices });
             document.getElementById('tax-give-modal').classList.add('hidden');
         }
 
