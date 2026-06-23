@@ -41,7 +41,7 @@ io.on('connection', (socket) => {
                         if (newHost) newHost.isHost = true;
                     }
                     if (room.status === 'lobby' || room.status === 'seon_drawing') {
-                        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI) });
+                        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
                     } else {
                         room.status = 'lobby';
                         room.players = room.players.filter(p => !p.isAI);
@@ -57,12 +57,13 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    // ⭐️ 1. 방 만들 때 maxPlayers(총 인원 수) 변수 받아서 저장
-    socket.on('createRoom', ({ playerName, maxPlayers }) => {
+    // ⭐️ 판돈과 최대 인원 설정
+    socket.on('createRoom', ({ playerName, maxPlayers, betAmount }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
-            maxPlayers: parseInt(maxPlayers) || 4, // 기본 4인
+            maxPlayers: parseInt(maxPlayers) || 4,
+            betAmount: parseInt(betAmount) || 0,
             players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
@@ -71,13 +72,12 @@ io.on('connection', (socket) => {
             lastRoundRanks: [],
             taxLogs: [],
             seonPickedData: {},
-            readyForNextRound: [],
-            // ⭐️ 2. 누적 정산 현황 데이터 저장소
+            readyPlayers: [],
             balances: {},
             transactions: []
         };
         socket.join(roomId);
-        socket.emit('roomCreated', { roomId, players: rooms[roomId].players });
+        socket.emit('roomCreated', { roomId, players: rooms[roomId].players, betAmount: rooms[roomId].betAmount, maxPlayers: rooms[roomId].maxPlayers });
     });
 
     socket.on('joinRoom', ({ roomId, playerName }) => {
@@ -85,24 +85,40 @@ io.on('connection', (socket) => {
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
         if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
         if (room.players.some(p => p.id === socket.id)) return;
-        
-        // 정해진 maxPlayers 인원까지만 입장 가능
-        if (room.players.filter(p => !p.isAI).length >= room.maxPlayers) {
-            return socket.emit('errorMsg', `방이 가득 찼습니다. (최대 ${room.maxPlayers}인)`);
-        }
+        if (room.players.filter(p => !p.isAI).length >= room.maxPlayers) return socket.emit('errorMsg', `방이 가득 찼습니다. (최대 ${room.maxPlayers}인)`);
 
         room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
         socket.join(roomId);
-        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI) });
+        io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
+    });
+
+    // ⭐️ 레디 시스템 동기화
+    socket.on('toggleReady', () => {
+        const room = getRoomBySocket(socket.id);
+        if (!room) return;
+        if (room.readyPlayers.includes(socket.id)) {
+            room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
+        } else {
+            room.readyPlayers.push(socket.id);
+        }
+        io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
+    });
+
+    // ⭐️ 감정표현 브로드캐스트
+    socket.on('sendEmote', (emote) => {
+        const room = getRoomBySocket(socket.id);
+        if (room) io.to(room.id).emit('playerEmoted', { id: socket.id, emote });
     });
 
     socket.on('startGame', () => {
         const room = getRoomBySocket(socket.id);
-        if (!room) return socket.emit('errorMsg', '방 세션 오류');
+        if (!room) return;
 
         const humanPlayers = room.players.filter(p => !p.isAI);
-        
-        // ⭐️ 3. 모자란 인원수는 방장이 세팅한 maxPlayers에 도달할 때까지 AI로 꽉꽉 채워넣음!
+        if (room.readyPlayers.length < humanPlayers.length - 1) {
+            return socket.emit('errorMsg', '모든 플레이어가 준비를 완료해야 합니다.');
+        }
+
         if (room.players.length < room.maxPlayers) {
             const botsNeeded = room.maxPlayers - room.players.length;
             for (let i = 1; i <= botsNeeded; i++) {
@@ -114,9 +130,7 @@ io.on('connection', (socket) => {
         room.seonPickedData = {};
 
         room.players.forEach(p => {
-            if (p.isAI) {
-                room.seonPickedData[p.id] = { name: p.name, card: Math.floor(Math.random() * 12) + 1, isAI: true };
-            }
+            if (p.isAI) room.seonPickedData[p.id] = { name: p.name, card: Math.floor(Math.random() * 12) + 1, isAI: true };
         });
 
         io.to(room.id).emit('seonDrawPhaseInit', { totalPlayers: room.players.length });
@@ -130,38 +144,37 @@ io.on('connection', (socket) => {
         const player = room.players.find(p => p.id === socket.id);
         if (!player) return;
 
-        const generatedCard = Math.floor(Math.random() * 12) + 1;
-        room.seonPickedData[socket.id] = { name: player.name, card: generatedCard, isAI: false };
+        room.seonPickedData[socket.id] = { name: player.name, card: Math.floor(Math.random() * 12) + 1, isAI: false };
 
         if (Object.keys(room.seonPickedData).length === room.players.length) {
             let sortedResults = Object.keys(room.seonPickedData).map(id => ({
-                id,
-                name: room.seonPickedData[id].name,
-                card: room.seonPickedData[id].card
+                id, name: room.seonPickedData[id].name, card: room.seonPickedData[id].card
             })).sort((a, b) => a.card - b.card);
 
             const winnerId = sortedResults[0].id;
             const winnerName = sortedResults[0].name;
 
+            // ⭐️ 첫 판 달무티 룰 완벽 적용: 뽑은 카드 순서대로 플레이어 배열 재정렬(자리 배치)
+            let newPlayersOrder = [];
+            sortedResults.forEach(res => newPlayersOrder.push(room.players.find(p => p.id === res.id)));
+            room.players = newPlayersOrder;
+
             io.to(room.id).emit('seonDrawResults', { drawResults: sortedResults, winnerId, winnerName });
 
             setTimeout(() => {
                 if (!rooms[room.id] || rooms[room.id].status !== 'seon_drawing') return;
-
                 room.status = 'playing';
                 room.finishedPlayers = [];
                 room.center = { cards: [], count: 0, rank: 99, ownerId: null };
                 room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
-
                 room.lastRoundRanks = room.players.map(p => p.id);
+                
                 distributeCards(room);
-
-                const targetIdx = room.players.findIndex(p => p.id === winnerId);
-                room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
+                room.currentTurnIdx = 0; // 배열 맨 앞이 무조건 선
 
                 io.to(room.id).emit('gameStarted', {
                     players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
-                    currentTurnId: room.players[room.currentTurnIdx].id,
+                    currentTurnId: room.players[0].id,
                     lastRoundRanks: room.lastRoundRanks
                 });
 
@@ -211,26 +224,29 @@ io.on('connection', (socket) => {
         const room = getRoomBySocket(socket.id);
         if (!room || room.status !== 'ended') return;
         
-        if (!room.readyForNextRound) room.readyForNextRound = [];
-        if (!room.readyForNextRound.includes(socket.id)) {
-            room.readyForNextRound.push(socket.id);
-        }
-
+        if (!room.readyPlayers.includes(socket.id)) room.readyPlayers.push(socket.id);
         const playerReady = room.players.find(p => p.id === socket.id);
-        io.to(room.id).emit('chatMsg', `✅ [${playerReady.name}] 님이 다음 라운드 준비를 완료했습니다.`);
+        io.to(room.id).emit('chatMsg', `✅ [${playerReady.name}] 다음 라운드 레디!`);
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         
-        if (room.readyForNextRound.length >= humanPlayers.length) {
+        if (room.readyPlayers.length >= humanPlayers.length) {
             room.status = 'tax_phase';
             io.to(room.id).emit('hideResultScreen');
             
             room.lastRoundRanks = [...room.finishedPlayers];
             room.finishedPlayers = [];
-            room.readyForNextRound = [];
+            room.readyPlayers = [];
             room.center = { cards: [], count: 0, rank: 99, ownerId: null };
             room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
             
+            // ⭐️ 둘째 판 부터는 지난 판 등수대로 자리 재배치 룰 완벽 적용
+            let newPlayersOrder = [];
+            room.lastRoundRanks.forEach(rId => {
+                newPlayersOrder.push(room.players.find(p => p.id === rId));
+            });
+            room.players = newPlayersOrder;
+
             distributeCards(room);
             executeTaxPhase(room.id, room);
         }
@@ -245,18 +261,17 @@ io.on('connection', (socket) => {
         indices.sort((a,b) => b-a);
         let taxCards = indices.map(i => giver.hand.splice(i, 1)[0]);
         receiver.hand.push(...taxCards);
-        room.taxLogs.push({ from: giver.name, to: receiver.name, cards: taxCards });
+        room.taxLogs.push({ fromId: giver.id, toId: receiver.id, fromName: giver.name, toName: receiver.name, cards: taxCards });
         
         socket.emit('yourHand', giver.hand);
         
-        let expectedLogs = 0;
-        let total = room.players.length;
+        let expectedLogs = 0; let total = room.players.length;
         if (total === 5) expectedLogs = 2;
         else if (total === 6 || total === 7) expectedLogs = 4;
         else if (total >= 8) expectedLogs = 6;
 
         if (room.taxLogs.length === expectedLogs) {
-            io.to(room.id).emit('taxPhaseResults', { taxLogs: room.taxLogs });
+            io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
             setTimeout(() => {
                 room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
                 startNormalRound(room.id, room);
@@ -264,6 +279,42 @@ io.on('connection', (socket) => {
         }
     });
 });
+
+// ⭐️ 무한 루프 차단 및 트릭 주인 로직 최적화 엔진
+function clearTrickAndSetLead(roomId, room) {
+    let trickWinnerId = room.center.ownerId;
+    room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+    room.players.forEach(p => p.hasPassed = false);
+
+    let nextTurnId = trickWinnerId;
+    if (!nextTurnId || room.finishedPlayers.includes(nextTurnId)) {
+        let winnerIdx = room.players.findIndex(p => p.id === trickWinnerId);
+        if (winnerIdx === -1) winnerIdx = 0;
+        
+        let nextIdx = (winnerIdx + 1) % room.players.length;
+        let loopCount = 0;
+        while (room.finishedPlayers.includes(room.players[nextIdx].id) && loopCount < room.players.length) {
+            nextIdx = (nextIdx + 1) % room.players.length;
+            loopCount++;
+        }
+        nextTurnId = room.players[nextIdx].id;
+    }
+    
+    room.currentTurnIdx = room.players.findIndex(p => p.id === nextTurnId);
+    let nextPlayer = room.players.find(p => p.id === nextTurnId);
+    if (nextPlayer) io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
+    io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
+}
+
+function advanceTurn(room) {
+    let initial = room.currentTurnIdx;
+    let loopCount = 0;
+    do {
+        room.currentTurnIdx = (room.currentTurnIdx + 1) % room.players.length;
+        loopCount++;
+        if (loopCount > room.players.length) break; // ⭐️ 무한 루프 완벽 방어막
+    } while (room.players[room.currentTurnIdx].hasPassed || room.finishedPlayers.includes(room.players[room.currentTurnIdx].id));
+}
 
 function handleAITurnIfNeeded(roomId, room) {
     if (room.status !== 'playing') return;
@@ -273,19 +324,14 @@ function handleAITurnIfNeeded(roomId, room) {
     setTimeout(() => {
         let aiHand = player.hand;
         let groups = {};
-        aiHand.forEach((r, idx) => {
-            if (!groups[r]) groups[r] = [];
-            groups[r].push(idx);
-        });
+        aiHand.forEach((r, idx) => { if (!groups[r]) groups[r] = []; groups[r].push(idx); });
 
         if (room.center.count === 0) {
             let bestRank = -1; let maxCount = 0;
             for (let r in groups) {
                 let num = Number(r);
-                if (num !== JOKER) {
-                    if (groups[r].length > maxCount || (groups[r].length === maxCount && num > bestRank)) {
-                        maxCount = groups[r].length; bestRank = num;
-                    }
+                if (num !== JOKER && (groups[r].length > maxCount || (groups[r].length === maxCount && num > bestRank))) {
+                    maxCount = groups[r].length; bestRank = num;
                 }
             }
             let pIndices = bestRank !== -1 ? groups[bestRank] : groups[JOKER];
@@ -323,44 +369,47 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
 
     if (player.hand.length === 0 && !room.finishedPlayers.includes(player.id)) {
         room.finishedPlayers.push(player.id);
+        io.to(roomId).emit('playerEscaped', { name: player.name });
     }
+    
     if (room.finishedPlayers.length >= room.players.length - 1) {
         room.status = 'ended';
         room.players.forEach(p => { if(!room.finishedPlayers.includes(p.id)) room.finishedPlayers.push(p.id); });
         
-        // ⭐️ 4. 게임 종료 시 누적 정산 계산 (사람 대 사람 한정)
+        // ⭐️ 판돈 정산 로직
         const humanFinished = room.finishedPlayers.filter(id => {
             const p = room.players.find(pl => pl.id === id);
             return p && !p.isAI;
         });
 
         let roundLog = null;
-        if (humanFinished.length >= 2) {
+        if (humanFinished.length >= 2 && room.betAmount > 0) {
             const firstHumanId = humanFinished[0];
             const lastHumanId = humanFinished[humanFinished.length - 1];
             const firstHuman = room.players.find(p => p.id === firstHumanId);
             const lastHuman = room.players.find(p => p.id === lastHumanId);
 
-            roundLog = { from: lastHuman.name, to: firstHuman.name, amount: 1000 };
+            roundLog = { from: lastHuman.name, to: firstHuman.name, amount: room.betAmount };
             room.transactions.push(roundLog);
 
-            // 잔액 업데이트
             if (!room.balances[firstHuman.name]) room.balances[firstHuman.name] = 0;
             if (!room.balances[lastHuman.name]) room.balances[lastHuman.name] = 0;
-            room.balances[firstHuman.name] += 1000;
-            room.balances[lastHuman.name] -= 1000;
+            room.balances[firstHuman.name] += room.betAmount;
+            room.balances[lastHuman.name] -= room.betAmount;
         }
 
         let playersData = room.players.map(p => ({ id: p.id, name: p.name }));
-        io.to(roomId).emit('gameOver', {
-            finishedPlayers: room.finishedPlayers,
-            playersData,
-            balances: room.balances,
-            roundLog
-        });
+        io.to(roomId).emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData, balances: room.balances, roundLog });
         return;
     }
-    advanceTurn(room);
+
+    let activePlayers = room.players.filter(p => !p.hasPassed && !room.finishedPlayers.includes(p.id));
+    if (activePlayers.length === 0 || (activePlayers.length === 1 && activePlayers[0].id === room.center.ownerId)) {
+        clearTrickAndSetLead(roomId, room);
+    } else {
+        advanceTurn(room);
+    }
+    
     broadcastGameState(roomId, room);
     handleAITurnIfNeeded(roomId, room);
 }
@@ -371,33 +420,11 @@ function executePassLogic(roomId, room, player) {
 
     let activePlayers = room.players.filter(p => !p.hasPassed && !room.finishedPlayers.includes(p.id));
     if (activePlayers.length === 0 || (activePlayers.length === 1 && activePlayers[0].id === room.center.ownerId)) {
-        let trickWinnerId = room.center.ownerId;
-        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
-        room.players.forEach(p => p.hasPassed = false);
-
-        let nextTurnId = trickWinnerId;
-        if (!nextTurnId || room.finishedPlayers.includes(nextTurnId)) {
-            let winnerIdx = room.players.findIndex(p => p.id === trickWinnerId);
-            if (winnerIdx === -1) winnerIdx = 0;
-
-            let nextIdx = (winnerIdx + 1) % room.players.length;
-            while (room.finishedPlayers.includes(room.players[nextIdx].id)) {
-                nextIdx = (nextIdx + 1) % room.players.length;
-            }
-            nextTurnId = room.players[nextIdx].id;
-        }
-        
-        const targetIdx = room.players.findIndex(p => p.id === nextTurnId);
-        room.currentTurnIdx = targetIdx !== -1 ? targetIdx : 0;
-        
-        let nextPlayer = room.players.find(p => p.id === nextTurnId);
-        if (nextPlayer) {
-            io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
-        }
-        io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
+        clearTrickAndSetLead(roomId, room);
     } else {
         advanceTurn(room);
     }
+    
     broadcastGameState(roomId, room);
     handleAITurnIfNeeded(roomId, room);
 }
@@ -409,12 +436,6 @@ function distributeCards(room) {
         p = (p + 1) % room.players.length;
     }
     room.players.forEach(pl => pl.hand.sort((a, b) => a - b));
-}
-
-function advanceTurn(room) {
-    do {
-        room.currentTurnIdx = (room.currentTurnIdx + 1) % room.players.length;
-    } while (room.players[room.currentTurnIdx].hasPassed || room.finishedPlayers.includes(room.players[room.currentTurnIdx].id));
 }
 
 function broadcastGameState(roomId, room) {
@@ -430,19 +451,10 @@ function broadcastGameState(roomId, room) {
 
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
-    
-    if (total <= 4) {
-        taxRules = [];
-    } else if (total === 5) {
-        taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
-    } else if (total === 6 || total === 7) {
-        taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 });
-        taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 });
-    } else if (total >= 8) {
-        taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 });
-        taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 });
-        taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 });
-    }
+    if (total <= 4) taxRules = [];
+    else if (total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
+    else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
+    else if (total >= 8) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 }); taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 }); }
 
     if (taxRules.length === 0) {
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
@@ -451,7 +463,6 @@ function executeTaxPhase(roomId, room) {
     }
 
     let humanTaxWaiting = false;
-
     taxRules.forEach(rule => {
         let hId = room.lastRoundRanks[rule.highRank]; let lId = room.lastRoundRanks[rule.lowRank]; let count = rule.count;
         let lowPlayer = room.players.find(p => p.id === lId); let highPlayer = room.players.find(p => p.id === hId);
@@ -459,7 +470,7 @@ function executeTaxPhase(roomId, room) {
         let bestCards = lowPlayer.hand.filter(c => c !== JOKER).sort((a,b)=>a-b).slice(0, count);
         bestCards.forEach(c => lowPlayer.hand.splice(lowPlayer.hand.indexOf(c), 1));
         highPlayer.hand.push(...bestCards);
-        room.taxLogs.push({ from: lowPlayer.name, to: highPlayer.name, cards: bestCards });
+        room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
@@ -472,34 +483,31 @@ function executeTaxPhase(roomId, room) {
             highPlayer.hand.sort((a,b)=>a-b);
             let worstCards = highPlayer.hand.splice(highPlayer.hand.length - count, count);
             lowPlayer.hand.push(...worstCards);
-            room.taxLogs.push({ from: highPlayer.name, to: lowPlayer.name, cards: worstCards });
+            room.taxLogs.push({ fromId: highPlayer.id, toId: lowPlayer.id, fromName: highPlayer.name, toName: lowPlayer.name, cards: worstCards });
         } else {
             humanTaxWaiting = true;
-            let log = room.taxLogs.find(l => l.to === highPlayer.name && l.from === lowPlayer.name);
+            let log = room.taxLogs.find(l => l.toName === highPlayer.name && l.fromName === lowPlayer.name);
             io.to(hId).emit('taxReceived', { cards: log.cards, count, targetName: lowPlayer.name, targetId: lId });
         }
     });
 
     if (!humanTaxWaiting) {
-        io.to(roomId).emit('taxPhaseResults', { taxLogs: room.taxLogs });
+        io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
         }, 3000);
-    } else {
-        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
     }
 }
 
 function startNormalRound(roomId, room) {
     room.status = 'playing';
     room.players.forEach(p => p.hand.sort((a,b)=>a-b));
-    let firstPlayerId = room.lastRoundRanks[0];
-    room.currentTurnIdx = room.players.findIndex(p => p.id === firstPlayerId);
+    room.currentTurnIdx = 0; // 배열 맨 앞이 방금 1등이므로 인덱스 0이 100% 선
     
     io.to(roomId).emit('gameStarted', {
         players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
-        currentTurnId: firstPlayerId,
+        currentTurnId: room.players[0].id,
         lastRoundRanks: room.lastRoundRanks
     });
 
