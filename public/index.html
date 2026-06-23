@@ -27,7 +27,6 @@
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
-        /* ⭐️ 4. 채팅 팝업 위치 고정 및 최상단 배치 */
         .emote-popup-anim { position: absolute; top: -35px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f;}
         
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
@@ -48,14 +47,14 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        /* ⭐️ 3. 적 아바타들 좌표 일제히 위로 상승! (밑에 절대 안 가려짐) */
-        .pos-left-low   { top: 32%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 12%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 2%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: 0%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 2%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 12%; right: max(25px, env(safe-area-inset-right)); }
-        .pos-right-low  { top: 32%; right: max(15px, env(safe-area-inset-right)); }
+        /* ⭐️ 1. 시야 확보를 위해 적 아바타들 전체 상승 (상단/중단 배치) */
+        .pos-left-low   { top: 25%; left: max(15px, env(safe-area-inset-left)); }
+        .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 1%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: -2%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 1%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-right-low  { top: 25%; right: max(15px, env(safe-area-inset-right)); }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
         .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -5px; z-index: 20; }
@@ -71,8 +70,7 @@
         .emote-grid button:active { background: #555; }
         .chat-input-container { border-top: 1px solid #555; padding-top: 10px; display: flex; gap: 6px; }
 
-        /* ⭐️ 1. 내 카드 상단 패딩 대폭 늘려서 선택해도 절대 안 잘리게 방어막 구축! */
-        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 50px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
+        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 40px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
         .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
@@ -99,8 +97,9 @@
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
-        #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 42%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        /* ⭐️ 1. 알림창과 상태창 테이블/패 안가리게 높이 완전 재조정 */
+        #game-status { position: absolute; top: max(15px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        #chat-toast-area { position: absolute; bottom: 48%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -118,19 +117,16 @@
     <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
-        
         <div id="step-1-nickname" class="input-group">
             <input type="text" id="player-name" placeholder="사용할 닉네임 입력" maxlength="8">
             <button class="btn" onclick="goToStep2()">입장하기</button>
         </div>
-
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
             <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9; color:#fff;" onclick="goToStep3()">기존 방 참가하기</button>
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
         </div>
-
         <div id="step-3-join" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">방 코드를 입력하세요</h3>
             <input type="text" id="room-code-input" placeholder="초대 코드 4자리 입력" maxlength="4">
@@ -182,7 +178,14 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- 게임 화면 (분할 HUD 적용) -->
+    <!-- ⭐️ 4. 혁명 애니메이션 전용 스크린 추가 -->
+    <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
+        <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
+        <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
+        <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
+    </div>
+
+    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -191,7 +194,6 @@
             <div class="center-area" id="center-area"></div>
         </div>
         
-        <!-- 커스텀 이모티콘 팝업 메뉴 -->
         <div id="emote-menu" class="hidden">
             <div class="emote-grid">
                 <button onclick="sendEmote('빨리!')">빨리!</button>
@@ -252,17 +254,16 @@
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
-            <div id="tax-give-log" class="slide-left" style="font-size:16px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
+            <div id="tax-give-log" class="slide-left" style="font-size:15px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
             <div style="font-size:24px; margin-bottom:15px; color:#f1c40f;">↕️</div>
-            <div id="tax-recv-log" class="slide-right" style="font-size:16px; color:#2ecc71; margin-bottom:25px; font-weight:bold;"></div>
+            <div id="tax-recv-log" class="slide-right" style="font-size:15px; color:#2ecc71; margin-bottom:25px; font-weight:bold;"></div>
             <p style="color:#aaa; font-size:13px; margin:0; animation:pulse 1.5s infinite;">잠시 후 새로운 라운드가 시작됩니다...</p>
         </div>
     </div>
 
-    <!-- ⭐️ 4. 결과 창 전면 개편: 가로 분할 뷰 및 투표/채팅 패널 -->
+    <!-- ⭐️ 2번. 결과 창 전면 개편 (투표 변경 가능토록 수정) -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
-        <!-- 좌측 패널: 결과, 정산, 다음행동 투표 -->
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
             <h1 style="color:#f1c40f; margin-bottom:10px; text-align:center; font-size:26px;">🎉 게임 종료 (순위표)</h1>
             <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; margin-bottom:15px;"></div>
@@ -275,18 +276,17 @@
             </div>
 
             <div id="vote-panel" style="background:#111; padding:15px; border-radius:10px; text-align:center; border: 1px solid #444;">
-                <h3 style="color:#fff; margin-top:0; margin-bottom:10px; font-size:16px;">다음 라운드 진행 방식 선택</h3>
+                <h3 style="color:#fff; margin-top:0; margin-bottom:10px; font-size:16px;">다음 라운드 진행 방식 선택 (만장일치 필요)</h3>
                 <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
+                    <!-- 버튼 disabled 제거, opacity 토글로 변경 -->
                     <button class="btn" id="btn-vote-keep" onclick="submitVote('keep')" style="flex:1; font-size:14px; padding:10px;">▶ 그대로 진행<br><span style="font-size:11px; font-weight:normal;">(나간 유저는 AI 대체)</span></button>
                     <button class="btn pass" id="btn-vote-lobby" onclick="submitVote('lobby')" style="flex:1; font-size:14px; padding:10px;">⚙️ 대기실 이동<br><span style="font-size:11px; font-weight:normal;">(인원 재정비)</span></button>
                 </div>
                 <div id="vote-status-list" style="font-size:13px; color:#aaa; text-align:left; background:#222; padding:10px; border-radius:8px; min-height:40px;">
-                    <!-- 투표 현황 -->
                 </div>
             </div>
         </div>
 
-        <!-- 우측 패널: 라이브 채팅방 -->
         <div id="result-right-panel" style="width: 320px; display:flex; flex-direction:column; background:#222; border: 1px solid #444; border-radius: 12px; padding: 15px;">
             <h3 style="color:#f1c40f; margin-top:0; margin-bottom:10px; text-align:center;">💬 대기 대화방</h3>
             <div id="result-chat-log" style="flex:1; overflow-y:auto; font-size:14px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; padding-right:5px; border-bottom:1px solid #444; padding-bottom:10px;"></div>
@@ -381,9 +381,10 @@
             document.getElementById('emote-menu').classList.add('hidden');
         }
 
+        // ⭐️ 투표 시스템 수정: 언제든 마음을 바꿀 수 있게 투명도로 활성화 표시
         function submitVote(type) {
-            document.getElementById('btn-vote-keep').disabled = true;
-            document.getElementById('btn-vote-lobby').disabled = true;
+            document.getElementById('btn-vote-keep').style.opacity = type === 'keep' ? '1' : '0.4';
+            document.getElementById('btn-vote-lobby').style.opacity = type === 'lobby' ? '1' : '0.4';
             socket.emit('submitVote', type);
         }
 
@@ -424,8 +425,10 @@
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
-            document.getElementById('btn-vote-keep').disabled = false;
-            document.getElementById('btn-vote-lobby').disabled = false;
+            
+            // 투표 버튼 초기화
+            document.getElementById('btn-vote-keep').style.opacity = '1';
+            document.getElementById('btn-vote-lobby').style.opacity = '1';
             updateWaitingPlayerList(players, []);
         });
 
@@ -485,7 +488,6 @@
             
             const screen = document.getElementById('seon-draw-screen');
             screen.classList.remove('hidden');
-
             const container = document.getElementById('seon-cards-container');
             container.innerHTML = '';
 
@@ -553,8 +555,8 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
             
-            document.getElementById('btn-vote-keep').disabled = false;
-            document.getElementById('btn-vote-lobby').disabled = false;
+            document.getElementById('btn-vote-keep').style.opacity = '1';
+            document.getElementById('btn-vote-lobby').style.opacity = '1';
             
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
@@ -562,6 +564,9 @@
             document.getElementById('my-avatar').style.border = 'none';
             document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
             document.getElementById('player-name-label').style.color = '#fff';
+            
+            // ⭐️ 잔상 카드 완벽 제거 보장
+            document.getElementById('center-area').innerHTML = '';
 
             let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
             if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
@@ -572,12 +577,33 @@
             updateTurnState(currentTurnId);
         });
 
+        // ⭐️ 반란 경고 애니메이션
+        socket.on('revolutionAlert', ({ type, playerName }) => {
+            const revScreen = document.getElementById('revolution-screen');
+            revScreen.classList.remove('hidden');
+            
+            if (type === 'grand') {
+                document.getElementById('rev-title').innerText = "🔥 대반란 발발!!";
+                document.getElementById('rev-subtitle').innerHTML = `대농노 [${playerName}]님이 조커 2장으로<br>대혁명을 일으켰습니다!<br><br><span style="color:#fff;">모든 세금이 면제되며, 계급이 완벽하게 역순으로 뒤집힙니다!</span>`;
+            } else {
+                document.getElementById('rev-title').innerText = "💥 반란 발발!!";
+                document.getElementById('rev-subtitle').innerHTML = `[${playerName}]님이 조커 2장으로<br>반란을 일으켰습니다!<br><br><span style="color:#fff;">이번 라운드는 모든 세금 교환이 면제됩니다.</span>`;
+            }
+            
+            setTimeout(() => { revScreen.classList.add('hidden'); }, 5500);
+        });
+
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             c.innerHTML = `<div class="number">${displayRank}</div><div class="center-content">${displayRank}</div><div class="number bottom">${displayRank}</div>`;
-            if (isClickable) {
+            
+            // ⭐️ 5. 세금 제출 시 조커 금지 로직
+            if (isTaxMode && rank === 13) {
+                c.style.opacity = '0.4';
+                c.onclick = () => alert('조커 카드는 세금으로 낼 수 없습니다!');
+            } else if (isClickable) {
                 c.onclick = () => {
                     c.classList.toggle('selected');
                     if(c.classList.contains('selected')) selectedIndices.push(index);
@@ -745,7 +771,6 @@
                 setTimeout(() => el.remove(), 2500);
             }
             
-            // 결과창 열려있으면 채팅로그에도 쌓기
             if (!document.getElementById('result-screen').classList.contains('hidden')) {
                 const logArea = document.getElementById('result-chat-log');
                 let div = document.createElement('div');
@@ -759,7 +784,6 @@
             document.getElementById('game-screen').classList.add('hidden');
             document.getElementById('result-screen').classList.remove('hidden');
             
-            // 투표 리스트 초기화
             document.getElementById('vote-status-list').innerHTML = '';
             document.getElementById('result-chat-log').innerHTML = '';
 
@@ -805,7 +829,6 @@
             if(!hasBalances) balEl.innerHTML += `<span style="font-size:13px; color:#aaa;">아직 누적 기록이 없습니다.</span>`;
         });
 
-        // ⭐️ 투표 현황 렌더링 리스너
         socket.on('voteStatusUpdated', ({ votes, playersData }) => {
             const list = document.getElementById('vote-status-list');
             list.innerHTML = '';
@@ -830,7 +853,9 @@
             document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
-            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 <strong>좋은 카드 [${cards.map(c=>c===13?'J':c).join(', ')}]</strong>를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
+            
+            let displayCards = cards.map(c=>c===13?'J':c).join(', ');
+            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 <strong>좋은 카드 [${displayCards}]</strong>를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
             const container = document.getElementById('tax-hand'); container.innerHTML = ''; selectedIndices = [];
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, true)); });
         });
@@ -852,6 +877,19 @@
             list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(이 창은 왕의 결정을 기다리는 대기창입니다)</span></div>`;
         });
 
+        // ⭐️ 6. 세금 명세서를 텍스트에서 직관적인 카드 이미지로 변환해주는 렌더러
+        function generateMiniCardsHTML(cards) {
+            if(!cards || cards.length === 0) return '';
+            return `<div style="display:flex; gap:10px; justify-content:center; align-items:center;">` +
+            cards.map(c => {
+                let display = c === 13 ? 'J' : c;
+                return `<div class="card rank-${c}" style="width:36px; height:52px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                    <div style="font-size:10px; font-weight:bold;">${display}</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:18px; font-weight:900;">${display}</div>
+                </div>`
+            }).join('') + `</div>`;
+        }
+
         socket.on('taxPhasePersonalResults', ({ taxLogs }) => {
             document.getElementById('tax-summary-modal').classList.add('hidden');
             
@@ -862,10 +900,10 @@
             if (myGive || myRecv) {
                 document.getElementById('personal-tax-modal').classList.remove('hidden');
                 
-                if(myGive) document.getElementById('tax-give-log').innerHTML = `📤 [${myGive.toName}]님에게 <span style="color:#fff;">[${myGive.cards.map(c=>c===13?'J':c).join(', ')}]</span> 상납`;
+                if(myGive) document.getElementById('tax-give-log').innerHTML = `<div style="margin-bottom:8px;">📤 [${myGive.toName}]님에게 세금 상납</div>` + generateMiniCardsHTML(myGive.cards);
                 else document.getElementById('tax-give-log').innerHTML = '';
 
-                if(myRecv) document.getElementById('tax-recv-log').innerHTML = `📥 [${myRecv.fromName}]님에게서 <span style="color:#fff;">[${myRecv.cards.map(c=>c===13?'J':c).join(', ')}]</span> 하사받음`;
+                if(myRecv) document.getElementById('tax-recv-log').innerHTML = `<div style="margin-bottom:8px;">📥 [${myRecv.fromName}]님에게서 하사받음</div>` + generateMiniCardsHTML(myRecv.cards);
                 else document.getElementById('tax-recv-log').innerHTML = '';
             }
         });

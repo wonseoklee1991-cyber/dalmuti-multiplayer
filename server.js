@@ -27,7 +27,6 @@ function createDeck() {
 
 io.on('connection', (socket) => {
     
-    // ⭐️ 누군가 튕겼을 때 방을 터뜨리지 않고 즉시 AI로 대체하는 로직으로 변경
     function handlePlayerExit() {
         for (const roomId in rooms) {
             const room = rooms[roomId];
@@ -136,7 +135,6 @@ io.on('connection', (socket) => {
         io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
-    // ⭐️ 텍스트 채팅 공용 라우터 (결과창에서도 쓴다)
     socket.on('sendEmote', (emote) => {
         const room = getRoomBySocket(socket.id);
         if (room) {
@@ -255,7 +253,7 @@ io.on('connection', (socket) => {
         executePassLogic(room.id, room, player);
     });
 
-    // ⭐️ 4. 결과창 만장일치 투표 시스템 추가
+    // ⭐️ 2번: 투표 시 버튼 상태를 잠그지 않고 계속 변경할 수 있도록 로직 업그레이드
     socket.on('submitVote', (voteType) => {
         const room = getRoomBySocket(socket.id);
         if (!room || room.status !== 'ended') return;
@@ -264,6 +262,8 @@ io.on('connection', (socket) => {
         if (!player) return;
 
         room.votes = room.votes || { keep: [], lobby: [] };
+        
+        // 기존 표 취소 후 새 표 반영
         room.votes.keep = room.votes.keep.filter(id => id !== socket.id);
         room.votes.lobby = room.votes.lobby.filter(id => id !== socket.id);
         
@@ -274,7 +274,7 @@ io.on('connection', (socket) => {
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         
-        // 만장일치로 '그대로 진행' 선택 시
+        // 만장일치 '그대로 진행'
         if (room.votes.keep.length >= humanPlayers.length) {
             room.status = 'tax_phase';
             io.to(room.id).emit('hideResultScreen');
@@ -294,7 +294,7 @@ io.on('connection', (socket) => {
             distributeCards(room);
             executeTaxPhase(room.id, room);
         }
-        // 만장일치로 '대기실로 이동' 선택 시
+        // 만장일치 '대기실로 이동'
         else if (room.votes.lobby.length >= humanPlayers.length) {
             room.status = 'lobby';
             room.finishedPlayers = [];
@@ -312,10 +312,15 @@ io.on('connection', (socket) => {
         const receiver = room.players.find(p => p.id === targetId);
         
         indices.sort((a,b) => b-a);
-        let taxCards = indices.map(i => giver.hand.splice(i, 1)[0]);
-        receiver.hand.push(...taxCards);
+        let taxCards = indices.map(i => giver.hand[i]);
         
-        // ⭐️ 2. 세금을 받은 왕의 손패를 이 시점에서 무조건 오름차순으로 정렬 처리!!
+        // ⭐️ 5. 조커는 세금 제출 절대 불가 (서버 방어막)
+        if (taxCards.includes(JOKER)) {
+            return socket.emit('errorMsg', '조커 카드는 세금으로 하사할 수 없습니다.');
+        }
+
+        taxCards = indices.map(i => giver.hand.splice(i, 1)[0]);
+        receiver.hand.push(...taxCards);
         receiver.hand.sort((a,b) => a-b);
         
         room.taxLogs.push({ fromId: giver.id, toId: receiver.id, fromName: giver.name, toName: receiver.name, cards: taxCards });
@@ -330,7 +335,7 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
             setTimeout(() => {
                 startNormalRound(room.id, room);
-            }, 3500);
+            }, 4000);
         }
     });
 });
@@ -487,6 +492,7 @@ function distributeCards(room) {
         room.players[p].hand.push(deck.pop());
         p = (p + 1) % room.players.length;
     }
+    room.players.forEach(pl => pl.hand.sort((a, b) => a - b));
 }
 
 function broadcastGameState(roomId, room) {
@@ -503,12 +509,52 @@ function broadcastGameState(roomId, room) {
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
     
+    // ⭐️ 4. 반란(혁명) 감지 엔진: 조커 2장을 가진 유저가 있는지 체크!
+    let revolution = false;
+    let grandRevolution = false;
+    let revPlayer = null;
+
+    for (let p of room.players) {
+        if (p.hand.filter(c => c === JOKER).length === 2) {
+            revolution = true;
+            revPlayer = p;
+            let lastRankId = room.lastRoundRanks[room.lastRoundRanks.length - 1];
+            if (p.id === lastRankId) grandRevolution = true;
+            break;
+        }
+    }
+
+    if (grandRevolution) {
+        room.lastRoundRanks.reverse();
+        let newOrder = [];
+        room.lastRoundRanks.forEach(rId => newOrder.push(room.players.find(p=>p.id===rId)));
+        room.players = newOrder;
+
+        io.to(roomId).emit('revolutionAlert', { type: 'grand', playerName: revPlayer.name });
+        setTimeout(() => {
+            room.players.forEach(p => p.hand.sort((a,b)=>a-b));
+            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+            startNormalRound(roomId, room);
+        }, 7000);
+        return;
+    } else if (revolution) {
+        io.to(roomId).emit('revolutionAlert', { type: 'normal', playerName: revPlayer.name });
+        setTimeout(() => {
+            room.players.forEach(p => p.hand.sort((a,b)=>a-b));
+            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+            startNormalRound(roomId, room);
+        }, 7000);
+        return;
+    }
+
+    // 일반 세금 로직
     if (total <= 4) taxRules = [];
     else if (total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
     else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
     else if (total >= 8) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 3 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 2 }); taxRules.push({ highRank: 2, lowRank: total - 3, count: 1 }); }
 
     if (taxRules.length === 0) {
+        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
         return;
     }
@@ -521,13 +567,12 @@ function executeTaxPhase(roomId, room) {
         let bestCards = lowPlayer.hand.filter(c => c !== JOKER).sort((a,b)=>a-b).slice(0, count);
         bestCards.forEach(c => lowPlayer.hand.splice(lowPlayer.hand.indexOf(c), 1));
         highPlayer.hand.push(...bestCards);
-        
-        // ⭐️ 2. 세금 징수 즉시 왕의 손패 정렬 보장!
         highPlayer.hand.sort((a,b)=>a-b);
-        
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
+    // ⭐️ 3. 손패 확실한 오름차순 정렬 후 전송 보장
+    room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     taxRules.forEach(rule => {
@@ -549,8 +594,9 @@ function executeTaxPhase(roomId, room) {
         io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
         io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
         setTimeout(() => {
+            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 3500);
+        }, 4000);
     } else {
         io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
     }
@@ -558,9 +604,7 @@ function executeTaxPhase(roomId, room) {
 
 function startNormalRound(roomId, room) {
     room.status = 'playing';
-    // ⭐️ 1. 다음 라운드 시작 전 무조건 테이블 초기화 다시 한 번 보장 (가장 중요!)
     room.center = { cards: [], count: 0, rank: 99, ownerId: null };
-    
     room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.currentTurnIdx = 0;
     
