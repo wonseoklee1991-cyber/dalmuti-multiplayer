@@ -27,7 +27,7 @@
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
-        .emote-popup-anim { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: #000; padding: 4px 8px; border-radius: 12px; font-size: 15px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 50; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        .emote-popup-anim { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.9); color: #000; padding: 4px 8px; border-radius: 12px; font-size: 15px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 100; animation: floatUp 2.5s ease-out forwards; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
         
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
         .table-3d { width: 85vw; max-width: 700px; height: 40vh; max-height: 320px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform: rotateX(40deg) translateY(-2vh); position: relative; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); margin-top: 8vh; }
@@ -55,17 +55,17 @@
         .pos-right-mid  { top: 25%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 45%; right: max(15px, env(safe-area-inset-right)); }
 
-        /* ⭐️ UI 분할 개선: HUD 레이어 신설 및 중앙 오픈 */
-        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; }
-        .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 10px max(15px, env(safe-area-inset-left)); pointer-events: none; }
-        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 10px; }
+        /* ⭐️ 1번 UI 전면 개편: 좌우 분할 조작 레이어 추가 및 충분한 패딩 */
+        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(15px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
+        .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -15px; z-index: 20; }
+        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 5px 12px 5px 5px; border-radius: 30px; border: 1px solid #444;}
         .hud-right { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
         
-        .btn-emote { background: #34495e; border: 2px solid #555; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
+        /* ⭐️ 2번 이모티콘 커스텀 팝업 메뉴 */
+        .btn-emote { background: #34495e; border: 2px solid #555; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
         .btn-emote:active { transform: scale(0.9); }
         
-        /* ⭐️ 이모티콘 팝업 커스텀 스타일 */
-        #emote-menu { position: absolute; bottom: 55px; left: 0; background: rgba(26,26,26,0.95); border: 1px solid #444; border-radius: 12px; padding: 12px; width: 240px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); z-index: 100; pointer-events: auto; }
+        #emote-menu { position: absolute; bottom: 80px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.95); border: 1px solid #444; border-radius: 12px; padding: 12px; width: 240px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.6); z-index: 1000; pointer-events: auto; }
         .emote-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 10px 0; font-size: 15px; cursor: pointer; transition: background 0.1s;}
         .emote-grid button:active { background: #555; }
@@ -76,14 +76,15 @@
         .edit-btn { background: #7f8c8d; color: #fff !important; width: 60px;}
         .custom-btn { background: #3498db !important; color: #fff !important; flex:1; text-align: center;}
 
-        .hand-scroll-area { width: 100%; overflow-x: auto; overflow-y: hidden; padding-top: 10px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+        /* ⭐️ 1번 카드 잘림 방지 패딩 대폭 상향 */
+        .hand-scroll-area { width: 100%; overflow-y: visible; overflow-x: auto; padding-top: 35px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; pointer-events: auto; }
         .hand-scroll-area::-webkit-scrollbar { display: none; }
         .hand { display: flex; width: max-content; margin: 0 auto; padding: 0 40px; }
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
         .card { width: 52px; height: 76px; background-color: #fff; border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between; padding: 5px; cursor: pointer; position: relative; border: 2px solid #bdc3c7; transition: transform 0.15s, border-color 0.15s; color: #333;}
-        .card.selected { transform: translateY(-22px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); }
+        .card.selected { transform: translateY(-26px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 15px rgba(231, 76, 60, 0.4); z-index: 10; }
         .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 900; }
@@ -98,13 +99,20 @@
             .card .center-content { font-size: 38px; }
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
+            .hand-scroll-area { padding-top: 45px; }
         }
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
         #game-status { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 38%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        #chat-toast-area { position: absolute; bottom: 35%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
+        
+        /* ⭐️ 세금 교환 애니메이션 */
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .slide-left { animation: slideInLeft 0.5s ease-out forwards; }
+        .slide-right { animation: slideInRight 0.5s ease-out forwards; animation-delay: 0.5s; opacity: 0;}
     </style>
 </head>
 <body>
@@ -124,24 +132,7 @@
 
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
-            
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;">
-                <span style="font-size:14px; color:#aaa; font-weight:bold;">게임 인원 설정:</span>
-                <select id="max-players" style="padding:6px; border-radius:6px; background:#333; color:#fff; border:1px solid #555; outline:none;">
-                    <option value="4">4인 (세금 면제)</option>
-                    <option value="5">5인 (세금 1장)</option>
-                    <option value="6">6인 (세금 2,1장)</option>
-                    <option value="7">7인 (세금 2,1장)</option>
-                    <option value="8">8인 (세금 3,2,1장)</option>
-                </select>
-            </div>
-            
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
-                <span style="font-size:14px; color:#aaa; font-weight:bold;">판돈 (1판):</span>
-                <input type="number" id="bet-amount" value="1000" style="width:100px; padding:6px; border-radius:6px; background:#333; color:#f1c40f; border:1px solid #555; text-align:right;">
-            </div>
-
-            <button class="btn" onclick="createRoom()">새로운 방 만들기</button>
+            <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
             <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9; color:#fff;" onclick="goToStep3()">기존 방 참가하기</button>
             <button class="btn back" onclick="goToStep1()" style="margin-top:10px; font-size:14px; padding:8px;">← 닉네임 다시 설정</button>
         </div>
@@ -154,12 +145,36 @@
         </div>
     </div>
 
-    <!-- 대기실 -->
+    <!-- ⭐️ 3번: 대기방 설정 탭 신설 -->
     <div id="waiting-screen" class="screen hidden">
-        <h2 style="color: #f1c40f;">🏠 대기실 (<span id="display-max-players"></span>인 방)</h2>
-        <h3 style="background:#333; padding:8px 20px; border-radius:8px; margin-bottom:5px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
-        <p style="color:#2ecc71; font-weight:bold; font-size:14px; margin-top:0;">💰 한 판당 판돈: <span id="display-bet-amount">0</span>원</p>
-        <div class="player-list" id="waiting-player-list"></div>
+        <h2 style="color: #f1c40f; margin-bottom:5px;">🏠 대기실</h2>
+        <h3 style="background:#333; padding:8px 20px; border-radius:8px; margin-top:0; margin-bottom:10px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
+        
+        <!-- 방장 전용 세팅 패널 -->
+        <div id="host-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 340px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:13px; color:#aaa; font-weight:bold;">총 인원 설정:</span>
+                <select id="max-players" onchange="changeRoomSettings()" style="padding:4px; border-radius:4px; background:#333; color:#fff; border:1px solid #555; outline:none; font-size:13px;">
+                    <option value="4">4인 (세금 면제)</option>
+                    <option value="5">5인 (세금 1장)</option>
+                    <option value="6">6인 (세금 2,1장)</option>
+                    <option value="7">7인 (세금 2,1장)</option>
+                    <option value="8">8인 (세금 3,2,1장)</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:13px; color:#aaa; font-weight:bold;">판돈 (1판):</span>
+                <input type="number" id="bet-amount" value="1000" onchange="changeRoomSettings()" style="width:80px; padding:4px; border-radius:4px; background:#333; color:#f1c40f; border:1px solid #555; text-align:right; font-size:13px;">
+            </div>
+            <div id="settings-lock-msg" style="color:#e74c3c; font-size:11px; text-align:center; margin-top:6px; display:none;">누군가 준비하여 설정이 잠겼습니다.</div>
+        </div>
+
+        <!-- 손님 전용 정보 패널 -->
+        <div id="guest-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 340px; text-align:center;">
+            <p style="color:#2ecc71; font-weight:bold; font-size:14px; margin:0;">[ <span id="display-max-players">4</span>인 방 / 판돈 <span id="display-bet-amount">1000</span>원 ]</p>
+        </div>
+
+        <div class="player-list" id="waiting-player-list" style="margin-bottom:15px;"></div>
         <div style="display: flex; gap: 10px; justify-content: center;">
             <button class="btn hidden" id="btn-start-game" onclick="startGame()">게임 시작하기</button>
             <button class="btn" style="background:#2ecc71; box-shadow: 0 4px 0 #27ae60;" id="btn-ready-toggle" onclick="toggleReady()">준비하기</button>
@@ -175,7 +190,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- ⭐️ 게임 화면 (분할 HUD 적용) -->
+    <!-- ⭐️ 1번 UI: 게임 화면 (좌/우 분할, 이모티콘 팝업) -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -184,47 +199,44 @@
             <div class="center-area" id="center-area"></div>
         </div>
         
+        <!-- 커스텀 이모티콘 팝업 메뉴 -->
+        <div id="emote-menu" class="hidden">
+            <div class="emote-grid">
+                <button onclick="sendEmote('빨리!')">빨리!</button>
+                <button onclick="sendEmote('스겜!')">스겜!</button>
+                <button onclick="sendEmote('🤬')">🤬</button>
+                <button onclick="sendEmote('💖')">💖</button>
+                <button onclick="sendEmote('🤮')">🤮</button>
+                <button onclick="sendEmote('😵‍💫')">😵‍💫</button>
+                <button onclick="sendEmote('👏')">👏</button>
+                <button onclick="sendEmote('👀')">👀</button>
+            </div>
+            <div class="custom-emote-container">
+                <div id="custom-emote-display" class="hidden" style="display:flex; gap:5px;">
+                    <button id="btn-use-custom" class="custom-btn" onclick="sendCustomEmote()"></button>
+                    <button class="edit-btn" onclick="editCustomEmote()">✏️수정</button>
+                </div>
+                <div id="custom-emote-input-area" style="display:flex; gap:5px;">
+                    <input type="text" id="custom-emote-input" placeholder="직접 입력..." maxlength="10">
+                    <button class="save-btn" onclick="saveCustomEmote()">저장</button>
+                </div>
+            </div>
+        </div>
+
         <div class="player-ui">
             <!-- 좌/우 분할 조작 레이어 -->
             <div class="hud-layer">
                 <div class="hud-left">
+                    <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
-                        <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s;">나</span>
-                    </div>
-                    
-                    <div style="position:relative;">
-                        <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
-                        
-                        <!-- 커스텀 이모티콘 팝업 메뉴 -->
-                        <div id="emote-menu" class="hidden">
-                            <div class="emote-grid">
-                                <button onclick="sendEmote('빨리!')">빨리!</button>
-                                <button onclick="sendEmote('스겜!')">스겜!</button>
-                                <button onclick="sendEmote('🤬')">🤬</button>
-                                <button onclick="sendEmote('💖')">💖</button>
-                                <button onclick="sendEmote('🤮')">🤮</button>
-                                <button onclick="sendEmote('😵‍💫')">😵‍💫</button>
-                                <button onclick="sendEmote('👏')">👏</button>
-                                <button onclick="sendEmote('👀')">👀</button>
-                            </div>
-                            <div class="custom-emote-container">
-                                <div id="custom-emote-display" class="hidden" style="display:flex; gap:5px;">
-                                    <button id="btn-use-custom" class="custom-btn" onclick="sendCustomEmote()"></button>
-                                    <button class="edit-btn" onclick="editCustomEmote()">✏️수정</button>
-                                </div>
-                                <div id="custom-emote-input-area" style="display:flex; gap:5px;">
-                                    <input type="text" id="custom-emote-input" placeholder="직접 입력..." maxlength="10">
-                                    <button class="save-btn" onclick="saveCustomEmote()">저장</button>
-                                </div>
-                            </div>
-                        </div>
+                        <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
+                        <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
                     </div>
                 </div>
                 
                 <div class="hud-right">
-                    <button class="btn" id="btn-play" style="margin:0; padding:12px 20px;" onclick="playCards()" disabled>카드 내기</button>
-                    <button class="btn pass" id="btn-pass" style="margin:0; padding:12px 20px;" onclick="passTurn()" disabled>패스</button>
+                    <button class="btn" id="btn-play" style="margin:0; padding:10px 18px;" onclick="playCards()" disabled>카드 내기</button>
+                    <button class="btn pass" id="btn-pass" style="margin:0; padding:10px 18px;" onclick="passTurn()" disabled>패스</button>
                 </div>
             </div>
             
@@ -239,20 +251,26 @@
         <h2 style="color:#f1c40f;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px;"></div>
         <p>농노에게 하사할 불필요한 카드를 정량만큼 골라주세요.</p>
-        <div class="hand-scroll-area">
+        <div class="hand-scroll-area" style="pointer-events: auto;">
             <div id="tax-hand" class="hand"></div>
         </div>
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 교환 개인화 애니메이션 모달 -->
-    <div id="personal-tax-modal" class="screen hidden" style="z-index:85; background:rgba(0,0,0,0.92);">
-        <h2 style="color:#f1c40f; margin-bottom:10px;">📜 세금 교환 명세서</h2>
-        <div style="background:#2c3e50; padding:20px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
-            <div id="tax-give-log" style="font-size:16px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
-            <div style="font-size:24px; margin-bottom:15px;">⬇️</div>
-            <div id="tax-recv-log" style="font-size:16px; color:#2ecc71; margin-bottom:20px; font-weight:bold;"></div>
-            <p style="color:#aaa; font-size:13px; margin:0;">잠시 후 새로운 라운드가 시작됩니다...</p>
+    <!-- ⭐️ 4번: 세금 교환 대기 화면 (왕이 선택 중일 때 블랙스크린 방지) -->
+    <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
+        <h2 style="color:#f1c40f;">📜 세금 징수 대기 및 결과</h2>
+        <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
+    </div>
+
+    <!-- ⭐️ 5번: 세금 개인 애니메이션 모달 -->
+    <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
+        <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
+        <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
+            <div id="tax-give-log" class="slide-left" style="font-size:16px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
+            <div style="font-size:24px; margin-bottom:15px; color:#f1c40f;">↕️</div>
+            <div id="tax-recv-log" class="slide-right" style="font-size:16px; color:#2ecc71; margin-bottom:25px; font-weight:bold;"></div>
+            <p style="color:#aaa; font-size:13px; margin:0; animation:pulse 1.5s infinite;">잠시 후 새로운 라운드가 시작됩니다...</p>
         </div>
     </div>
 
@@ -284,7 +302,6 @@
         let currentPlayerName = "";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ 커스텀 이모티콘 초기화
         function initCustomEmote() {
             let saved = localStorage.getItem('customDalmutiEmote');
             if(saved) {
@@ -322,11 +339,9 @@
             document.getElementById('step-1-nickname').classList.remove('hidden');
         }
 
-        function createRoom() {
-            const maxP = document.getElementById('max-players').value;
-            const betA = document.getElementById('bet-amount').value;
+        function createRoomReq() {
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
-            socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: maxP, betAmount: betA });
+            socket.emit('createRoom', { playerName: currentPlayerName });
         }
 
         function joinRoom() {
@@ -334,6 +349,12 @@
             if(!code) return alert('방 번호 4자리를 입력해주세요.');
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
             socket.emit('joinRoom', { roomId: code, playerName: currentPlayerName });
+        }
+
+        function changeRoomSettings() {
+            let m = document.getElementById('max-players').value;
+            let b = document.getElementById('bet-amount').value;
+            socket.emit('updateRoomSettings', { maxPlayers: m, betAmount: b });
         }
 
         function leaveLobby() {
@@ -346,7 +367,6 @@
         function toggleReady() { socket.emit('toggleReady'); }
         function startGame() { socket.emit('startGame'); }
 
-        // ⭐️ 이모티콘 팝업 및 전송 로직
         function toggleEmoteMenu() { document.getElementById('emote-menu').classList.toggle('hidden'); }
         
         function saveCustomEmote() {
@@ -376,8 +396,8 @@
 
         socket.on('roomCreated', ({ roomId, players, betAmount, maxPlayers }) => {
             document.getElementById('room-id-display').innerText = roomId;
-            document.getElementById('display-max-players').innerText = maxPlayers;
-            document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString();
+            document.getElementById('max-players').value = maxPlayers;
+            document.getElementById('bet-amount').value = betAmount;
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             unlockLobbyButtons();
@@ -386,8 +406,14 @@
 
         socket.on('roomUpdated', ({ roomId, players, readyPlayers, betAmount, maxPlayers }) => {
             if(roomId) document.getElementById('room-id-display').innerText = roomId;
-            if(maxPlayers) document.getElementById('display-max-players').innerText = maxPlayers;
-            if(betAmount !== undefined) document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString();
+            if(maxPlayers) {
+                document.getElementById('max-players').value = maxPlayers;
+                document.getElementById('display-max-players').innerText = maxPlayers;
+            }
+            if(betAmount !== undefined) {
+                document.getElementById('bet-amount').value = betAmount;
+                document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString();
+            }
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             unlockLobbyButtons();
@@ -399,6 +425,7 @@
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('personal-tax-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.add('hidden');
+            document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
@@ -410,7 +437,33 @@
             container.innerHTML = '';
             let me = players.find(p => p.id === socket.id || p.id === myId);
             let humanCount = players.filter(p => !p.isAI).length;
+            let isSomeoneReady = readyPlayers.length > 0;
             
+            // ⭐️ 3. 방장 / 일반인 세팅창 구분 및 잠금 처리
+            if(me && me.isHost) {
+                document.getElementById('host-settings-panel').style.display = 'block';
+                document.getElementById('guest-settings-panel').style.display = 'none';
+                document.getElementById('max-players').disabled = isSomeoneReady;
+                document.getElementById('bet-amount').disabled = isSomeoneReady;
+                document.getElementById('settings-lock-msg').style.display = isSomeoneReady ? 'block' : 'none';
+                
+                document.getElementById('btn-start-game').classList.remove('hidden');
+                document.getElementById('btn-ready-toggle').classList.add('hidden');
+                
+                if (readyPlayers.length >= humanCount - 1) {
+                    document.getElementById('btn-start-game').disabled = false;
+                    document.getElementById('btn-start-game').innerText = '게임 시작하기';
+                } else {
+                    document.getElementById('btn-start-game').disabled = true;
+                    document.getElementById('btn-start-game').innerText = `시작 대기 (${readyPlayers.length}/${humanCount-1}명 준비)`;
+                }
+            } else {
+                document.getElementById('host-settings-panel').style.display = 'none';
+                document.getElementById('guest-settings-panel').style.display = 'block';
+                document.getElementById('btn-start-game').classList.add('hidden');
+                document.getElementById('btn-ready-toggle').classList.remove('hidden');
+            }
+
             let readyBtn = document.getElementById('btn-ready-toggle');
             if (readyPlayers.includes(me.id)) {
                 readyBtn.innerText = '준비 완료 취소';
@@ -420,21 +473,6 @@
                 readyBtn.innerText = '준비하기';
                 readyBtn.style.background = '#2ecc71';
                 readyBtn.style.boxShadow = '0 4px 0 #27ae60';
-            }
-
-            if(me && me.isHost) {
-                document.getElementById('btn-start-game').classList.remove('hidden');
-                readyBtn.classList.add('hidden');
-                if (readyPlayers.length >= humanCount - 1) {
-                    document.getElementById('btn-start-game').disabled = false;
-                    document.getElementById('btn-start-game').innerText = '게임 시작하기';
-                } else {
-                    document.getElementById('btn-start-game').disabled = true;
-                    document.getElementById('btn-start-game').innerText = `시작 대기 (${readyPlayers.length}/${humanCount-1}명 준비)`;
-                }
-            } else {
-                document.getElementById('btn-start-game').classList.add('hidden');
-                readyBtn.classList.remove('hidden');
             }
 
             players.forEach((p, idx) => {
@@ -517,6 +555,7 @@
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('personal-tax-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.add('hidden');
+            document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             window.lastRoundRanks = lastRoundRanks || [];
             
@@ -527,7 +566,7 @@
             let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
             if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
             const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-            document.getElementById('player-name-label').innerText = `${badges[rankIdx] || ''} 나(Player)`;
+            document.getElementById('player-name-label').innerText = `나(Player) ${badges[rankIdx] || ''}`;
 
             document.getElementById('btn-next-round').disabled = false;
             document.getElementById('btn-next-round').innerText = '다음 라운드 진행';
@@ -762,6 +801,7 @@
         }
 
         socket.on('taxReceived', ({ cards, count, targetName, targetId }) => {
+            document.getElementById('tax-summary-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
             document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 <strong>좋은 카드 [${cards.map(c=>c===13?'J':c).join(', ')}]</strong>를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
@@ -774,7 +814,23 @@
             document.getElementById('tax-give-modal').classList.add('hidden');
         }
 
+        // ⭐️ 4번: 세금 대기 중 블랙스크린 방지 알림
+        socket.on('taxPhaseWaiting', ({ taxLogs }) => {
+            if (document.getElementById('tax-give-modal').classList.contains('hidden')) {
+                document.getElementById('tax-summary-modal').classList.remove('hidden');
+            }
+            const list = document.getElementById('tax-summary-list');
+            list.innerHTML = '';
+            taxLogs.forEach(log => {
+                list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`;
+            });
+            list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(이 창은 왕의 결정을 기다리는 대기창입니다)</span></div>`;
+        });
+
+        // ⭐️ 5번: 애니메이션 연출 개인화 명세서
         socket.on('taxPhasePersonalResults', ({ taxLogs }) => {
+            document.getElementById('tax-summary-modal').classList.add('hidden'); // 요약창 닫기
+            
             const myIdReal = myId || socket.id;
             let myGive = taxLogs.find(l => l.fromId === myIdReal);
             let myRecv = taxLogs.find(l => l.toId === myIdReal);

@@ -33,6 +33,11 @@ io.on('connection', (socket) => {
             if (pIdx !== -1) {
                 room.players.splice(pIdx, 1);
                 socket.leave(roomId);
+                
+                if (room.readyPlayers.includes(socket.id)) {
+                    room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
+                }
+
                 if (room.players.filter(p => !p.isAI).length === 0) {
                     delete rooms[roomId];
                 } else {
@@ -57,13 +62,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    // ⭐️ 판돈과 최대 인원 설정
-    socket.on('createRoom', ({ playerName, maxPlayers, betAmount }) => {
+    socket.on('createRoom', ({ playerName }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
-            maxPlayers: parseInt(maxPlayers) || 4,
-            betAmount: parseInt(betAmount) || 0,
+            maxPlayers: 4, // 기본값
+            betAmount: 1000, // 기본값
             players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
@@ -92,7 +96,21 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
-    // ⭐️ 레디 시스템 동기화
+    // ⭐️ 방장이 대기실에서 설정 변경 시 즉시 동기화
+    socket.on('updateRoomSettings', ({ maxPlayers, betAmount }) => {
+        const room = getRoomBySocket(socket.id);
+        if (!room) return;
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player || !player.isHost) return;
+        
+        // 누군가 레디했으면 변경 불가 방어막
+        if (room.readyPlayers.length > 0) return;
+
+        room.maxPlayers = parseInt(maxPlayers) || 4;
+        room.betAmount = parseInt(betAmount) || 0;
+        io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
+    });
+
     socket.on('toggleReady', () => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
@@ -104,7 +122,6 @@ io.on('connection', (socket) => {
         io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
-    // ⭐️ 감정표현 브로드캐스트
     socket.on('sendEmote', (emote) => {
         const room = getRoomBySocket(socket.id);
         if (room) io.to(room.id).emit('playerEmoted', { id: socket.id, emote });
@@ -154,7 +171,6 @@ io.on('connection', (socket) => {
             const winnerId = sortedResults[0].id;
             const winnerName = sortedResults[0].name;
 
-            // ⭐️ 첫 판 달무티 룰 완벽 적용: 뽑은 카드 순서대로 플레이어 배열 재정렬(자리 배치)
             let newPlayersOrder = [];
             sortedResults.forEach(res => newPlayersOrder.push(room.players.find(p => p.id === res.id)));
             room.players = newPlayersOrder;
@@ -170,7 +186,7 @@ io.on('connection', (socket) => {
                 room.lastRoundRanks = room.players.map(p => p.id);
                 
                 distributeCards(room);
-                room.currentTurnIdx = 0; // 배열 맨 앞이 무조건 선
+                room.currentTurnIdx = 0;
 
                 io.to(room.id).emit('gameStarted', {
                     players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
@@ -240,7 +256,6 @@ io.on('connection', (socket) => {
             room.center = { cards: [], count: 0, rank: 99, ownerId: null };
             room.players.forEach(p => { p.hand = []; p.hasPassed = false; });
             
-            // ⭐️ 둘째 판 부터는 지난 판 등수대로 자리 재배치 룰 완벽 적용
             let newPlayersOrder = [];
             room.lastRoundRanks.forEach(rId => {
                 newPlayersOrder.push(room.players.find(p => p.id === rId));
@@ -275,12 +290,11 @@ io.on('connection', (socket) => {
             setTimeout(() => {
                 room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
                 startNormalRound(room.id, room);
-            }, 3000);
+            }, 3500);
         }
     });
 });
 
-// ⭐️ 무한 루프 차단 및 트릭 주인 로직 최적화 엔진
 function clearTrickAndSetLead(roomId, room) {
     let trickWinnerId = room.center.ownerId;
     room.center = { cards: [], count: 0, rank: 99, ownerId: null };
@@ -307,12 +321,11 @@ function clearTrickAndSetLead(roomId, room) {
 }
 
 function advanceTurn(room) {
-    let initial = room.currentTurnIdx;
     let loopCount = 0;
     do {
         room.currentTurnIdx = (room.currentTurnIdx + 1) % room.players.length;
         loopCount++;
-        if (loopCount > room.players.length) break; // ⭐️ 무한 루프 완벽 방어막
+        if (loopCount > room.players.length) break;
     } while (room.players[room.currentTurnIdx].hasPassed || room.finishedPlayers.includes(room.players[room.currentTurnIdx].id));
 }
 
@@ -376,7 +389,6 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         room.status = 'ended';
         room.players.forEach(p => { if(!room.finishedPlayers.includes(p.id)) room.finishedPlayers.push(p.id); });
         
-        // ⭐️ 판돈 정산 로직
         const humanFinished = room.finishedPlayers.filter(id => {
             const p = room.players.find(pl => pl.id === id);
             return p && !p.isAI;
@@ -451,6 +463,7 @@ function broadcastGameState(roomId, room) {
 
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
+    
     if (total <= 4) taxRules = [];
     else if (total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
     else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
@@ -492,18 +505,21 @@ function executeTaxPhase(roomId, room) {
     });
 
     if (!humanTaxWaiting) {
+        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs }); // 노예 대기창
         io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 3000);
+        }, 3500);
+    } else {
+        io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs }); // 노예 대기창 띄워줌
     }
 }
 
 function startNormalRound(roomId, room) {
     room.status = 'playing';
     room.players.forEach(p => p.hand.sort((a,b)=>a-b));
-    room.currentTurnIdx = 0; // 배열 맨 앞이 방금 1등이므로 인덱스 0이 100% 선
+    room.currentTurnIdx = 0;
     
     io.to(roomId).emit('gameStarted', {
         players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
