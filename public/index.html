@@ -47,11 +47,11 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        /* ⭐️ 1. 시야 확보를 위해 적 아바타들 전체 상승 (상단/중단 배치) */
+        /* ⭐️ 1. 시야 확보를 위해 적 아바타들 전체 상승 */
         .pos-left-low   { top: 25%; left: max(15px, env(safe-area-inset-left)); }
         .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
         .pos-left-high  { top: 1%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: -2%; left: 50%; --tx: -50%; }
+        .pos-center-top { top: max(2%, env(safe-area-inset-top)); left: 50%; --tx: -50%; }
         .pos-right-high { top: 1%; left: 70%; --tx: -50%; }
         .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 25%; right: max(15px, env(safe-area-inset-right)); }
@@ -97,9 +97,10 @@
         
         .rank-1 { background: linear-gradient(135deg, #f1c40f, #f39c12); color: #fff; } .rank-2 { background: linear-gradient(135deg, #9b59b6, #8e44ad); color: #fff; } .rank-3 { background: linear-gradient(135deg, #3498db, #2980b9); color: #fff; } .rank-4 { background: linear-gradient(135deg, #1abc9c, #16a085); color: #fff; } .rank-5 { background: linear-gradient(135deg, #2ecc71, #27ae60); color: #fff; } .rank-6 { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; } .rank-7 { background: linear-gradient(135deg, #e74c3c, #c0392b); color: #fff; } .rank-8 { background: linear-gradient(135deg, #ecf0f1, #bdc3c7); color: #333; } .rank-9 { background: linear-gradient(135deg, #95a5a6, #7f8c8d); color: #fff; } .rank-10 { background: linear-gradient(135deg, #34495e, #2c3e50); color: #fff; } .rank-11 { background: linear-gradient(135deg, #d2b4de, #c39bd3); color: #333; } .rank-12 { background: linear-gradient(135deg, #a6acaf, #839192); color: #fff; } .rank-13 { background: linear-gradient(135deg, #111, #222); color: #e74c3c; border: 2px solid #e74c3c; }
 
-        /* ⭐️ 1. 알림창과 상태창 테이블/패 안가리게 높이 완전 재조정 */
-        #game-status { position: absolute; top: max(15px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 7px 22px; border-radius: 20px; font-size: 14px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
-        #chat-toast-area { position: absolute; bottom: 48%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 10px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        /* ⭐️ 1. 알림창 위치 완벽 조정 (테이블 절대 안가림) */
+        #game-status { position: absolute; top: max(5px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        #chat-toast-area { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -178,7 +179,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- ⭐️ 4. 혁명 애니메이션 전용 스크린 추가 -->
+    <!-- ⭐️ 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
@@ -244,7 +245,7 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 교환 대기 화면 -->
+    <!-- ⭐️ 세금 교환 대기 화면 (빈 화면 방지) -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 및 결과</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
@@ -261,7 +262,7 @@
         </div>
     </div>
 
-    <!-- ⭐️ 2번. 결과 창 전면 개편 (투표 변경 가능토록 수정) -->
+    <!-- 결과 창 전면 개편 (투표 변경 가능토록 수정) -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -278,7 +279,6 @@
             <div id="vote-panel" style="background:#111; padding:15px; border-radius:10px; text-align:center; border: 1px solid #444;">
                 <h3 style="color:#fff; margin-top:0; margin-bottom:10px; font-size:16px;">다음 라운드 진행 방식 선택 (만장일치 필요)</h3>
                 <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
-                    <!-- 버튼 disabled 제거, opacity 토글로 변경 -->
                     <button class="btn" id="btn-vote-keep" onclick="submitVote('keep')" style="flex:1; font-size:14px; padding:10px;">▶ 그대로 진행<br><span style="font-size:11px; font-weight:normal;">(나간 유저는 AI 대체)</span></button>
                     <button class="btn pass" id="btn-vote-lobby" onclick="submitVote('lobby')" style="flex:1; font-size:14px; padding:10px;">⚙️ 대기실 이동<br><span style="font-size:11px; font-weight:normal;">(인원 재정비)</span></button>
                 </div>
@@ -307,6 +307,20 @@
         let taxCountRequired = 0;
         let currentPlayerName = "";
         window.currentFinishedPlayers = [];
+
+        function initCustomEmote() {
+            let saved = localStorage.getItem('customDalmutiEmote');
+            if(saved) {
+                document.getElementById('custom-emote-display').style.display = 'flex';
+                document.getElementById('custom-emote-input-area').style.display = 'none';
+                document.getElementById('btn-use-custom').innerText = saved;
+            } else {
+                document.getElementById('custom-emote-display').style.display = 'none';
+                document.getElementById('custom-emote-input-area').style.display = 'flex';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', initCustomEmote);
 
         socket.on('connect', () => { myId = socket.id; });
 
@@ -381,7 +395,6 @@
             document.getElementById('emote-menu').classList.add('hidden');
         }
 
-        // ⭐️ 투표 시스템 수정: 언제든 마음을 바꿀 수 있게 투명도로 활성화 표시
         function submitVote(type) {
             document.getElementById('btn-vote-keep').style.opacity = type === 'keep' ? '1' : '0.4';
             document.getElementById('btn-vote-lobby').style.opacity = type === 'lobby' ? '1' : '0.4';
@@ -426,7 +439,6 @@
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             
-            // 투표 버튼 초기화
             document.getElementById('btn-vote-keep').style.opacity = '1';
             document.getElementById('btn-vote-lobby').style.opacity = '1';
             updateWaitingPlayerList(players, []);
@@ -565,8 +577,7 @@
             document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
             document.getElementById('player-name-label').style.color = '#fff';
             
-            // ⭐️ 잔상 카드 완벽 제거 보장
-            document.getElementById('center-area').innerHTML = '';
+            document.getElementById('center-area').innerHTML = ''; // 잔상 카드 제거 보장
 
             let rankIdx = (window.lastRoundRanks || []).indexOf(socket.id);
             if(rankIdx === -1) rankIdx = (window.lastRoundRanks || []).indexOf(myId);
@@ -577,7 +588,6 @@
             updateTurnState(currentTurnId);
         });
 
-        // ⭐️ 반란 경고 애니메이션
         socket.on('revolutionAlert', ({ type, playerName }) => {
             const revScreen = document.getElementById('revolution-screen');
             revScreen.classList.remove('hidden');
@@ -599,7 +609,6 @@
             c.className = `card rank-${rank}`;
             c.innerHTML = `<div class="number">${displayRank}</div><div class="center-content">${displayRank}</div><div class="number bottom">${displayRank}</div>`;
             
-            // ⭐️ 5. 세금 제출 시 조커 금지 로직
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
                 c.onclick = () => alert('조커 카드는 세금으로 낼 수 없습니다!');
@@ -854,8 +863,10 @@
             document.getElementById('tax-give-modal').classList.remove('hidden');
             taxTargetId = targetId; taxCountRequired = count;
             
-            let displayCards = cards.map(c=>c===13?'J':c).join(', ');
-            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 <strong>좋은 카드 [${displayCards}]</strong>를 징수했습니다.<br>하사할 카드 <strong>${count}장</strong>을 고르세요.`;
+            // ⭐️ 왕이 볼 세금 징수 명세서도 카드로 표시되게 업그레이드
+            let displayCardsHTML = generateMiniCardsHTML(cards);
+            document.getElementById('tax-received-info').innerHTML = `농노 [${targetName}]에게서 좋은 카드를 징수했습니다.<br>${displayCardsHTML}<br>하사할 불필요한 카드 <strong>${count}장</strong>을 고르세요.<br><span style="font-size:12px; color:#aaa;">(조커는 세금으로 하사할 수 없습니다)</span>`;
+            
             const container = document.getElementById('tax-hand'); container.innerHTML = ''; selectedIndices = [];
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, true)); });
         });
@@ -863,6 +874,9 @@
         function submitTaxHand() {
             socket.emit('submitTaxHand', { targetId: taxTargetId, indices: selectedIndices });
             document.getElementById('tax-give-modal').classList.add('hidden');
+            
+            document.getElementById('tax-summary-modal').classList.remove('hidden');
+            document.getElementById('tax-summary-list').innerHTML = `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#2ecc71; background:#333; font-weight:bold; animation: pulse 1s infinite;">✅ 카드 하사 완료!<br>다른 플레이어들의 세금 교환을<br>기다리고 있습니다...</div>`;
         }
 
         socket.on('taxPhaseWaiting', ({ taxLogs }) => {
@@ -874,13 +888,12 @@
             taxLogs.forEach(log => {
                 list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`;
             });
-            list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(이 창은 왕의 결정을 기다리는 대기창입니다)</span></div>`;
+            list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold; animation: pulse 1s infinite;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(잠시 대기해 주세요)</span></div>`;
         });
 
-        // ⭐️ 6. 세금 명세서를 텍스트에서 직관적인 카드 이미지로 변환해주는 렌더러
         function generateMiniCardsHTML(cards) {
             if(!cards || cards.length === 0) return '';
-            return `<div style="display:flex; gap:10px; justify-content:center; align-items:center;">` +
+            return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let display = c === 13 ? 'J' : c;
                 return `<div class="card rank-${c}" style="width:36px; height:52px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">

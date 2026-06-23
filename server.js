@@ -253,7 +253,6 @@ io.on('connection', (socket) => {
         executePassLogic(room.id, room, player);
     });
 
-    // ⭐️ 2번: 투표 시 버튼 상태를 잠그지 않고 계속 변경할 수 있도록 로직 업그레이드
     socket.on('submitVote', (voteType) => {
         const room = getRoomBySocket(socket.id);
         if (!room || room.status !== 'ended') return;
@@ -262,8 +261,6 @@ io.on('connection', (socket) => {
         if (!player) return;
 
         room.votes = room.votes || { keep: [], lobby: [] };
-        
-        // 기존 표 취소 후 새 표 반영
         room.votes.keep = room.votes.keep.filter(id => id !== socket.id);
         room.votes.lobby = room.votes.lobby.filter(id => id !== socket.id);
         
@@ -274,7 +271,6 @@ io.on('connection', (socket) => {
 
         const humanPlayers = room.players.filter(p => !p.isAI);
         
-        // 만장일치 '그대로 진행'
         if (room.votes.keep.length >= humanPlayers.length) {
             room.status = 'tax_phase';
             io.to(room.id).emit('hideResultScreen');
@@ -294,7 +290,6 @@ io.on('connection', (socket) => {
             distributeCards(room);
             executeTaxPhase(room.id, room);
         }
-        // 만장일치 '대기실로 이동'
         else if (room.votes.lobby.length >= humanPlayers.length) {
             room.status = 'lobby';
             room.finishedPlayers = [];
@@ -314,7 +309,6 @@ io.on('connection', (socket) => {
         indices.sort((a,b) => b-a);
         let taxCards = indices.map(i => giver.hand[i]);
         
-        // ⭐️ 5. 조커는 세금 제출 절대 불가 (서버 방어막)
         if (taxCards.includes(JOKER)) {
             return socket.emit('errorMsg', '조커 카드는 세금으로 하사할 수 없습니다.');
         }
@@ -335,7 +329,7 @@ io.on('connection', (socket) => {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
             setTimeout(() => {
                 startNormalRound(room.id, room);
-            }, 4000);
+            }, 3500);
         }
     });
 });
@@ -374,12 +368,20 @@ function advanceTurn(room) {
     } while (room.players[room.currentTurnIdx].hasPassed || room.finishedPlayers.includes(room.players[room.currentTurnIdx].id));
 }
 
+// ⭐️ 4. 사람 유저가 모두 탈출하면 150ms 딜레이로 광속 진행 (스피드핵)
 function handleAITurnIfNeeded(roomId, room) {
     if (room.status !== 'playing') return;
     const player = room.players[room.currentTurnIdx];
     if (!player || !player.isAI) return;
 
+    let delay = 1200; // 기본 대기 속도
+    const activeHumans = room.players.filter(p => !p.isAI && !room.finishedPlayers.includes(p.id));
+    if (activeHumans.length === 0) {
+        delay = 150; // 사람이 없으면 0.15초 단위로 초고속 스킵!
+    }
+
     setTimeout(() => {
+        if (room.status !== 'playing') return;
         let aiHand = player.hand;
         let groups = {};
         aiHand.forEach((r, idx) => { if (!groups[r]) groups[r] = []; groups[r].push(idx); });
@@ -418,7 +420,7 @@ function handleAITurnIfNeeded(roomId, room) {
                 executePassLogic(roomId, room, player);
             }
         }
-    }, 1200);
+    }, delay);
 }
 
 function executePlayLogic(roomId, room, player, selectedCards, eRank) {
@@ -509,7 +511,6 @@ function broadcastGameState(roomId, room) {
 function executeTaxPhase(roomId, room) {
     let total = room.players.length; let taxRules = []; room.taxLogs = [];
     
-    // ⭐️ 4. 반란(혁명) 감지 엔진: 조커 2장을 가진 유저가 있는지 체크!
     let revolution = false;
     let grandRevolution = false;
     let revPlayer = null;
@@ -547,7 +548,6 @@ function executeTaxPhase(roomId, room) {
         return;
     }
 
-    // 일반 세금 로직
     if (total <= 4) taxRules = [];
     else if (total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
     else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
@@ -571,8 +571,6 @@ function executeTaxPhase(roomId, room) {
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
-    // ⭐️ 3. 손패 확실한 오름차순 정렬 후 전송 보장
-    room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     taxRules.forEach(rule => {
@@ -614,7 +612,6 @@ function startNormalRound(roomId, room) {
         lastRoundRanks: room.lastRoundRanks
     });
 
-    room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
     handleAITurnIfNeeded(roomId, room);
 }
 
