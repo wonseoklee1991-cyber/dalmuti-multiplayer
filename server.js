@@ -40,6 +40,7 @@ io.on('connection', (socket) => {
                     room.players[pIdx].id = `ai_replace_${Date.now()}`;
                     room.players[pIdx].name = `🤖 AI (대체)`;
                     room.players[pIdx].isAI = true;
+                    room.players[pIdx].avatar = '🤖'; // 나갔을 땐 로봇으로 강제 변경
                     
                     if (!room.players.some(p => p.isHost && !p.isAI)) {
                         let newHost = room.players.find(p => !p.isAI);
@@ -77,13 +78,14 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    socket.on('createRoom', ({ playerName, maxPlayers, betAmount }) => {
+    // ⭐️ 아바타 데이터(avatar) 추가 수신
+    socket.on('createRoom', ({ playerName, maxPlayers, betAmount, avatar }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
             id: roomId,
             maxPlayers: parseInt(maxPlayers) || 4,
             betAmount: parseInt(betAmount) || 0,
-            players: [{ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: true, isAI: false }],
+            players: [{ id: socket.id, name: playerName, avatar: avatar || '🧑‍💻', hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0,
             center: { cards: [], count: 0, rank: 99, ownerId: null },
             status: 'lobby',
@@ -100,14 +102,14 @@ io.on('connection', (socket) => {
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players, betAmount: rooms[roomId].betAmount, maxPlayers: rooms[roomId].maxPlayers });
     });
 
-    socket.on('joinRoom', ({ roomId, playerName }) => {
+    socket.on('joinRoom', ({ roomId, playerName, avatar }) => {
         const room = rooms[roomId];
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
         if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
         if (room.players.some(p => p.id === socket.id)) return;
         if (room.players.filter(p => !p.isAI).length >= room.maxPlayers) return socket.emit('errorMsg', `방이 가득 찼습니다. (최대 ${room.maxPlayers}인)`);
 
-        room.players.push({ id: socket.id, name: playerName, hand: [], hasPassed: false, isHost: false, isAI: false });
+        room.players.push({ id: socket.id, name: playerName, avatar: avatar || '🧑‍💻', hand: [], hasPassed: false, isHost: false, isAI: false });
         socket.join(roomId);
         io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
@@ -155,7 +157,7 @@ io.on('connection', (socket) => {
         if (room.players.length < room.maxPlayers) {
             const botsNeeded = room.maxPlayers - room.players.length;
             for (let i = 1; i <= botsNeeded; i++) {
-                room.players.push({ id: `ai_${i}_${Date.now()}`, name: `🤖 AI 봇 ${i}`, hand: [], hasPassed: false, isHost: false, isAI: true });
+                room.players.push({ id: `ai_${i}_${Date.now()}`, name: `🤖 AI 봇 ${i}`, avatar: '🤖', hand: [], hasPassed: false, isHost: false, isAI: true });
             }
         }
 
@@ -206,7 +208,7 @@ io.on('connection', (socket) => {
                 room.players.forEach(p => p.hand.sort((a,b)=>a-b));
 
                 io.to(room.id).emit('gameStarted', {
-                    players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
+                    players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
                     currentTurnId: room.players[0].id,
                     lastRoundRanks: room.lastRoundRanks
                 });
@@ -368,17 +370,14 @@ function advanceTurn(room) {
     } while (room.players[room.currentTurnIdx].hasPassed || room.finishedPlayers.includes(room.players[room.currentTurnIdx].id));
 }
 
-// ⭐️ 4. 사람 유저가 모두 탈출하면 150ms 딜레이로 광속 진행 (스피드핵)
 function handleAITurnIfNeeded(roomId, room) {
     if (room.status !== 'playing') return;
     const player = room.players[room.currentTurnIdx];
     if (!player || !player.isAI) return;
 
-    let delay = 1200; // 기본 대기 속도
+    let delay = 1200;
     const activeHumans = room.players.filter(p => !p.isAI && !room.finishedPlayers.includes(p.id));
-    if (activeHumans.length === 0) {
-        delay = 150; // 사람이 없으면 0.15초 단위로 초고속 스킵!
-    }
+    if (activeHumans.length === 0) delay = 150;
 
     setTimeout(() => {
         if (room.status !== 'playing') return;
@@ -502,8 +501,9 @@ function broadcastGameState(roomId, room) {
         center: room.center,
         currentTurnId: room.players[room.currentTurnIdx].id,
         finishedPlayers: room.finishedPlayers,
+        // ⭐️ 아바타 전송
         players: room.players.map(p => ({
-            id: p.id, name: p.name, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
+            id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
         }))
     });
 }
@@ -571,6 +571,7 @@ function executeTaxPhase(roomId, room) {
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
+    room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     taxRules.forEach(rule => {
@@ -607,11 +608,12 @@ function startNormalRound(roomId, room) {
     room.currentTurnIdx = 0;
     
     io.to(roomId).emit('gameStarted', {
-        players: room.players.map(p => ({ id: p.id, name: p.name, cardCount: p.hand.length, isAI: p.isAI })),
+        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
         currentTurnId: room.players[0].id,
         lastRoundRanks: room.lastRoundRanks
     });
 
+    room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
     handleAITurnIfNeeded(roomId, room);
 }
 
