@@ -25,7 +25,7 @@ function createDeck() {
     return deck.sort(() => Math.random() - 0.5);
 }
 
-// ⭐️ 특정 유저에게만 "네 턴이야!" 라고 소리 알림을 쏴주는 함수
+// ⭐️ 소리 알림 헬퍼
 function notifyTurn(roomId, turnId) {
     const room = rooms[roomId];
     if (!room) return;
@@ -43,13 +43,18 @@ io.on('connection', (socket) => {
             const pIdx = room.players.findIndex(p => p.id === socket.id);
             if (pIdx !== -1) {
                 const pName = room.players[pIdx].name;
+                const originalAvatar = room.players[pIdx].avatar;
                 socket.leave(roomId);
 
+                // 게임 중이거나 세금/결과창일 때 나가면 -> 임시 AI로 껍데기 씌우기 (이름은 기억함!)
                 if (room.status === 'playing' || room.status === 'tax_phase' || room.status === 'ended') {
-                    io.to(roomId).emit('chatMsg', `⚠️ [${pName}] 님이 나갔습니다. AI가 자리를 대체합니다.`);
+                    io.to(roomId).emit('chatMsg', `⚠️ [${pName}] 님이 일시적으로 끊겼습니다. AI가 임시 대체합니다.`);
                     room.players[pIdx].id = `ai_replace_${Date.now()}`;
-                    room.players[pIdx].name = `🤖 AI (대체)`;
                     room.players[pIdx].isAI = true;
+                    // ⭐️ 나중에 재접속 식별을 위해 원래 닉네임과 아바타 정보 백업
+                    room.players[pIdx].originalName = pName;
+                    room.players[pIdx].originalAvatar = originalAvatar;
+                    room.players[pIdx].name = `🤖 AI (${pName} 대체)`;
                     room.players[pIdx].avatar = '🤖';
                     
                     if (!room.players.some(p => p.isHost && !p.isAI)) {
@@ -66,6 +71,7 @@ io.on('connection', (socket) => {
                         }
                     }
                 } else {
+                    // 대기실에서 나간 경우 완전히 삭제
                     room.players.splice(pIdx, 1);
                     if (room.readyPlayers.includes(socket.id)) {
                         room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
@@ -114,7 +120,49 @@ io.on('connection', (socket) => {
     socket.on('joinRoom', ({ roomId, playerName, avatar }) => {
         const room = rooms[roomId];
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
-        if (room.status !== 'lobby') return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
+
+        // ⭐️ 재접속(Rejoin) 시스템: 이미 게임이 시작되었어도 닉네임이 같으면 AI를 쫓아내고 자리를 강탈함!
+        if (room.status !== 'lobby') {
+            let replaceIdx = room.players.findIndex(p => p.isAI && p.originalName === playerName);
+            if (replaceIdx !== -1) {
+                // 내 자리 복구
+                room.players[replaceIdx].id = socket.id;
+                room.players[replaceIdx].name = playerName;
+                room.players[replaceIdx].avatar = avatar || room.players[replaceIdx].originalAvatar || '🧑‍💻';
+                room.players[replaceIdx].isAI = false;
+                delete room.players[replaceIdx].originalName;
+                delete room.players[replaceIdx].originalAvatar;
+
+                socket.join(roomId);
+                io.to(roomId).emit('chatMsg', `🎉 [${playerName}] 님이 재접속하여 AI를 밀어내고 자리를 복구했습니다!`);
+                
+                // 상황에 맞는 복구 화면 전송
+                if (room.status === 'playing') {
+                    // 현재 상태 렌더링
+                    socket.emit('gameStarted', {
+                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
+                        currentTurnId: room.players[room.currentTurnIdx].id,
+                        lastRoundRanks: room.lastRoundRanks
+                    });
+                    socket.emit('yourHand', room.players[replaceIdx].hand);
+                    socket.emit('gameStateUpdated', {
+                        center: room.center,
+                        currentTurnId: room.players[room.currentTurnIdx].id,
+                        finishedPlayers: room.finishedPlayers,
+                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI }))
+                    });
+                } else if (room.status === 'ended') {
+                    socket.emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData: room.players, balances: room.balances, roundLog: room.transactions[room.transactions.length-1], votes: room.votes });
+                }
+                
+                // 나 말고 다른 사람들에게 아바타 원래대로 돌아온 것 렌더링 갱신
+                broadcastGameState(roomId, room);
+                return;
+            } else {
+                return socket.emit('errorMsg', '이미 게임이 시작된 방입니다.');
+            }
+        }
+
         if (room.players.some(p => p.id === socket.id)) return;
         if (room.players.filter(p => !p.isAI).length >= room.maxPlayers) return socket.emit('errorMsg', `방이 가득 찼습니다. (최대 ${room.maxPlayers}인)`);
 
@@ -223,8 +271,7 @@ io.on('connection', (socket) => {
                 });
 
                 room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-                
-                notifyTurn(room.id, room.players[0].id); // ⭐️ 선 플레이어에게 소리 알림
+                notifyTurn(room.id, room.players[0].id);
                 handleAITurnIfNeeded(room.id, room);
             }, 4500);
         } else {
@@ -370,8 +417,7 @@ function clearTrickAndSetLead(roomId, room) {
     let nextPlayer = room.players.find(p => p.id === nextTurnId);
     if (nextPlayer) io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
     io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
-    
-    notifyTurn(roomId, nextTurnId); // ⭐️ 트릭 잡은 사람에게 턴 소리 알림
+    notifyTurn(roomId, nextTurnId);
 }
 
 function advanceTurn(room) {
@@ -479,7 +525,7 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         clearTrickAndSetLead(roomId, room);
     } else {
         advanceTurn(room);
-        notifyTurn(roomId, room.players[room.currentTurnIdx].id); // ⭐️ 다음 턴 사람에게 소리 알림
+        notifyTurn(roomId, room.players[room.currentTurnIdx].id);
     }
     
     broadcastGameState(roomId, room);
@@ -495,7 +541,7 @@ function executePassLogic(roomId, room, player) {
         clearTrickAndSetLead(roomId, room);
     } else {
         advanceTurn(room);
-        notifyTurn(roomId, room.players[room.currentTurnIdx].id); // ⭐️ 다음 턴 사람에게 소리 알림
+        notifyTurn(roomId, room.players[room.currentTurnIdx].id);
     }
     
     broadcastGameState(roomId, room);
@@ -585,7 +631,6 @@ function executeTaxPhase(roomId, room) {
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
-    room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     taxRules.forEach(rule => {
@@ -628,8 +673,7 @@ function startNormalRound(roomId, room) {
     });
 
     room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-    
-    notifyTurn(roomId, room.players[0].id); // ⭐️ 첫 시작 선 플레이어에게 알림음
+    notifyTurn(roomId, room.players[0].id);
     handleAITurnIfNeeded(roomId, room);
 }
 
