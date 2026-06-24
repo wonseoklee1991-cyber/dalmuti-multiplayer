@@ -25,6 +25,16 @@ function createDeck() {
     return deck.sort(() => Math.random() - 0.5);
 }
 
+// ⭐️ 특정 유저에게만 "네 턴이야!" 라고 소리 알림을 쏴주는 함수
+function notifyTurn(roomId, turnId) {
+    const room = rooms[roomId];
+    if (!room) return;
+    const player = room.players.find(p => p.id === turnId);
+    if (player && !player.isAI) {
+        io.to(player.id).emit('yourTurnSFX');
+    }
+}
+
 io.on('connection', (socket) => {
     
     function handlePlayerExit() {
@@ -40,7 +50,7 @@ io.on('connection', (socket) => {
                     room.players[pIdx].id = `ai_replace_${Date.now()}`;
                     room.players[pIdx].name = `🤖 AI (대체)`;
                     room.players[pIdx].isAI = true;
-                    room.players[pIdx].avatar = '🤖'; // 나갔을 땐 로봇으로 강제 변경
+                    room.players[pIdx].avatar = '🤖';
                     
                     if (!room.players.some(p => p.isHost && !p.isAI)) {
                         let newHost = room.players.find(p => !p.isAI);
@@ -78,7 +88,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    // ⭐️ 아바타 데이터(avatar) 추가 수신
     socket.on('createRoom', ({ playerName, maxPlayers, betAmount, avatar }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
@@ -214,6 +223,8 @@ io.on('connection', (socket) => {
                 });
 
                 room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+                
+                notifyTurn(room.id, room.players[0].id); // ⭐️ 선 플레이어에게 소리 알림
                 handleAITurnIfNeeded(room.id, room);
             }, 4500);
         } else {
@@ -359,6 +370,8 @@ function clearTrickAndSetLead(roomId, room) {
     let nextPlayer = room.players.find(p => p.id === nextTurnId);
     if (nextPlayer) io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
     io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
+    
+    notifyTurn(roomId, nextTurnId); // ⭐️ 트릭 잡은 사람에게 턴 소리 알림
 }
 
 function advanceTurn(room) {
@@ -466,6 +479,7 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         clearTrickAndSetLead(roomId, room);
     } else {
         advanceTurn(room);
+        notifyTurn(roomId, room.players[room.currentTurnIdx].id); // ⭐️ 다음 턴 사람에게 소리 알림
     }
     
     broadcastGameState(roomId, room);
@@ -481,6 +495,7 @@ function executePassLogic(roomId, room, player) {
         clearTrickAndSetLead(roomId, room);
     } else {
         advanceTurn(room);
+        notifyTurn(roomId, room.players[room.currentTurnIdx].id); // ⭐️ 다음 턴 사람에게 소리 알림
     }
     
     broadcastGameState(roomId, room);
@@ -501,7 +516,6 @@ function broadcastGameState(roomId, room) {
         center: room.center,
         currentTurnId: room.players[room.currentTurnIdx].id,
         finishedPlayers: room.finishedPlayers,
-        // ⭐️ 아바타 전송
         players: room.players.map(p => ({
             id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
         }))
@@ -614,6 +628,8 @@ function startNormalRound(roomId, room) {
     });
 
     room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+    
+    notifyTurn(roomId, room.players[0].id); // ⭐️ 첫 시작 선 플레이어에게 알림음
     handleAITurnIfNeeded(roomId, room);
 }
 

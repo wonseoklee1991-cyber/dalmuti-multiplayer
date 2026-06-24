@@ -7,7 +7,8 @@
     <link rel="manifest" href="/manifest.json">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        * { box-sizing: border-box; font-family: 'Pretendard', 'Georgia', serif; user-select: none; }
+        /* ⭐️ 폰트 원상 복구 (깔끔한 산세리프 폰트) */
+        * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
         .hidden { display: none !important; }
         .btn { padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
@@ -47,7 +48,7 @@
         .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; }
         .ai-node.active { border-color: #2ecc71; background: rgba(46, 204, 113, 0.2); --scale: 1.05; box-shadow: 0 0 15px #2ecc71; }
         .ai-node.passed { opacity: 0.35; filter: grayscale(80%); }
-        .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background-color: #333; }
+        .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
@@ -83,22 +84,22 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
+        /* ⭐️ 3번: 달무티풍 카드 디자인 (폰트는 깔끔하게 유지하되 아이콘 삽입) */
         .card {
-            width: 52px; height: 76px;
+            width: 54px; height: 78px;
             background-color: #eaddcf;
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
             border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 5px; cursor: pointer; position: relative;
+            padding: 4px; cursor: pointer; position: relative;
             border: 2px solid #5c4033;
             box-shadow: 2px 2px 4px rgba(0,0,0,0.4), inset 0 0 8px rgba(139,69,19,0.2);
             transition: transform 0.15s, border-color 0.15s;
             color: #3b2a1a;
-            font-family: 'Georgia', 'Times New Roman', serif;
         }
         .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5); z-index: 10; }
-        .card .number { font-size: 14px; font-weight: bold; }
+        .card .number { font-size: 13px; font-weight: bold; }
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
-        .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 28px; font-weight: 900; font-style: italic; color: #5c4033; text-shadow: 1px 1px 0px rgba(255,255,255,0.4); }
+        .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 100%; text-shadow: 1px 1px 0px rgba(255,255,255,0.4); }
 
         .card.card-back {
             background-color: #5c4033;
@@ -109,9 +110,8 @@
 
         @media screen and (min-width: 1024px) {
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
-            .card { width: 72px; height: 105px; border-radius: 8px; padding: 7px; }
+            .card { width: 74px; height: 108px; border-radius: 8px; padding: 6px; }
             .card .number { font-size: 16px; }
-            .card .center-content { font-size: 38px; }
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
             .hand-scroll-area { padding-top: 60px; }
@@ -183,10 +183,9 @@
         </div>
     </div>
 
-    <!-- ⭐️ 대기방 (화면 좌/우 2분할 가로 레이아웃으로 변경) -->
+    <!-- 대기방 설정 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         
-        <!-- 좌측 패널: 방 설정 및 유저 목록 -->
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
             <h2 style="color: #f1c40f; margin-bottom:5px; margin-top:0;">🏠 대기실</h2>
             <h3 style="background:#333; padding:8px 20px; border-radius:8px; margin-top:0; margin-bottom:10px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
@@ -222,7 +221,6 @@
             </div>
         </div>
 
-        <!-- 우측 패널: 대기실 채팅 -->
         <div id="waiting-chat-panel" style="width: 320px; display:flex; flex-direction:column; background:#222; border: 1px solid #444; border-radius: 12px; padding: 15px;">
             <h3 style="color:#f1c40f; margin-top:0; margin-bottom:10px; text-align:center;">💬 대기 대화방</h3>
             <div id="waiting-chat-log" style="flex:1; overflow-y:auto; font-size:14px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; padding-right:5px; border-bottom:1px solid #444; padding-bottom:10px; text-align:left;"></div>
@@ -249,7 +247,6 @@
         <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
     </div>
 
-    <!-- 라운드 로딩 스크린 -->
     <div id="round-loading-screen" class="screen hidden" style="z-index: 110; background: rgba(17,17,17,0.95);">
         <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
             <div style="font-size: 50px; margin-bottom: 20px; animation: spin 1.5s linear infinite; display: inline-block;">⏳</div>
@@ -307,7 +304,7 @@
         </div>
     </div>
 
-    <!-- ⭐️ 일시정지 모달창 (볼륨 조절 슬라이더 탑재) -->
+    <!-- ⭐️ 일시정지 모달창 (볼륨 조절 작동 복구) -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -340,13 +337,11 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 대기 화면 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 현황</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
-    <!-- 세금 개인 애니메이션 모달 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
@@ -403,6 +398,23 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
+        // ⭐️ 오리지널 달무티 직업/명칭 데이터베이스
+        const cardThemeData = {
+            1: { icon: '👑', name: '대달무티' },
+            2: { icon: '🎩', name: '소달무티' },
+            3: { icon: '🦅', name: '대영주' },
+            4: { icon: '🗡️', name: '기사' },
+            5: { icon: '⛪', name: '수녀원장' },
+            6: { icon: '📜', name: '남작' },
+            7: { icon: '🍷', name: '재봉사' },
+            8: { icon: '⚒️', name: '석공' },
+            9: { icon: '🥖', name: '요리사' },
+            10: { icon: '🐑', name: '양치기' },
+            11: { icon: '⛏️', name: '광부' },
+            12: { icon: '🧹', name: '농노' },
+            13: { icon: '🃏', name: '광대' }
+        };
+
         const bgmAudio = new Audio('/bgm.mp3');
         bgmAudio.loop = true;
         bgmAudio.volume = 0.4;
@@ -427,7 +439,7 @@
             }
         }
         
-        // ⭐️ 오디오 볼륨 조절 기능
+        // ⭐️ 볼륨 조절 함수 복구!
         function changeVolume(val) {
             bgmAudio.volume = parseFloat(val);
         }
@@ -436,6 +448,11 @@
             if(type === 'card') { sfxCard.currentTime = 0; sfxCard.play().catch(e=>{}); }
             if(type === 'turn') { sfxTurn.currentTime = 0; sfxTurn.play().catch(e=>{}); }
         }
+
+        // ⭐️ 1번 기능: 서버가 1:1로 쏴주는 턴 알림 신호를 받아서 소리 재생
+        socket.on('yourTurnSFX', () => {
+            playSfx('turn');
+        });
 
         function togglePauseMenu() {
             document.getElementById('pause-modal').classList.toggle('hidden');
@@ -805,11 +822,21 @@
             }, 5500);
         });
 
+        // ⭐️ 3번 기능: 카드 중앙에 멋진 오리지널 직업 명칭과 아이콘 삽입!
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
-            c.innerHTML = `<div class="number">${displayRank}</div><div class="center-content">${displayRank}</div><div class="number bottom">${displayRank}</div>`;
+            
+            let theme = cardThemeData[rank] || { icon: '', name: '' };
+
+            c.innerHTML = `
+                <div class="number">${displayRank}</div>
+                <div class="center-content">
+                    <div style="font-size:26px;">${theme.icon}</div>
+                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px;">${theme.name}</div>
+                </div>
+                <div class="number bottom">${displayRank}</div>`;
             
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -891,8 +918,6 @@
             
             document.getElementById('game-status').innerText = isMyTurn ? '당신의 차례입니다!' : '다른 플레이어의 턴 대기 중...';
             document.getElementById('game-status').style.color = isMyTurn ? '#2ecc71' : '#ecf0f1';
-            
-            if(isMyTurn) playSfx('turn');
         }
 
         function playCards() {
@@ -1115,14 +1140,16 @@
             }
         });
 
+        // ⭐️ 세금 명세서용 미니 카드 렌더러
         function generateMiniCardsHTML(cards) {
             if(!cards || cards.length === 0) return '';
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let display = c === 13 ? 'J' : c;
-                return `<div class="card rank-${c}" style="width:36px; height:52px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
-                    <div style="font-size:10px; font-weight:bold;">${display}</div>
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:18px; font-weight:900;">${display}</div>
+                let theme = cardThemeData[c] || { icon: '', name: '' };
+                return `<div class="card rank-${c}" style="width:38px; height:54px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                    <div style="font-size:9px; font-weight:bold;">${display}</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px;">${theme.icon}</div>
                 </div>`
             }).join('') + `</div>`;
         }
