@@ -8,7 +8,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
     <script src="/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
@@ -168,11 +167,9 @@
             <input type="password" id="auth-password" placeholder="비밀번호 (6자리 이상)">
             <button class="btn" onclick="loginUser()">로그인</button>
             <button class="btn back" onclick="registerUser()">새로 회원가입</button>
-            
             <div style="text-align: center; margin-top: 5px;">
                 <span style="color:#3498db; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="resetPassword()">비밀번호를 잊으셨나요?</span>
             </div>
-            
             <p id="auth-msg" style="color:#e74c3c; font-size:12px; text-align:center; margin:0; margin-top:5px;"></p>
         </div>
 
@@ -358,7 +355,7 @@
                     <span style="color:#fff; font-size:14px; font-weight:bold;">🔊 효과음 (SFX)</span>
                     <button class="btn" id="btn-sfx" style="padding:6px 12px; font-size:12px; margin:0; background:#e67e22; box-shadow:0 4px 0 #d35400;" onclick="toggleSFX()">ON</button>
                 </div>
-                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 자동 감지할 수 없어 효과음 끄기 버튼을 제공합니다)</div>
+                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 버튼을 제공합니다)</div>
             </div>
 
             <button class="btn" style="width:100%; margin:0 0 10px 0; background:#2ecc71; box-shadow:0 4px 0 #27ae60; color:#fff;" onclick="togglePauseMenu()">▶️ 다시 게임 진행</button>
@@ -437,15 +434,15 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ 중요: 발급받으신 파이어베이스 키를 여기에 덮어씌워주세요! ⭐️
+        // ⭐️ 질문자님의 진짜 파이어베이스 키값!
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
-              authDomain: "dalmuti-multi.firebaseapp.com",
-              projectId: "dalmuti-multi",
-              storageBucket: "dalmuti-multi.firebasestorage.app",
-              messagingSenderId: "867724560676",
-              appId: "1:867724560676:web:395ccb214138df6eb8cbb1",
-              measurementId: "G-YXFKS4XW3Y"
+            authDomain: "dalmuti-multi.firebaseapp.com",
+            projectId: "dalmuti-multi",
+            storageBucket: "dalmuti-multi.firebasestorage.app",
+            messagingSenderId: "867724560676",
+            appId: "1:867724560676:web:395ccb214138df6eb8cbb1",
+            measurementId: "G-YXFKS4XW3Y"
         };
         
         firebase.initializeApp(firebaseConfig);
@@ -475,7 +472,6 @@
             }
         });
 
-        // ⭐️ 새로 추가된 비밀번호 찾기(이메일 발송) 기능
         function resetPassword() {
             const email = document.getElementById('auth-email').value.trim();
             const msgEl = document.getElementById('auth-msg');
@@ -727,7 +723,6 @@
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
             document.getElementById('waiting-chat-log').innerHTML = '';
-            // 나가면 다시 로그인 완료 상태(step-2)로 돌아감
             document.getElementById('step-2-action').classList.remove('hidden');
         }
 

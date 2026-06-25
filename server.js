@@ -9,7 +9,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 const rooms = {};
 const JOKER = 13;
 
-// ⭐️ 모든 유저의 고유 계정(UID) 기반 영구 누적 장부
 const globalLedger = {};
 
 function getRoomBySocket(socketId) {
@@ -55,7 +54,7 @@ io.on('connection', (socket) => {
                     room.players[pIdx].isAI = true;
                     room.players[pIdx].originalName = pName;
                     room.players[pIdx].originalAvatar = originalAvatar;
-                    room.players[pIdx].uid = uid; // UID 유지
+                    room.players[pIdx].uid = uid;
                     room.players[pIdx].name = `🤖 AI (${pName} 대체)`;
                     room.players[pIdx].avatar = '🤖';
                     
@@ -71,7 +70,6 @@ io.on('connection', (socket) => {
                         triggerRevolution(roomId, room, p, isGrand);
                     }
                     
-                    // 선 뽑기 중에 튕기면 AI가 이어서 뽑게 설정
                     if (room.status === 'seon_drawing') {
                         setTimeout(() => { handleSeonPick(roomId, room.players[pIdx].id); }, 1500);
                     }
@@ -107,7 +105,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    // UID 포함하여 방 생성/접속
     socket.on('createRoom', ({ playerName, maxPlayers, betAmount, avatar, uid }) => {
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
@@ -148,8 +145,9 @@ io.on('connection', (socket) => {
                 io.to(roomId).emit('chatMsg', `🎉 [${playerName}] 님이 재접속하여 AI를 밀어내고 자리를 복구했습니다!`);
                 
                 if (room.status === 'playing') {
+                    // ⭐️ 여기서도 손패(hand) 길이를 명확하게 전송!
                     socket.emit('gameStarted', {
-                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
+                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
                         currentTurnId: room.players[room.currentTurnIdx].id,
                         lastRoundRanks: room.lastRoundRanks
                     });
@@ -158,7 +156,7 @@ io.on('connection', (socket) => {
                         center: room.center,
                         currentTurnId: room.players[room.currentTurnIdx].id,
                         finishedPlayers: room.finishedPlayers,
-                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI }))
+                        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI }))
                     });
                 } else if (room.status === 'ended') {
                     socket.emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData: room.players, balances: getCurrentRoomBalances(room), roundLog: room.transactions[room.transactions.length-1], votes: room.votes });
@@ -212,7 +210,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // ⭐️ 견고해진 선 뽑기 엔진 초기화
     socket.on('startGame', () => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
@@ -230,10 +227,10 @@ io.on('connection', (socket) => {
         }
 
         room.status = 'seon_drawing';
-        room.seonDrawDeck = createDeck(); // 80장 실제 덱
-        room.seonDraws = {};              // 뽑기 히스토리
-        room.tiedPlayers = [];            // 현재 턴의 참여자 (없으면 전원)
-        room.seonRound = 1;               // 라운드 수 (동률 발생 시 증가)
+        room.seonDrawDeck = createDeck();
+        room.seonDraws = {};
+        room.tiedPlayers = [];
+        room.seonRound = 1;
 
         room.players.forEach(p => {
             room.seonDraws[p.id] = { name: p.name, history: [], isAI: p.isAI };
@@ -249,23 +246,19 @@ io.on('connection', (socket) => {
         handleSeonPick(getRoomBySocket(socket.id)?.id, socket.id);
     });
 
-    // ⭐️ 카드 뽑기 및 동률 판단 분기 로직
     function handleSeonPick(roomId, playerId) {
         const room = rooms[roomId];
         if (!room || room.status !== 'seon_drawing') return;
         
-        // 동률 전용 라운드일 때 대상자가 아니면 무시
         if (room.tiedPlayers.length > 0 && !room.tiedPlayers.includes(playerId)) return;
         
         let pData = room.seonDraws[playerId];
         if (!pData) return;
 
-        // 이미 이번 라운드에 카드를 뽑았으면 무시
         if (pData.history.length >= room.seonRound) return;
 
         pData.history.push(room.seonDrawDeck.pop());
 
-        // 이번 라운드에 참여해야 할 플레이어들
         let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.id);
         let allDrawn = participants.every(id => room.seonDraws[id].history.length === room.seonRound);
 
@@ -277,13 +270,12 @@ io.on('connection', (socket) => {
         }
     }
 
-    // ⭐️ 승자 판단 및 동률 재시작 결정
     function checkTiesAndProceed(roomId, room, participants) {
         let latestCardsMap = {};
         
         participants.forEach(id => {
             let hist = room.seonDraws[id].history;
-            let card = hist[hist.length - 1]; // 방금 뽑은 카드
+            let card = hist[hist.length - 1];
             if (!latestCardsMap[card]) latestCardsMap[card] = [];
             latestCardsMap[card].push(id);
         });
@@ -293,7 +285,6 @@ io.on('connection', (socket) => {
         let bestPlayers = latestCardsMap[bestValue];
 
         if (bestPlayers.length > 1) {
-            // 가장 좋은 카드를 뽑은 사람이 여러 명 -> 동률 재시작
             room.tiedPlayers = bestPlayers;
             room.seonRound++;
             
@@ -316,7 +307,6 @@ io.on('connection', (socket) => {
             }, 4000);
 
         } else {
-            // 깔끔하게 승자 결정됨 -> 모든 플레이어 랭킹 정렬 (앞 라운드 카드부터 비교)
             let allIds = Object.keys(room.seonDraws);
             allIds.sort((a, b) => {
                 let histA = room.seonDraws[a].history;
@@ -561,7 +551,6 @@ function handleAITurnIfNeeded(roomId, room) {
     }, delay);
 }
 
-// ⭐️ 방 내의 플레이어 정보를 바탕으로 전역 장부(UID)에서 현재 방 정산금 계산
 function getCurrentRoomBalances(room) {
     let balances = {};
     room.players.filter(p => !p.isAI).forEach(p => {
@@ -593,7 +582,6 @@ function executePlayLogic(roomId, room, player, selectedCards, eRank) {
         });
 
         let roundLog = null;
-        // ⭐️ UID 기반 글로벌 정산 업데이트
         if (humanFinished.length >= 2 && room.betAmount > 0) {
             const firstHumanId = humanFinished[0];
             const lastHumanId = humanFinished[humanFinished.length - 1];
@@ -648,8 +636,11 @@ function executePassLogic(roomId, room, player) {
     handleAITurnIfNeeded(roomId, room);
 }
 
+// ⭐️ 여기서도 반드시! 방에 있는 모든 사람들에게 카드 정보를 명확하게 뿌려주도록 보장
 function distributeCards(room) {
-    let deck = createDeck(); let p = 0;
+    room.players.forEach(p => p.hand = []); // 기존 패 완벽 초기화
+    let deck = createDeck();
+    let p = 0;
     while (deck.length > 0) {
         room.players[p].hand.push(deck.pop());
         p = (p + 1) % room.players.length;
@@ -657,13 +648,14 @@ function distributeCards(room) {
     room.players.forEach(pl => pl.hand.sort((a, b) => a - b));
 }
 
+// ⭐️ 여기서도 반드시! 카드 0장 버그 원천 차단 (p.hand.length 를 직접 전달)
 function broadcastGameState(roomId, room) {
     io.to(roomId).emit('gameStateUpdated', {
         center: room.center,
         currentTurnId: room.players[room.currentTurnIdx].id,
         finishedPlayers: room.finishedPlayers,
         players: room.players.map(p => ({
-            id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
+            id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI
         }))
     });
 }
@@ -769,6 +761,7 @@ function proceedWithTax(roomId, room) {
     }
 }
 
+// ⭐️ 여기서도 반드시! 카드 0장 버그 원천 차단 (p.hand.length 를 직접 전달)
 function startNormalRound(roomId, room) {
     room.status = 'playing';
     room.center = { cards: [], count: 0, rank: 99, ownerId: null };
@@ -776,7 +769,7 @@ function startNormalRound(roomId, room) {
     room.currentTurnIdx = 0;
     
     io.to(roomId).emit('gameStarted', {
-        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
+        players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
         currentTurnId: room.players[0].id,
         lastRoundRanks: room.lastRoundRanks
     });
