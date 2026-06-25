@@ -162,7 +162,7 @@
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
-        <!-- 로그인/회원가입 창 -->
+        <!-- 로그인 창 -->
         <div id="step-0-auth" class="input-group">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">클라우드 계정 로그인</h3>
             <input type="email" id="auth-email" placeholder="이메일 주소">
@@ -434,7 +434,7 @@
         </div>
     </div>
 
-    <!-- ⭐️ 자바스크립트 로직 (에러 우회 픽스 & 키값 고정) -->
+    <!-- ⭐️ 자바스크립트 로직 -->
     <script>
         const socket = io();
         let myId = null;
@@ -447,7 +447,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ 질문자님의 파이어베이스 고정 키값
+        // ⭐️ 질문자님의 진짜 파이어베이스 키값 고정 박제!
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -468,7 +468,6 @@
                 
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
-                    // ⭐️ 사진을 localStorage에서 최우선으로 불러옵니다.
                     currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
                     
                     document.getElementById('display-nickname').innerText = currentPlayerName;
@@ -554,7 +553,6 @@
             auth.signOut();
         }
 
-        // ⭐️ 버그 픽스: Firebase photoURL 용량 초과 거부 에러 우회
         function saveProfileAndGoToStep2() {
             const nameInput = document.getElementById('player-name').value.trim();
             if(!nameInput) return alert('닉네임을 먼저 입력해주세요.');
@@ -563,11 +561,9 @@
             const user = auth.currentUser;
             
             if (user) {
-                // 긴 Base64 이미지는 Firebase에서 거부하므로 displayName만 업데이트합니다.
                 user.updateProfile({
                     displayName: currentPlayerName
                 }).then(() => {
-                    // 아바타 이미지는 로컬 스토리지에만 넉넉하고 안전하게 저장합니다.
                     localStorage.setItem('dalmuti_avatar_' + user.uid, currentAvatar);
                     document.getElementById('display-nickname').innerText = currentPlayerName;
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
