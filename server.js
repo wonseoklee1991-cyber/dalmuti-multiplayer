@@ -145,7 +145,6 @@ io.on('connection', (socket) => {
                 io.to(roomId).emit('chatMsg', `🎉 [${playerName}] 님이 재접속하여 AI를 밀어내고 자리를 복구했습니다!`);
                 
                 if (room.status === 'playing') {
-                    // ⭐️ 여기서도 손패(hand) 길이를 명확하게 전송!
                     socket.emit('gameStarted', {
                         players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
                         currentTurnId: room.players[room.currentTurnIdx].id,
@@ -328,7 +327,11 @@ io.on('connection', (socket) => {
 
             io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: allIds[0], winnerName: room.seonDraws[allIds[0]].name });
 
-            setTimeout(() => { startNormalRound(roomId, room); }, 4500);
+            // ⭐️ 0장 오류 픽스: 여기서 카드를 미리 나눠줘야 게임 화면에서 손패가 표시됩니다!!
+            setTimeout(() => {
+                distributeCards(room);
+                startNormalRound(roomId, room);
+            }, 4500);
         }
     }
 
@@ -636,9 +639,8 @@ function executePassLogic(roomId, room, player) {
     handleAITurnIfNeeded(roomId, room);
 }
 
-// ⭐️ 여기서도 반드시! 방에 있는 모든 사람들에게 카드 정보를 명확하게 뿌려주도록 보장
 function distributeCards(room) {
-    room.players.forEach(p => p.hand = []); // 기존 패 완벽 초기화
+    room.players.forEach(p => p.hand = []);
     let deck = createDeck();
     let p = 0;
     while (deck.length > 0) {
@@ -648,7 +650,6 @@ function distributeCards(room) {
     room.players.forEach(pl => pl.hand.sort((a, b) => a - b));
 }
 
-// ⭐️ 여기서도 반드시! 카드 0장 버그 원천 차단 (p.hand.length 를 직접 전달)
 function broadcastGameState(roomId, room) {
     io.to(roomId).emit('gameStateUpdated', {
         center: room.center,
@@ -761,7 +762,6 @@ function proceedWithTax(roomId, room) {
     }
 }
 
-// ⭐️ 여기서도 반드시! 카드 0장 버그 원천 차단 (p.hand.length 를 직접 전달)
 function startNormalRound(roomId, room) {
     room.status = 'playing';
     room.center = { cards: [], count: 0, rank: 99, ownerId: null };

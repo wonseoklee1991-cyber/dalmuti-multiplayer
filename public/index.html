@@ -158,9 +158,11 @@
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
     </div>
 
+    <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
+        <!-- 로그인 창 -->
         <div id="step-0-auth" class="input-group">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">클라우드 계정 로그인</h3>
             <input type="email" id="auth-email" placeholder="이메일 주소">
@@ -173,6 +175,7 @@
             <p id="auth-msg" style="color:#e74c3c; font-size:12px; text-align:center; margin:0; margin-top:5px;"></p>
         </div>
 
+        <!-- 캐릭터 설정/수정 창 -->
         <div id="step-1-nickname" class="input-group hidden">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">내 캐릭터 프로필 설정</h3>
             <div class="avatar-selector">
@@ -189,6 +192,7 @@
             <button class="btn" onclick="saveProfileAndGoToStep2()">프로필 저장 완료</button>
         </div>
 
+        <!-- 액션 창 -->
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
@@ -207,6 +211,7 @@
         </div>
     </div>
 
+    <!-- 대기방 설정 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
@@ -254,6 +259,7 @@
         </div>
     </div>
 
+    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -261,6 +267,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
+    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
@@ -275,6 +282,7 @@
         </div>
     </div>
 
+    <!-- 반란 선택 모달 -->
     <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #e74c3c;">
             <div style="font-size:50px; margin-bottom:10px; animation: pulse 1s infinite;">🃏🃏</div>
@@ -287,6 +295,7 @@
         </div>
     </div>
 
+    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <button class="btn-pause" onclick="togglePauseMenu()">⏸️</button>
         
@@ -336,6 +345,7 @@
         </div>
     </div>
 
+    <!-- 일시정지 모달창 -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -355,7 +365,7 @@
                     <span style="color:#fff; font-size:14px; font-weight:bold;">🔊 효과음 (SFX)</span>
                     <button class="btn" id="btn-sfx" style="padding:6px 12px; font-size:12px; margin:0; background:#e67e22; box-shadow:0 4px 0 #d35400;" onclick="toggleSFX()">ON</button>
                 </div>
-                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 버튼을 제공합니다)</div>
+                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 효과음 끄기 버튼을 제공합니다)</div>
             </div>
 
             <button class="btn" style="width:100%; margin:0 0 10px 0; background:#2ecc71; box-shadow:0 4px 0 #27ae60; color:#fff;" onclick="togglePauseMenu()">▶️ 다시 게임 진행</button>
@@ -363,6 +373,7 @@
         </div>
     </div>
 
+    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -388,6 +399,7 @@
         </div>
     </div>
 
+    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -422,6 +434,7 @@
         </div>
     </div>
 
+    <!-- ⭐️ 자바스크립트 로직 (파이어베이스 키값 고정됨) -->
     <script>
         const socket = io();
         let myId = null;
@@ -434,7 +447,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ 질문자님의 진짜 파이어베이스 키값!
+        // ⭐️ 질문자님의 진짜 파이어베이스 키값! (절대 건드리지 마세요)
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -448,6 +461,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // ⭐️ 프로필 이미지 클라우드 동기화 로직
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
@@ -455,7 +469,8 @@
                 
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
-                    currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
+                    // 클라우드 photoURL 우선 -> 로컬저장소 -> 기본 이모지 순으로 불러옴
+                    currentAvatar = user.photoURL || localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
                     
                     document.getElementById('display-nickname').innerText = currentPlayerName;
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
@@ -540,6 +555,7 @@
             auth.signOut();
         }
 
+        // ⭐️ 변경: 프로필 저장 시 이미지(Base64)를 파이어베이스에 업로드
         function saveProfileAndGoToStep2() {
             const nameInput = document.getElementById('player-name').value.trim();
             if(!nameInput) return alert('닉네임을 먼저 입력해주세요.');
@@ -548,7 +564,10 @@
             const user = auth.currentUser;
             
             if (user) {
-                user.updateProfile({ displayName: currentPlayerName }).then(() => {
+                user.updateProfile({
+                    displayName: currentPlayerName,
+                    photoURL: currentAvatar // 클라우드에 내 아바타 영구 저장
+                }).then(() => {
                     localStorage.setItem('dalmuti_avatar_' + user.uid, currentAvatar);
                     document.getElementById('display-nickname').innerText = currentPlayerName;
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
@@ -563,6 +582,25 @@
             document.getElementById('step-2-action').classList.add('hidden');
             document.getElementById('step-1-nickname').classList.remove('hidden');
             document.getElementById('player-name').value = currentPlayerName;
+            
+            // 기존 아바타 선택 상태 복구
+            document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
+            if (currentAvatar && currentAvatar.startsWith('data:image')) {
+                const previewEl = document.getElementById('avatar-preview-img');
+                previewEl.style.backgroundImage = `url(${currentAvatar})`;
+                previewEl.style.backgroundSize = 'cover';
+                previewEl.innerText = '';
+                previewEl.classList.add('selected');
+            } else {
+                let found = false;
+                document.querySelectorAll('.avatar-opt').forEach(opt => {
+                    if(opt.innerText === currentAvatar) {
+                        opt.classList.add('selected');
+                        found = true;
+                    }
+                });
+                if(!found) document.querySelectorAll('.avatar-opt')[0].classList.add('selected');
+            }
         }
 
         const cardThemeData = {
@@ -642,6 +680,7 @@
             leaveLobby();
         }
 
+        // ⭐️ 사진 크기 최적화 (80x80)하여 파이어베이스 용량 초과 방지
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -652,15 +691,15 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    canvas.width = 100; canvas.height = 100;
+                    canvas.width = 80; canvas.height = 80; // 사이즈 축소
                     
                     const minSize = Math.min(img.width, img.height);
                     const sx = (img.width - minSize) / 2;
                     const sy = (img.height - minSize) / 2;
                     
-                    ctx.drawImage(img, sx, sy, minSize, minSize, 0, 0, 100, 100);
+                    ctx.drawImage(img, sx, sy, minSize, minSize, 0, 0, 80, 80);
                     
-                    currentAvatar = canvas.toDataURL('image/jpeg', 0.8);
+                    currentAvatar = canvas.toDataURL('image/jpeg', 0.7); // 압축률 증가
                     
                     document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
                     
@@ -676,6 +715,7 @@
         }
 
         function applyAvatarStyle(el, avatarData) {
+            if (!el) return;
             if (avatarData && avatarData.startsWith('data:image')) {
                 el.style.backgroundImage = `url(${avatarData})`;
                 el.style.backgroundSize = 'cover';
