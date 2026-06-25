@@ -25,7 +25,6 @@ function createDeck() {
     return deck.sort(() => Math.random() - 0.5);
 }
 
-// ⭐️ 소리 알림 헬퍼
 function notifyTurn(roomId, turnId) {
     const room = rooms[roomId];
     if (!room) return;
@@ -46,12 +45,10 @@ io.on('connection', (socket) => {
                 const originalAvatar = room.players[pIdx].avatar;
                 socket.leave(roomId);
 
-                // 게임 중이거나 세금/결과창일 때 나가면 -> 임시 AI로 껍데기 씌우기 (이름은 기억함!)
                 if (room.status === 'playing' || room.status === 'tax_phase' || room.status === 'ended') {
                     io.to(roomId).emit('chatMsg', `⚠️ [${pName}] 님이 일시적으로 끊겼습니다. AI가 임시 대체합니다.`);
                     room.players[pIdx].id = `ai_replace_${Date.now()}`;
                     room.players[pIdx].isAI = true;
-                    // ⭐️ 나중에 재접속 식별을 위해 원래 닉네임과 아바타 정보 백업
                     room.players[pIdx].originalName = pName;
                     room.players[pIdx].originalAvatar = originalAvatar;
                     room.players[pIdx].name = `🤖 AI (${pName} 대체)`;
@@ -60,6 +57,14 @@ io.on('connection', (socket) => {
                     if (!room.players.some(p => p.isHost && !p.isAI)) {
                         let newHost = room.players.find(p => !p.isAI);
                         if (newHost) newHost.isHost = true;
+                    }
+
+                    // ⭐️ 반란 선택을 고민하다 나갔을 경우 AI가 바로 반란 버튼을 눌러버리게 처리
+                    if (room.pendingRevolution && room.pendingRevolution.playerId === socket.id) {
+                        let isGrand = room.pendingRevolution.isGrand;
+                        let p = room.players[pIdx];
+                        delete room.pendingRevolution;
+                        triggerRevolution(roomId, room, p, isGrand);
                     }
 
                     if (room.status === 'playing') broadcastGameState(roomId, room);
@@ -71,7 +76,6 @@ io.on('connection', (socket) => {
                         }
                     }
                 } else {
-                    // 대기실에서 나간 경우 완전히 삭제
                     room.players.splice(pIdx, 1);
                     if (room.readyPlayers.includes(socket.id)) {
                         room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
@@ -121,11 +125,9 @@ io.on('connection', (socket) => {
         const room = rooms[roomId];
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
 
-        // ⭐️ 재접속(Rejoin) 시스템: 이미 게임이 시작되었어도 닉네임이 같으면 AI를 쫓아내고 자리를 강탈함!
         if (room.status !== 'lobby') {
             let replaceIdx = room.players.findIndex(p => p.isAI && p.originalName === playerName);
             if (replaceIdx !== -1) {
-                // 내 자리 복구
                 room.players[replaceIdx].id = socket.id;
                 room.players[replaceIdx].name = playerName;
                 room.players[replaceIdx].avatar = avatar || room.players[replaceIdx].originalAvatar || '🧑‍💻';
@@ -136,9 +138,7 @@ io.on('connection', (socket) => {
                 socket.join(roomId);
                 io.to(roomId).emit('chatMsg', `🎉 [${playerName}] 님이 재접속하여 AI를 밀어내고 자리를 복구했습니다!`);
                 
-                // 상황에 맞는 복구 화면 전송
                 if (room.status === 'playing') {
-                    // 현재 상태 렌더링
                     socket.emit('gameStarted', {
                         players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand.length, isAI: p.isAI })),
                         currentTurnId: room.players[room.currentTurnIdx].id,
@@ -155,7 +155,6 @@ io.on('connection', (socket) => {
                     socket.emit('gameOver', { finishedPlayers: room.finishedPlayers, playersData: room.players, balances: room.balances, roundLog: room.transactions[room.transactions.length-1], votes: room.votes });
                 }
                 
-                // 나 말고 다른 사람들에게 아바타 원래대로 돌아온 것 렌더링 갱신
                 broadcastGameState(roomId, room);
                 return;
             } else {
@@ -271,6 +270,7 @@ io.on('connection', (socket) => {
                 });
 
                 room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+                
                 notifyTurn(room.id, room.players[0].id);
                 handleAITurnIfNeeded(room.id, room);
             }, 4500);
@@ -360,6 +360,24 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ⭐️ 클라이언트가 고민 끝에 보낸 반란 응답 수신
+    socket.on('respondRevolution', ({ wantsRevolution }) => {
+        const room = getRoomBySocket(socket.id);
+        if (!room || room.status !== 'tax_phase' || !room.pendingRevolution) return;
+        if (room.pendingRevolution.playerId !== socket.id) return;
+
+        let isGrand = room.pendingRevolution.isGrand;
+        let player = room.players.find(p => p.id === socket.id);
+        delete room.pendingRevolution;
+
+        if (wantsRevolution && player) {
+            triggerRevolution(room.id, room, player, isGrand);
+        } else {
+            if(player) io.to(room.id).emit('chatMsg', `🤫 [${player.name}] 님이 반란을 조용히 넘겼습니다.`);
+            proceedWithTax(room.id, room);
+        }
+    });
+
     socket.on('submitTaxHand', ({ targetId, indices }) => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
@@ -417,6 +435,7 @@ function clearTrickAndSetLead(roomId, room) {
     let nextPlayer = room.players.find(p => p.id === nextTurnId);
     if (nextPlayer) io.to(roomId).emit('chatMsg', `📯 [${nextPlayer.name}] 플레이어가 선을 잡았습니다!`);
     io.to(roomId).emit('newRound', { currentTurnId: nextTurnId });
+    
     notifyTurn(roomId, nextTurnId);
 }
 
@@ -568,46 +587,60 @@ function broadcastGameState(roomId, room) {
     });
 }
 
+// ⭐️ 반란 감지 후 선택의 기회를 주는 로직
 function executeTaxPhase(roomId, room) {
-    let total = room.players.length; let taxRules = []; room.taxLogs = [];
-    
-    let revolution = false;
-    let grandRevolution = false;
+    room.status = 'tax_phase';
     let revPlayer = null;
+    let isGrand = false;
 
     for (let p of room.players) {
         if (p.hand.filter(c => c === JOKER).length === 2) {
-            revolution = true;
             revPlayer = p;
             let lastRankId = room.lastRoundRanks[room.lastRoundRanks.length - 1];
-            if (p.id === lastRankId) grandRevolution = true;
+            if (p.id === lastRankId) isGrand = true;
             break;
         }
     }
 
-    if (grandRevolution) {
+    if (revPlayer) {
+        if (revPlayer.isAI) {
+            // AI는 얄짤없이 100% 확률로 무조건 반란을 누름
+            triggerRevolution(roomId, room, revPlayer, isGrand);
+        } else {
+            io.to(roomId).emit('chatMsg', `👑 조커를 가진 누군가가 반란을 고민 중입니다...`);
+            io.to(revPlayer.id).emit('promptRevolution', { isGrand });
+            // 플레이어가 나갈 경우를 대비해 대기 상태 메모리 저장
+            room.pendingRevolution = { playerId: revPlayer.id, isGrand: isGrand };
+        }
+    } else {
+        proceedWithTax(roomId, room);
+    }
+}
+
+// ⭐️ 진짜 반란이 일어났을 때의 처리 함수
+function triggerRevolution(roomId, room, revPlayer, isGrand) {
+    if (isGrand) {
         room.lastRoundRanks.reverse();
         let newOrder = [];
         room.lastRoundRanks.forEach(rId => newOrder.push(room.players.find(p=>p.id===rId)));
         room.players = newOrder;
 
         io.to(roomId).emit('revolutionAlert', { type: 'grand', playerName: revPlayer.name });
-        setTimeout(() => {
-            room.players.forEach(p => p.hand.sort((a,b)=>a-b));
-            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-            startNormalRound(roomId, room);
-        }, 7000);
-        return;
-    } else if (revolution) {
+    } else {
         io.to(roomId).emit('revolutionAlert', { type: 'normal', playerName: revPlayer.name });
-        setTimeout(() => {
-            room.players.forEach(p => p.hand.sort((a,b)=>a-b));
-            room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-            startNormalRound(roomId, room);
-        }, 7000);
-        return;
     }
 
+    setTimeout(() => {
+        room.players.forEach(p => p.hand.sort((a,b)=>a-b));
+        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        startNormalRound(roomId, room);
+    }, 7000);
+}
+
+// ⭐️ 반란이 없거나 조용히 넘어갔을 때 진행되는 정상 세금 페이즈
+function proceedWithTax(roomId, room) {
+    let total = room.players.length; let taxRules = []; room.taxLogs = [];
+    
     if (total <= 4) taxRules = [];
     else if (total === 5) taxRules.push({ highRank: 0, lowRank: total - 1, count: 1 });
     else if (total === 6 || total === 7) { taxRules.push({ highRank: 0, lowRank: total - 1, count: 2 }); taxRules.push({ highRank: 1, lowRank: total - 2, count: 1 }); }
@@ -631,6 +664,7 @@ function executeTaxPhase(roomId, room) {
         room.taxLogs.push({ fromId: lowPlayer.id, toId: highPlayer.id, fromName: lowPlayer.name, toName: highPlayer.name, cards: bestCards });
     });
 
+    room.players.forEach(p => p.hand.sort((a,b)=>a-b));
     room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
 
     taxRules.forEach(rule => {
@@ -673,6 +707,7 @@ function startNormalRound(roomId, room) {
     });
 
     room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+    
     notifyTurn(roomId, room.players[0].id);
     handleAITurnIfNeeded(roomId, room);
 }

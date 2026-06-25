@@ -30,7 +30,6 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 10px; width: 100%; overflow-y: auto; margin-bottom: 15px; border: 1px solid #444; flex: 1; min-height: 80px;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
-        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -40px) scale(1.5); } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         @keyframes bubblePop {
@@ -49,7 +48,7 @@
         
         #opponents-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 6; }
         .ai-node { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.85); border: 2px solid #444; border-radius: 25px; padding: 4px 12px 4px 4px; --tx: 0%; --scale: 0.92; transform: translateX(var(--tx)) scale(var(--scale)); transition: all 0.2s; }
-        .ai-node .avatar { width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; transition: all 0.3s; background-size: cover; background-position: center; }
+        .ai-node .avatar { position: relative; width: 34px; height: 34px; font-size: 18px; border-radius: 50%; background: #2c3e50; display: flex; justify-content: center; align-items: center; transition: all 0.3s; background-size: cover; background-position: center; }
         .ai-node .info { display: flex; flex-direction: column; }
         .ai-node .name { font-size: 13px; color: #fff; font-weight: bold; transition: color 0.3s; text-shadow: 1px 1px 2px #000; }
         .ai-node .count { font-size: 11px; color: #f1c40f; font-weight: bold; }
@@ -68,10 +67,9 @@
         .pos-right-mid  { top: 2%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 22%; right: max(15px, env(safe-area-inset-right)); }
 
-        /* ⭐️ 2번. 화면 하단 홈바 스와이프 간섭 방지 패딩 대폭 추가 (bottom 30px) */
-        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(30px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.98) 55%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
+        .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.95) 45%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
         .hud-layer { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 max(15px, env(safe-area-inset-left)) 0 max(15px, env(safe-area-inset-left)); margin-bottom: -5px; z-index: 20; }
-        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.8); padding: 6px 12px 6px 6px; border-radius: 30px; border: 1px solid #555;}
+        .hud-left { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.7); padding: 6px 12px 6px 6px; border-radius: 30px; border: 1px solid #555;}
         .hud-right { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
         
         .btn-emote { background: #34495e; border: 2px solid #f1c40f; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
@@ -80,9 +78,9 @@
         .btn-pause { position: absolute; top: max(15px, env(safe-area-inset-top)); right: max(15px, env(safe-area-inset-right)); background: rgba(0,0,0,0.7); border: 2px solid #555; color: #fff; border-radius: 50%; width: 42px; height: 42px; font-size: 16px; display: flex; justify-content: center; align-items: center; z-index: 50; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
         .btn-pause:active { transform: scale(0.9); }
         
-        #emote-menu { position: absolute; bottom: 100px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.98); border: 2px solid #555; border-radius: 12px; padding: 15px; width: 280px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); z-index: 9999; pointer-events: auto; }
+        #emote-menu { position: absolute; bottom: 85px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.98); border: 2px solid #555; border-radius: 12px; padding: 15px; width: 280px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); z-index: 9999; pointer-events: auto; }
         .emote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-        .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 12px 0; font-size: 14px; cursor: pointer; transition: background 0.1s;}
+        .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 12px 0; font-size: 15px; cursor: pointer; transition: background 0.1s;}
         .emote-grid button:active { background: #555; }
         .chat-input-container { border-top: 1px solid #555; padding-top: 10px; display: flex; gap: 6px; }
 
@@ -120,6 +118,7 @@
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
             .card { width: 74px; height: 108px; border-radius: 8px; padding: 6px; }
             .card .number { font-size: 16px; }
+            .card .center-content { font-size: 38px; }
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
             .hand-scroll-area { padding-top: 60px; }
@@ -140,8 +139,8 @@
         .rank-13 { background-color: #333; color: #f1c40f; border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
         .rank-13 .center-content { color: #f1c40f; text-shadow: 1px 1px 0px #000; }
 
-        #game-status { position: absolute; top: 16%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
-        #chat-toast-area { position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
+        #game-status { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        #chat-toast-area { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -156,6 +155,7 @@
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
     </div>
 
+    <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
@@ -190,6 +190,7 @@
         </div>
     </div>
 
+    <!-- 대기방 설정 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
@@ -238,6 +239,7 @@
 
     </div>
 
+    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -245,12 +247,14 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
+    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
         <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
     </div>
 
+    <!-- 라운드 로딩 스크린 -->
     <div id="round-loading-screen" class="screen hidden" style="z-index: 110; background: rgba(17,17,17,0.95);">
         <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
             <div style="font-size: 50px; margin-bottom: 20px; animation: spin 1.5s linear infinite; display: inline-block;">⏳</div>
@@ -259,6 +263,20 @@
         </div>
     </div>
 
+    <!-- ⭐️ 반란 선택 모달 -->
+    <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
+        <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #e74c3c;">
+            <div style="font-size:50px; margin-bottom:10px; animation: pulse 1s infinite;">🃏🃏</div>
+            <h2 id="rev-prompt-title" style="color:#e74c3c; margin-top:0; margin-bottom:10px;">반란 기회!</h2>
+            <p id="rev-prompt-desc" style="color:#ccc; font-size:14px; margin-bottom:20px;">조커 2장을 보유하고 있습니다.<br>반란을 일으키시겠습니까?</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn pass" style="flex:1; background:#95a5a6; box-shadow:0 4px 0 #7f8c8d;" onclick="respondRevolution(false)">🤫 조용히 넘어가기</button>
+                <button class="btn" style="flex:1; background:#e74c3c; color:#fff; box-shadow:0 4px 0 #c0392b;" onclick="respondRevolution(true)">🔥 반란 일으키기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <button class="btn-pause" onclick="togglePauseMenu()">⏸️</button>
         
@@ -302,13 +320,13 @@
                     <button class="btn pass" id="btn-pass" style="margin:0; padding:12px 20px;" onclick="passTurn()" disabled>패스</button>
                 </div>
             </div>
-            
             <div class="hand-scroll-area">
                 <div id="player-hand" class="hand"></div>
             </div>
         </div>
     </div>
 
+    <!-- 일시정지 모달창 -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -330,6 +348,7 @@
         </div>
     </div>
 
+    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -340,11 +359,13 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
+    <!-- 세금 대기 화면 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 현황</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
+    <!-- 세금 개인 애니메이션 모달 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
@@ -355,6 +376,7 @@
         </div>
     </div>
 
+    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -603,6 +625,12 @@
             socket.emit('submitVote', type);
         }
 
+        // ⭐️ 클라이언트: 반란 선택 답변 전송
+        function respondRevolution(wantsRevolution) {
+            document.getElementById('revolution-prompt-modal').classList.add('hidden');
+            socket.emit('respondRevolution', { wantsRevolution });
+        }
+
         function unlockLobbyButtons() { document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = false); }
 
         socket.on('roomCreated', ({ roomId, players, betAmount, maxPlayers }) => {
@@ -640,6 +668,7 @@
             document.getElementById('seon-draw-screen').classList.add('hidden');
             document.getElementById('round-loading-screen').classList.add('hidden');
             document.getElementById('pause-modal').classList.add('hidden');
+            document.getElementById('revolution-prompt-modal').classList.add('hidden');
             
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
@@ -779,7 +808,7 @@
             document.getElementById('personal-tax-modal').classList.add('hidden');
             document.getElementById('tax-give-modal').classList.add('hidden');
             document.getElementById('tax-summary-modal').classList.add('hidden');
-            
+            document.getElementById('revolution-prompt-modal').classList.add('hidden');
             document.getElementById('round-loading-screen').classList.add('hidden');
             
             document.getElementById('btn-vote-keep').style.opacity = '1';
@@ -801,6 +830,19 @@
 
             renderOpponents(players);
             updateTurnState(currentTurnId);
+        });
+
+        // ⭐️ 클라이언트: 반란 선택 모달 띄우기
+        socket.on('promptRevolution', ({ isGrand }) => {
+            const modal = document.getElementById('revolution-prompt-modal');
+            modal.classList.remove('hidden');
+            if (isGrand) {
+                document.getElementById('rev-prompt-title').innerText = "🔥 대반란 기회!!";
+                document.getElementById('rev-prompt-desc').innerHTML = "조커 2장을 보유한 대농노입니다!<br>대혁명을 일으켜 계급을 완벽히 뒤집겠습니까?";
+            } else {
+                document.getElementById('rev-prompt-title').innerText = "💥 반란 기회!";
+                document.getElementById('rev-prompt-desc').innerHTML = "조커 2장을 보유하고 있습니다.<br>반란을 일으켜 세금을 면제받겠습니까?";
+            }
         });
 
         socket.on('revolutionAlert', ({ type, playerName }) => {
@@ -1012,7 +1054,7 @@
                 else el.style.top = '40px';
                 
                 target.appendChild(el);
-                setTimeout(() => el.remove(), 3500);
+                setTimeout(() => el.remove(), 5000); // ⭐️ 5초 유지
             }
             
             if (!document.getElementById('result-screen').classList.contains('hidden')) {
