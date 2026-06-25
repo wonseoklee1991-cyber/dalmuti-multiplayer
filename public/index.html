@@ -6,7 +6,6 @@
     <title>위대한 달무티 - 멀티플레이어</title>
     <link rel="manifest" href="/manifest.json">
     
-    <!-- ⭐️ Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     
@@ -160,21 +159,23 @@
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
     </div>
 
-    <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
-        <!-- 로그인/회원가입 창 (초기 화면) -->
         <div id="step-0-auth" class="input-group">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">클라우드 계정 로그인</h3>
             <input type="email" id="auth-email" placeholder="이메일 주소">
             <input type="password" id="auth-password" placeholder="비밀번호 (6자리 이상)">
             <button class="btn" onclick="loginUser()">로그인</button>
             <button class="btn back" onclick="registerUser()">새로 회원가입</button>
-            <p id="auth-msg" style="color:#e74c3c; font-size:12px; text-align:center; margin:0;"></p>
+            
+            <div style="text-align: center; margin-top: 5px;">
+                <span style="color:#3498db; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="resetPassword()">비밀번호를 잊으셨나요?</span>
+            </div>
+            
+            <p id="auth-msg" style="color:#e74c3c; font-size:12px; text-align:center; margin:0; margin-top:5px;"></p>
         </div>
 
-        <!-- 캐릭터 생성/수정 창 -->
         <div id="step-1-nickname" class="input-group hidden">
             <h3 style="color:#aaa; font-size:14px; text-align:center; margin-top:0;">내 캐릭터 프로필 설정</h3>
             <div class="avatar-selector">
@@ -191,7 +192,6 @@
             <button class="btn" onclick="saveProfileAndGoToStep2()">프로필 저장 완료</button>
         </div>
 
-        <!-- 액션 창 (프로필 수정 버튼 추가) -->
         <div id="step-2-action" class="input-group hidden">
             <h3 style="text-align:center; margin-top:0; color:#ccc;">환영합니다, <span id="display-nickname" style="color:#f1c40f;"></span>님!</h3>
             <button class="btn" onclick="createRoomReq()">새로운 방 만들기</button>
@@ -210,7 +210,6 @@
         </div>
     </div>
 
-    <!-- 대기방 설정 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
@@ -258,7 +257,6 @@
         </div>
     </div>
 
-    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -266,7 +264,6 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
-    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
@@ -281,7 +278,6 @@
         </div>
     </div>
 
-    <!-- 반란 선택 모달 -->
     <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #e74c3c;">
             <div style="font-size:50px; margin-bottom:10px; animation: pulse 1s infinite;">🃏🃏</div>
@@ -294,7 +290,6 @@
         </div>
     </div>
 
-    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <button class="btn-pause" onclick="togglePauseMenu()">⏸️</button>
         
@@ -344,7 +339,6 @@
         </div>
     </div>
 
-    <!-- ⭐️ 일시정지 모달창 (효과음 끄기 버튼 추가) -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -372,7 +366,6 @@
         </div>
     </div>
 
-    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -383,13 +376,11 @@
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
 
-    <!-- 세금 대기 화면 -->
     <div id="tax-summary-modal" class="screen hidden" style="z-index:85;">
         <h2 style="color:#f1c40f;">📜 세금 징수 대기 현황</h2>
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
-    <!-- 세금 개인 애니메이션 모달 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
@@ -400,7 +391,6 @@
         </div>
     </div>
 
-    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -435,11 +425,10 @@
         </div>
     </div>
 
-    <!-- ⭐️ 자바스크립트 로직 시작 ⭐️ -->
     <script>
         const socket = io();
         let myId = null;
-        let myUid = null; // 파이어베이스 유저 고유 ID (장부용)
+        let myUid = null;
         let myHand = [];
         let selectedIndices = [];
         let taxTargetId = null;
@@ -448,7 +437,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ (필독) 발급받으신 파이어베이스 키를 여기에 넣으세요! ⭐️
+        // ⭐️ 중요: 발급받으신 파이어베이스 키를 여기에 덮어씌워주세요! ⭐️
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
               authDomain: "dalmuti-multi.firebaseapp.com",
@@ -462,13 +451,11 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // ⭐️ 자동 로그인 및 프로필 자동 패스 기능
         auth.onAuthStateChanged((user) => {
             if (user) {
-                myUid = user.uid; // 장부용 UID 저장
+                myUid = user.uid;
                 document.getElementById('step-0-auth').classList.add('hidden');
                 
-                // 만약 프로필을 이미 설정했다면 곧바로 대기실 이동
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
                     currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
@@ -487,6 +474,34 @@
                 document.getElementById('step-2-action').classList.add('hidden');
             }
         });
+
+        // ⭐️ 새로 추가된 비밀번호 찾기(이메일 발송) 기능
+        function resetPassword() {
+            const email = document.getElementById('auth-email').value.trim();
+            const msgEl = document.getElementById('auth-msg');
+
+            if(!email) {
+                msgEl.style.color = '#e67e22';
+                msgEl.innerText = "이메일 칸에 가입하신 이메일을 입력한 뒤 다시 눌러주세요!";
+                return;
+            }
+
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    msgEl.style.color = '#2ecc71';
+                    msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다! 메일함을 확인해주세요.";
+                })
+                .catch((error) => {
+                    msgEl.style.color = '#e74c3c';
+                    if(error.code === 'auth/user-not-found') {
+                        msgEl.innerText = "가입되지 않은 이메일입니다.";
+                    } else if(error.code === 'auth/invalid-email') {
+                        msgEl.innerText = "올바른 이메일 형식이 아닙니다.";
+                    } else {
+                        msgEl.innerText = "오류 발생: " + error.message;
+                    }
+                });
+        }
 
         function registerUser() {
             const email = document.getElementById('auth-email').value.trim();
@@ -529,7 +544,6 @@
             auth.signOut();
         }
 
-        // ⭐️ 프로필 설정(신규/수정) 통합 함수
         function saveProfileAndGoToStep2() {
             const nameInput = document.getElementById('player-name').value.trim();
             if(!nameInput) return alert('닉네임을 먼저 입력해주세요.');
@@ -579,7 +593,7 @@
         const sfxTurn = new Audio('/turn.mp3');
 
         let isBgmPlaying = false;
-        let isSfxPlaying = true; // 효과음 ON/OFF 플래그
+        let isSfxPlaying = true;
 
         function toggleBGM() {
             isBgmPlaying = !isBgmPlaying;
@@ -614,7 +628,7 @@
         }
 
         function playSfx(type) {
-            if(!isSfxPlaying) return; // ⭐️ 효과음 꺼져있으면 재생 안함
+            if(!isSfxPlaying) return;
             if(type === 'card') { sfxCard.currentTime = 0; sfxCard.play().catch(e=>{}); }
             if(type === 'turn') { sfxTurn.currentTime = 0; sfxTurn.play().catch(e=>{}); }
         }
@@ -690,12 +704,6 @@
             document.getElementById('step-3-join').classList.remove('hidden');
         }
 
-        function goToStep2() {
-            document.getElementById('step-3-join').classList.add('hidden');
-            document.getElementById('step-1-nickname').classList.add('hidden');
-            document.getElementById('step-2-action').classList.remove('hidden');
-        }
-
         function createRoomReq() {
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
             socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: 4, betAmount: 1000, avatar: currentAvatar, uid: myUid });
@@ -719,7 +727,8 @@
             document.getElementById('waiting-screen').classList.add('hidden');
             document.getElementById('lobby-screen').classList.remove('hidden');
             document.getElementById('waiting-chat-log').innerHTML = '';
-            goToStep2();
+            // 나가면 다시 로그인 완료 상태(step-2)로 돌아감
+            document.getElementById('step-2-action').classList.remove('hidden');
         }
 
         function toggleReady() { socket.emit('toggleReady'); }
@@ -868,7 +877,6 @@
             });
         }
 
-        // ⭐️ 선 뽑기 초기화 (터치 시 서버에 요청만 보냄)
         socket.on('seonDrawPhaseInit', ({ isTieBreaker, tiedPlayers }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
             const screen = document.getElementById('seon-draw-screen');
@@ -899,7 +907,7 @@
                         guide.innerText = "⏳ 결과를 기다리는 중입니다...";
                         guide.style.background = "#34495e";
                         document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
-                        socket.emit('pickSeonCard'); // 내가 뽑겠다는 신호만 보냄
+                        socket.emit('pickSeonCard');
                     };
                 } else {
                     backCard.style.opacity = '0.5';
@@ -915,7 +923,6 @@
             }
         });
 
-        // ⭐️ 동률 발생 애니메이션
         socket.on('seonTieOccurred', ({ drawResults, tiedPlayers }) => {
             const container = document.getElementById('seon-cards-container');
             container.innerHTML = '';
@@ -1371,8 +1378,8 @@
                 let display = c === 13 ? 'J' : c;
                 let theme = cardThemeData[c] || { icon: '', name: '' };
                 return `<div class="card rank-${c}" style="width:38px; height:54px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
-                    <div style="font-size:9px; font-weight:bold;">${display}</div>
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px;">${theme.icon}</div>
+                    <div style="font-size:10px; font-weight:bold;">${display}</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:18px; font-weight:900;">${theme.icon}</div>
                 </div>`
             }).join('') + `</div>`;
         }
