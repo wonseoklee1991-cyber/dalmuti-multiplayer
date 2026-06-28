@@ -35,7 +35,6 @@ function notifyTurn(roomId, turnId) {
     }
 }
 
-// 백그라운드 재접속 시 장부의 모든 구버전 소켓 ID를 신버전 소켓 ID로 일괄 동기화하는 함수
 function updatePlayerIdInRoom(room, oldId, newId) {
     if (room.finishedPlayers.includes(oldId)) {
         room.finishedPlayers[room.finishedPlayers.indexOf(oldId)] = newId;
@@ -50,6 +49,11 @@ function updatePlayerIdInRoom(room, oldId, newId) {
     }
     if (room.readyPlayers && room.readyPlayers.includes(oldId)) {
         room.readyPlayers[room.readyPlayers.indexOf(oldId)] = newId;
+    }
+    if (room.seonDraws) {
+        Object.keys(room.seonDraws).forEach(uid => {
+            if (room.seonDraws[uid].id === oldId) room.seonDraws[uid].id = newId;
+        });
     }
 }
 
@@ -93,15 +97,12 @@ io.on('connection', (socket) => {
 
                     if (room.status === 'playing') broadcastGameState(roomId, room);
                     if (room.status === 'ended') {
-                        if (room.votes) {
-                            io.to(roomId).emit('voteStatusUpdated', { votes: room.votes, playersData: room.players });
-                        }
+                        if (room.votes) io.to(roomId).emit('voteStatusUpdated', { votes: room.votes, playersData: room.players });
                     }
                 } else {
                     room.players.splice(pIdx, 1);
-                    if (room.readyPlayers.includes(socket.id)) {
-                        room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
-                    }
+                    if (room.readyPlayers.includes(socket.id)) room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
+                    
                     if (room.players.filter(p => !p.isAI).length === 0) {
                         delete rooms[roomId];
                     } else {
@@ -120,28 +121,23 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
+    // ⭐️ 서버 멈춤 원천 차단: 클라이언트가 uid를 못 보내도 안전하게 임시 ID 생성
     socket.on('createRoom', ({ playerName, maxPlayers, betAmount, avatar, uid }) => {
+        uid = uid || `guest_${socket.id}`;
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
         rooms[roomId] = {
-            id: roomId,
-            maxPlayers: parseInt(maxPlayers) || 4,
-            betAmount: parseInt(betAmount) || 0,
+            id: roomId, maxPlayers: parseInt(maxPlayers) || 4, betAmount: parseInt(betAmount) || 0,
             players: [{ id: socket.id, name: playerName, avatar: avatar || '🧑‍💻', uid: uid, hand: [], hasPassed: false, isHost: true, isAI: false }],
-            currentTurnIdx: 0,
-            center: { cards: [], count: 0, rank: 99, ownerId: null },
-            status: 'lobby',
-            finishedPlayers: [],
-            lastRoundRanks: [],
-            taxLogs: [],
-            readyPlayers: [],
-            transactions: [],
-            votes: { keep: [], lobby: [] }
+            currentTurnIdx: 0, center: { cards: [], count: 0, rank: 99, ownerId: null },
+            status: 'lobby', finishedPlayers: [], lastRoundRanks: [], taxLogs: [],
+            readyPlayers: [], transactions: [], votes: { keep: [], lobby: [] }
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players, betAmount: rooms[roomId].betAmount, maxPlayers: rooms[roomId].maxPlayers });
     });
 
     socket.on('joinRoom', ({ roomId, playerName, avatar, uid }) => {
+        uid = uid || `guest_${socket.id}`;
         const room = rooms[roomId];
         if (!room) return socket.emit('errorMsg', '방을 찾을 수 없습니다.');
 
@@ -164,8 +160,7 @@ io.on('connection', (socket) => {
                 if (room.status === 'playing') {
                     socket.emit('gameStarted', {
                         players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
-                        currentTurnId: room.players[room.currentTurnIdx].id,
-                        lastRoundRanks: room.lastRoundRanks
+                        currentTurnId: room.players[room.currentTurnIdx].id, lastRoundRanks: room.lastRoundRanks
                     });
                     socket.emit('yourHand', room.players[replaceIdx].hand);
                 }
@@ -184,7 +179,6 @@ io.on('connection', (socket) => {
         io.to(roomId).emit('roomUpdated', { roomId: roomId, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
-    // ⭐️ 모바일 백그라운드 복귀 전용 마스터 동기화 파이프라인
     socket.on('requestRoomSync', ({ uid }) => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
@@ -201,23 +195,11 @@ io.on('connection', (socket) => {
         }
 
         socket.emit('forceUIRenderSync', {
-            status: room.status,
-            roomId: room.id,
-            betAmount: room.betAmount,
-            maxPlayers: room.maxPlayers,
-            players: room.players.map(p => ({
-                id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI, uid: p.uid
-            })),
-            readyPlayers: room.readyPlayers,
-            currentTurnId: room.players[room.currentTurnIdx] ? room.players[room.currentTurnIdx].id : null,
-            center: room.center,
-            finishedPlayers: room.finishedPlayers,
-            lastRoundRanks: room.lastRoundRanks,
-            hand: player.hand,
-            balances: getCurrentRoomBalances(room),
-            votes: room.votes,
-            tiedPlayers: room.tiedPlayers || [],
-            seonRound: room.seonRound
+            status: room.status, roomId: room.id, betAmount: room.betAmount, maxPlayers: room.maxPlayers,
+            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, hasPassed: p.hasPassed, isEscaped: room.finishedPlayers.includes(p.id), isAI: p.isAI, uid: p.uid })),
+            readyPlayers: room.readyPlayers, currentTurnId: room.players[room.currentTurnIdx] ? room.players[room.currentTurnIdx].id : null,
+            center: room.center, finishedPlayers: room.finishedPlayers, lastRoundRanks: room.lastRoundRanks,
+            hand: player.hand, balances: getCurrentRoomBalances(room), votes: room.votes, tiedPlayers: room.tiedPlayers || [], seonRound: room.seonRound
         });
         broadcastGameState(room.id, room);
     });
@@ -229,19 +211,15 @@ io.on('connection', (socket) => {
         if (!player || !player.isHost) return;
         if (room.readyPlayers.length > 0) return;
 
-        room.maxPlayers = parseInt(maxPlayers) || 4;
-        room.betAmount = parseInt(betAmount) || 0;
+        room.maxPlayers = parseInt(maxPlayers) || 4; room.betAmount = parseInt(betAmount) || 0;
         io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
     socket.on('toggleReady', () => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
-        if (room.readyPlayers.includes(socket.id)) {
-            room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
-        } else {
-            room.readyPlayers.push(socket.id);
-        }
+        if (room.readyPlayers.includes(socket.id)) room.readyPlayers = room.readyPlayers.filter(id => id !== socket.id);
+        else room.readyPlayers.push(socket.id);
         io.to(room.id).emit('roomUpdated', { roomId: room.id, players: room.players.filter(p => !p.isAI), readyPlayers: room.readyPlayers, betAmount: room.betAmount, maxPlayers: room.maxPlayers });
     });
 
@@ -258,9 +236,7 @@ io.on('connection', (socket) => {
         if (!room) return;
 
         const humanPlayers = room.players.filter(p => !p.isAI);
-        if (room.readyPlayers.length < humanPlayers.length - 1) {
-            return socket.emit('errorMsg', '모든 플레이어가 준비를 완료해야 합니다.');
-        }
+        if (room.readyPlayers.length < humanPlayers.length - 1) return socket.emit('errorMsg', '모든 플레이어가 준비를 완료해야 합니다.');
 
         if (room.players.length < room.maxPlayers) {
             const botsNeeded = room.maxPlayers - room.players.length;
@@ -277,9 +253,7 @@ io.on('connection', (socket) => {
 
         room.players.forEach(p => {
             room.seonDraws[p.uid] = { id: p.id, name: p.name, history: [], isAI: p.isAI };
-            if (p.isAI) {
-                setTimeout(() => { handleSeonPick(room.id, p.id); }, 1000 + Math.random() * 2000);
-            }
+            if (p.isAI) setTimeout(() => { handleSeonPick(room.id, p.id); }, 1000 + Math.random() * 2000);
         });
 
         io.to(room.id).emit('seonDrawPhaseInit', { isTieBreaker: false, tiedPlayers: [] });
@@ -301,20 +275,20 @@ io.on('connection', (socket) => {
         let pData = room.seonDraws[player.uid];
         if (!pData || pData.history.length >= room.seonRound) return;
 
+        if(room.seonDrawDeck.length === 0) room.seonDrawDeck = createDeck(); // 덱 소진 대비 안전장치
         pData.history.push(room.seonDrawDeck.pop());
 
         let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
         let allDrawn = participants.every(uid => room.seonDraws[uid].history.length === room.seonRound);
 
-        if (allDrawn) {
-            checkTiesAndProceed(roomId, room, participants);
-        } else {
+        if (allDrawn) checkTiesAndProceed(roomId, room, participants);
+        else {
             let drawnCount = participants.filter(uid => room.seonDraws[uid].history.length === room.seonRound).length;
             io.to(roomId).emit('seonPickProgress', { message: `⏳ 다른 플레이어 대기 중... (${drawnCount}/${participants.length})` });
         }
     }
 
-    // ⭐️ 핵심 개편: 계급 침범 없이 동률 그룹 단위로 완벽 격리 재뽑기
+    // ⭐️ 서버 멈춤 해결 및 시각적 오류 수정
     function checkTiesAndProceed(roomId, room, participants) {
         let latestCardsMap = {};
         participants.forEach(uid => {
@@ -351,14 +325,12 @@ io.on('connection', (socket) => {
                 
                 currentRoundTies.forEach(uid => {
                     let p = room.players.find(pl => pl.uid === uid);
-                    if (p && p.isAI) {
-                        setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
-                    }
+                    if (p && p.isAI) setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
                 });
             }, 4000);
 
         } else {
-            // 모든 그룹의 서열 정렬 (1세트 카드 비교 -> 같으면 2세트 비교 연쇄 알고리즘)
+            // 그룹이 완벽하게 독립적으로 계산됨
             let allUids = Object.keys(room.seonDraws);
             allUids.sort((a, b) => {
                 let histA = room.seonDraws[a].history;
@@ -371,12 +343,19 @@ io.on('connection', (socket) => {
                 return 0;
             });
 
-            room.players = allUids.map(uid => room.players.find(p => p.uid === uid));
+            // ⭐️ 방어 코드: undefined 맵핑 방지!
+            let newPlayers = [];
+            allUids.forEach(uid => {
+                let p = room.players.find(p => String(p.uid) === String(uid));
+                if (p) newPlayers.push(p);
+            });
+            room.players = newPlayers;
             room.lastRoundRanks = room.players.map(p => p.id);
 
-            let finalResults = allUids.map(uid => ({
-                id: room.seonDraws[uid].id, uid: uid, name: room.seonDraws[uid].name,
-                card: room.seonDraws[uid].history[room.seonDraws[uid].history.length - 1]
+            // ⭐️ 혼동 방지: 최종 결과창에서는 무조건 '1라운드의 첫 카드'만 표시!
+            let finalResults = room.players.map(p => ({
+                id: p.id, uid: p.uid, name: p.name,
+                card: room.seonDraws[p.uid].history[0]
             }));
 
             let winnerPlayer = room.players[0];
@@ -455,7 +434,7 @@ io.on('connection', (socket) => {
             room.lastRoundRanks.forEach(rId => {
                 newPlayersOrder.push(room.players.find(p => p.id === rId));
             });
-            room.players = newOrder = newPlayersOrder;
+            room.players = newPlayersOrder;
 
             distributeCards(room);
             executeTaxPhase(room.id, room);
@@ -514,9 +493,7 @@ io.on('connection', (socket) => {
 
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
-            setTimeout(() => {
-                startNormalRound(room.id, room);
-            }, 3500);
+            setTimeout(() => { startNormalRound(room.id, room); }, 3500);
         }
     });
 });
