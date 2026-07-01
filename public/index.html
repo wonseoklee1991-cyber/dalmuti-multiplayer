@@ -60,8 +60,6 @@
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
-        
-        /* ⭐️ 미니 카드 비율 수정 완료 */
         .ai-mini-card { position: absolute; width: 12px; height: 23px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
         .pos-left-low   { top: 22%; left: max(15px, env(safe-area-inset-left)); }
@@ -95,34 +93,38 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 카드 비율 356x684(약 1:1.92) 완벽 대응 ⭐️ */
+        /* ⭐️ 카드 356x684(약 1:1.921) 비율 완벽 대응 및 테두리(border) 완전 삭제 */
         .card {
-            width: 54px; height: 104px; /* 모바일 크기 최적화 */
-            border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;
+            width: 60px !important;
+            height: 115px !important;
+            border-radius: 6px !important;
             cursor: pointer; position: relative;
-            border: 2px solid #5c4033;
-            box-shadow: 2px 2px 4px rgba(0,0,0,0.4), inset 0 0 8px rgba(139,69,19,0.2);
-            transition: transform 0.15s, border-color 0.15s;
+            border: none !important; /* 지저분한 테두리 삭제 */
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.6) !important;
+            transition: transform 0.15s !important;
+            background-size: 100% 100% !important; /* 이미지 잘림 방지 */
+            background-color: transparent !important;
         }
-        .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5); z-index: 10; }
-        
+        .card.selected {
+            transform: translateY(-30px) scale(1.05) !important;
+            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.8) !important;
+            z-index: 10 !important;
+        }
+
         .card.card-back {
             background-color: #5c4033 !important;
             background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px) !important;
-            border: 2px solid #f1c40f; color: transparent;
+            border: 2px solid #f1c40f !important;
         }
-        .card.card-back::after { content: "👑"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); background: none; padding:0; }
+        .card.card-back::after { content: "👑" !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); }
 
         @media screen and (min-width: 1024px) {
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
-            .card { width: 74px; height: 142px; border-radius: 8px; } /* PC 화면 비율 최적화 */
+            .card { width: 90px !important; height: 173px !important; }
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
             .hand-scroll-area { padding-top: 60px; }
         }
-        
-        .rank-1 { border-color: #ffd700; box-shadow: inset 0 0 15px rgba(218,165,32,0.8); }
-        .rank-13 { border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
 
         #game-status { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
         
@@ -413,7 +415,7 @@
         </div>
     </div>
 
-    <!-- ⭐️ 자바스크립트 로직 (이미지 카드 적용 핵심 코드 완벽 수정) -->
+    <!-- ⭐️ 자바스크립트 로직 (이미지 텍스트 삭제 및 카드비율 적용 완료) -->
     <script>
         const socket = io();
         let myId = null;
@@ -426,6 +428,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
+        // 질문자님의 고정 파이어베이스 키값 (절대 건드리지 마세요!)
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -498,7 +501,6 @@
                 for(let i=0; i<8; i++) {
                     let backCard = document.createElement('div');
                     backCard.className = "card card-back";
-                    backCard.style.transform = "scale(1.2)";
                     if (isMyTurnToPick) {
                         backCard.onclick = () => {
                             backCard.style.borderColor = "#2ecc71";
@@ -931,7 +933,7 @@
             }
             for(let i=0; i<8; i++) {
                 let backCard = document.createElement('div');
-                backCard.className = "card card-back"; backCard.style.transform = "scale(1.2)";
+                backCard.className = "card card-back";
                 if (isMyTurnToPick) {
                     backCard.onclick = () => {
                         backCard.style.borderColor = "#2ecc71"; guide.innerText = "⏳ 결과를 기다리는 중입니다...";
@@ -959,9 +961,9 @@
             drawResults.forEach((res, idx) => {
                 let cardBox = document.createElement('div');
                 cardBox.style.display = 'flex'; cardBox.style.flexDirection = 'column'; cardBox.style.alignItems = 'center'; cardBox.style.gap = '8px';
-                let cardEl = createCardHTML(res.card, idx, false); cardEl.style.transform = 'scale(1.15)';
+                let cardEl = createCardHTML(res.card, idx, false);
                 if (tiedPlayers.includes(res.uid)) {
-                    cardEl.style.boxShadow = '0 0 15px #e74c3c'; cardEl.style.borderColor = '#e74c3c';
+                    cardEl.style.boxShadow = '0 0 15px #e74c3c';
                 } else { cardEl.style.opacity = '0.5'; }
                 let nameEl = document.createElement('div'); nameEl.style.fontSize = '13px'; nameEl.style.fontWeight = 'bold'; nameEl.innerText = res.name;
                 if(res.uid === myUid) nameEl.style.color = '#f1c40f';
@@ -969,7 +971,6 @@
             });
         });
 
-        // ⭐️ 결과창 버그 수정: 재뽑기 혼란 방지 (첫 1라운드 대표 카드만 출력)
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -978,7 +979,7 @@
             drawResults.forEach((res, idx) => {
                 let cardBox = document.createElement('div');
                 cardBox.style.display = 'flex'; cardBox.style.flexDirection = 'column'; cardBox.style.alignItems = 'center'; cardBox.style.gap = '8px';
-                let cardEl = createCardHTML(res.card, idx, false); cardEl.style.transform = 'scale(1.15)';
+                let cardEl = createCardHTML(res.card, idx, false);
                 let nameEl = document.createElement('div'); nameEl.style.fontSize = '13px'; nameEl.style.fontWeight = 'bold'; nameEl.innerText = res.name;
                 if(res.uid === myUid) nameEl.style.color = '#f1c40f';
                 cardBox.appendChild(cardEl); cardBox.appendChild(nameEl); container.appendChild(cardBox);
@@ -986,19 +987,19 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 완벽하게 수정된 커스텀 이미지 카드 생성 로직 ⭐️
+        // ⭐️ 모든 텍스트/테두리를 제거하고 원본 이미지를 최우선으로 보여주도록 CSS 강제 적용
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
-            // 💡 public/assets 폴더 안의 이미지를 무조건 가장 선명하게 불러옵니다!
+            // 질문자님의 356x684(약 1:1.92) 비율 이미지를 폴더에서 불러옵니다.
             let customImageURL = `/assets/card_${rank}.png`;
 
-            // ⭐️ 카드 내부의 하얀 숫자와 이모티콘 텍스트를 완전히 싹 비웠습니다 (innerHTML 삭제)
+            // 모든 글자(innerHTML)를 완전히 삭제!
             c.innerHTML = ``;
             
-            // ⭐️ 커스텀 이미지가 다른 CSS에 가려지지 않도록 inline style로 최우선 적용합니다.
-            c.style.background = `url('${customImageURL}') center/cover no-repeat #eaddcf`;
+            // 이미지가 빈 공간 없이 꽉 차게 (100% 100%) 들어가고 잡다한 테두리 배경은 끕니다.
+            c.style.background = `url('${customImageURL}') center/100% 100% no-repeat`;
 
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -1021,9 +1022,9 @@
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, false)); });
         });
 
-        // ⭐️ DOM 재생성 버그 완벽 수리 (innerHTML += 로 인한 스타일 날아감 방지)
         function renderOpponents(players) {
             const container = document.getElementById('opponents-container');
+            
             let others = players.filter(p => p.id !== socket.id && p.id !== myId);
             let totalOthers = others.length;
             
@@ -1175,10 +1176,8 @@
                 let el = document.createElement('div');
                 el.className = 'emote-popup-anim';
                 el.innerText = emote;
-                
                 if (isMe) el.style.top = '-50px';
                 else el.style.top = '40px';
-                
                 target.appendChild(el);
                 setTimeout(() => el.remove(), 5000);
             }
@@ -1214,12 +1213,10 @@
                 let pName = p ? p.name : '알 수 없음';
                 let rankNum = idx + 1;
                 let rName = "평민"; let icon = "👤";
-                
                 if (idx === 0) { rName = "대달무티"; icon = "👑"; }
                 else if (idx === 1) { rName = "소달무티"; icon = "🥈"; }
                 else if (idx === finishedPlayers.length - 1) { rName = "대농노"; icon = "💩"; }
                 else if (idx === finishedPlayers.length - 2) { rName = "소농노"; icon = "🧹"; }
-                
                 let item = document.createElement('div'); item.className = 'player-item';
                 if(pId === socket.id || pId === myId) item.style.color = '#f1c40f';
                 item.innerHTML = `<div style="font-size:16px;"><strong>${rankNum}등</strong> ${icon} ${rName} - ${pName}</div>`;
@@ -1284,7 +1281,6 @@
         function submitTaxHand() {
             socket.emit('submitTaxHand', { targetId: taxTargetId, indices: selectedIndices });
             document.getElementById('tax-give-modal').classList.add('hidden');
-            
             document.getElementById('tax-summary-modal').classList.remove('hidden');
             document.getElementById('tax-summary-list').innerHTML = `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#2ecc71; background:#333; font-weight:bold; animation: pulse 1s infinite;">✅ 카드 하사 완료!<br>다른 플레이어들의 세금 교환을<br>기다리고 있습니다...</div>`;
         }
@@ -1295,13 +1291,10 @@
             }
             const list = document.getElementById('tax-summary-list');
             list.innerHTML = '';
-            
             if(taxLogs.length === 0) {
                  list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#fff; background:#333; font-weight:bold; animation: pulse 1s infinite;">⏳ 다른 플레이어들이 세금 교환을<br>진행 중입니다...<br><span style="font-size:12px; color:#aaa;">(당신은 이번 판 세금 교환 대상자가 아닙니다)</span></div>`;
             } else {
-                taxLogs.forEach(log => {
-                    list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`;
-                });
+                taxLogs.forEach(log => { list.innerHTML += `<div style="font-size:14px; margin-bottom:6px;">[${log.fromName}] ➡️ [${log.toName}] 상납 완료</div>`; });
                 list.innerHTML += `<div style="margin-top:20px; padding:15px; border-radius:8px; text-align:center; color:#f1c40f; background:#333; font-weight:bold;">👑 대달무티가 하사할 카드를<br>고르고 있습니다...<br><span style="font-size:12px; color:#aaa;">(잠시 대기해 주세요)</span></div>`;
             }
         });
@@ -1311,25 +1304,21 @@
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                // 세금 미니카드에서도 innerHTML(숫자)을 제거하고, 비율을 1:1.92 에 맞췄습니다.
-                return `<div class="card rank-${c}" style="width:38px; height:73px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/cover no-repeat #eaddcf;">
-                </div>`
+                // 세금 미니카드에서도 innerHTML을 없애고 이미지만 출력
+                return `<div class="card rank-${c}" style="width:38px; height:73px; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/100% 100% no-repeat #eaddcf; border:none;"></div>`
             }).join('') + `</div>`;
         }
 
         socket.on('taxPhasePersonalResults', ({ taxLogs }) => {
             document.getElementById('tax-summary-modal').classList.add('hidden');
-            
             const myIdReal = myId || socket.id;
             let myGive = taxLogs.find(l => l.fromId === myIdReal);
             let myRecv = taxLogs.find(l => l.toId === myIdReal);
 
             if (myGive || myRecv) {
                 document.getElementById('personal-tax-modal').classList.remove('hidden');
-                
                 if(myGive) document.getElementById('tax-give-log').innerHTML = `<div style="margin-bottom:8px;">📤 [${myGive.toName}]님에게 세금 상납</div>` + generateMiniCardsHTML(myGive.cards);
                 else document.getElementById('tax-give-log').innerHTML = '';
-
                 if(myRecv) document.getElementById('tax-recv-log').innerHTML = `<div style="margin-bottom:8px;">📥 [${myRecv.fromName}]님에게서 하사받음</div>` + generateMiniCardsHTML(myRecv.cards);
                 else document.getElementById('tax-recv-log').innerHTML = '';
             } else {
@@ -1340,17 +1329,12 @@
         socket.on('chatMsg', (msg) => {
             const box = document.getElementById('chat-toast-area');
             if (box) {
-                box.innerText = msg;
-                box.classList.remove('hidden');
-                clearTimeout(window.chatTimeout);
-                window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3200);
+                box.innerText = msg; box.classList.remove('hidden');
+                clearTimeout(window.chatTimeout); window.chatTimeout = setTimeout(() => { box.classList.add('hidden'); }, 3200);
             }
         });
 
-        socket.on('errorMsg', (msg) => {
-            alert(msg);
-            unlockLobbyButtons();
-        });
+        socket.on('errorMsg', (msg) => { alert(msg); unlockLobbyButtons(); });
     </script>
 </body>
 </html>

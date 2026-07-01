@@ -52,7 +52,9 @@ function updatePlayerIdInRoom(room, oldId, newId) {
     }
     if (room.seonDraws) {
         Object.keys(room.seonDraws).forEach(uid => {
-            if (room.seonDraws[uid].id === oldId) room.seonDraws[uid].id = newId;
+            if (room.seonDraws[uid] && room.seonDraws[uid].id === oldId) {
+                room.seonDraws[uid].id = newId;
+            }
         });
     }
 }
@@ -263,107 +265,121 @@ io.on('connection', (socket) => {
     });
 
     function handleSeonPick(roomId, playerId) {
-        const room = rooms[roomId];
-        if (!room || room.status !== 'seon_drawing') return;
-        
-        const player = room.players.find(p => p.id === playerId);
-        if (!player) return;
+        try {
+            const room = rooms[roomId];
+            if (!room || room.status !== 'seon_drawing') return;
+            
+            const player = room.players.find(p => p.id === playerId);
+            if (!player) return;
 
-        if (room.tiedPlayers.length > 0 && !room.tiedPlayers.includes(player.uid)) return;
-        
-        let pData = room.seonDraws[player.uid];
-        if (!pData || pData.history.length >= room.seonRound) return;
+            if (room.tiedPlayers.length > 0 && !room.tiedPlayers.includes(player.uid)) return;
+            
+            let pData = room.seonDraws[player.uid];
+            if (!pData || pData.history.length >= room.seonRound) return;
 
-        if(room.seonDrawDeck.length === 0) room.seonDrawDeck = createDeck();
-        pData.history.push(room.seonDrawDeck.pop());
+            if(room.seonDrawDeck.length === 0) room.seonDrawDeck = createDeck();
+            pData.history.push(room.seonDrawDeck.pop());
 
-        let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
-        let allDrawn = participants.every(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound);
+            let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
+            let allDrawn = participants.every(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound);
 
-        if (allDrawn) checkTiesAndProceed(roomId, room, participants);
-        else {
-            let drawnCount = participants.filter(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound).length;
-            io.to(roomId).emit('seonPickProgress', { message: `⏳ 다른 플레이어 대기 중... (${drawnCount}/${participants.length})` });
-        }
+            if (allDrawn) checkTiesAndProceed(roomId, room, participants);
+            else {
+                let drawnCount = participants.filter(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound).length;
+                io.to(roomId).emit('seonPickProgress', { message: `⏳ 다른 플레이어 대기 중... (${drawnCount}/${participants.length})` });
+            }
+        } catch (e) { console.error("handleSeonPick Error:", e); }
     }
 
     function checkTiesAndProceed(roomId, room, participants) {
-        let latestCardsMap = {};
-        participants.forEach(uid => {
-            let hist = room.seonDraws[uid].history;
-            let card = hist[hist.length - 1];
-            if (!latestCardsMap[card]) latestCardsMap[card] = [];
-            latestCardsMap[card].push(uid);
-        });
+        try {
+            let latestCardsMap = {};
+            participants.forEach(uid => {
+                if(!room.seonDraws[uid]) return;
+                let hist = room.seonDraws[uid].history;
+                let card = hist[hist.length - 1];
+                if (!latestCardsMap[card]) latestCardsMap[card] = [];
+                latestCardsMap[card].push(uid);
+            });
 
-        let currentRoundTies = [];
-        for (let card in latestCardsMap) {
-            if (latestCardsMap[card].length > 1) {
-                currentRoundTies.push(...latestCardsMap[card]);
+            let currentRoundTies = [];
+            for (let card in latestCardsMap) {
+                if (latestCardsMap[card].length > 1) {
+                    currentRoundTies.push(...latestCardsMap[card]);
+                }
             }
-        }
 
-        if (currentRoundTies.length > 0) {
-            room.tiedPlayers = currentRoundTies;
-            room.seonRound++;
-            
-            let drawResults = room.players.map(p => {
-                let d = room.seonDraws[p.uid];
-                return {
-                    id: p.id, uid: p.uid, name: p.name,
-                    card: d && d.history.length ? d.history[d.history.length - 1] : null
-                };
-            }).filter(res => res.card !== null);
-
-            io.to(roomId).emit('seonTieOccurred', { drawResults, tiedPlayers: currentRoundTies });
-
-            setTimeout(() => {
-                if (!rooms[roomId] || rooms[roomId].status !== 'seon_drawing') return;
-                io.to(roomId).emit('seonDrawPhaseInit', { isTieBreaker: true, tiedPlayers: currentRoundTies });
+            if (currentRoundTies.length > 0) {
+                room.tiedPlayers = currentRoundTies;
+                room.seonRound++;
                 
-                currentRoundTies.forEach(uid => {
-                    let p = room.players.find(pl => pl.uid === uid);
-                    if (p && p.isAI) {
-                        setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
+                let drawResults = room.players.map(p => {
+                    let d = room.seonDraws[p.uid];
+                    return {
+                        id: p.id, uid: p.uid, name: p.name,
+                        card: d && d.history.length ? d.history[d.history.length - 1] : null
+                    };
+                }).filter(res => res.card !== null);
+
+                io.to(roomId).emit('seonTieOccurred', { drawResults, tiedPlayers: currentRoundTies });
+
+                setTimeout(() => {
+                    if (!rooms[roomId] || rooms[roomId].status !== 'seon_drawing') return;
+                    io.to(roomId).emit('seonDrawPhaseInit', { isTieBreaker: true, tiedPlayers: currentRoundTies });
+                    
+                    currentRoundTies.forEach(uid => {
+                        let p = room.players.find(pl => pl.uid === uid);
+                        if (p && p.isAI) {
+                            setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
+                        }
+                    });
+                }, 4000);
+
+            } else {
+                let allUids = Object.keys(room.seonDraws);
+                allUids.sort((a, b) => {
+                    let histA = room.seonDraws[a] ? room.seonDraws[a].history : [];
+                    let histB = room.seonDraws[b] ? room.seonDraws[b].history : [];
+                    for (let i = 0; i < Math.max(histA.length, histB.length); i++) {
+                        let valA = histA[i] !== undefined ? histA[i] : 999;
+                        let valB = histB[i] !== undefined ? histB[i] : 999;
+                        if (valA !== valB) return valA - valB;
                     }
+                    return 0;
                 });
-            }, 4000);
 
-        } else {
-            let allUids = Object.keys(room.seonDraws);
-            allUids.sort((a, b) => {
-                let histA = room.seonDraws[a].history;
-                let histB = room.seonDraws[b].history;
-                for (let i = 0; i < Math.max(histA.length, histB.length); i++) {
-                    let valA = histA[i] !== undefined ? histA[i] : 999;
-                    let valB = histB[i] !== undefined ? histB[i] : 999;
-                    if (valA !== valB) return valA - valB;
-                }
-                return 0;
-            });
+                let newPlayers = [];
+                allUids.forEach(uid => {
+                    let p = room.players.find(p => String(p.uid) === String(uid));
+                    if (p) newPlayers.push(p);
+                });
+                room.players = newPlayers;
+                room.lastRoundRanks = room.players.map(p => p.id);
 
-            room.players.sort((a, b) => allUids.indexOf(String(a.uid)) - allUids.indexOf(String(b.uid)));
-            room.lastRoundRanks = room.players.map(p => p.id);
+                let finalResults = room.players.map(p => {
+                    let d = room.seonDraws[p.uid];
+                    return {
+                        id: p.id, uid: p.uid, name: p.name,
+                        card: d && d.history ? d.history[0] : JOKER
+                    };
+                });
 
-            let finalResults = room.players.map(p => {
-                let d = room.seonDraws[p.uid];
-                return {
-                    id: p.id, uid: p.uid, name: p.name,
-                    card: d && d.history ? d.history[0] : JOKER
-                };
-            });
+                let winnerPlayer = room.players[0];
+                io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
-            let winnerPlayer = room.players[0];
-            io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
-
-            // ⭐️ 서버 다운 완벽 방지 처리
-            setTimeout(() => {
-                if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
-                    distributeCards(rooms[roomId]);
-                    startNormalRound(roomId, rooms[roomId]);
-                }
-            }, 4500);
-        }
+                // ⭐️ 게임 멈춤 현상(서버 충돌) 완벽 방어
+                setTimeout(() => {
+                    try {
+                        if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
+                            distributeCards(rooms[roomId]);
+                            startNormalRound(roomId, rooms[roomId]);
+                        }
+                    } catch(err) {
+                        console.error("Round Start Fallback Error:", err);
+                    }
+                }, 4500);
+            }
+        } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
 
     socket.on('playCards', ({ indices }) => {
@@ -542,45 +558,51 @@ function handleAITurnIfNeeded(roomId, room) {
     if (activeHumans.length === 0) delay = 150;
 
     setTimeout(() => {
-        if (room.status !== 'playing') return;
-        let aiHand = player.hand;
-        let groups = {};
-        aiHand.forEach((r, idx) => { if (!groups[r]) groups[r] = []; groups[r].push(idx); });
+        try {
+            if (!rooms[roomId] || rooms[roomId].status !== 'playing') return;
+            let aiHand = player.hand;
+            if (!aiHand || aiHand.length === 0) return; // ⭐️ 에러 방어
+            
+            let groups = {};
+            aiHand.forEach((r, idx) => { if (!groups[r]) groups[r] = []; groups[r].push(idx); });
 
-        if (room.center.count === 0) {
-            let bestRank = -1; let maxCount = 0;
-            for (let r in groups) {
-                let num = Number(r);
-                if (num !== JOKER && (groups[r].length > maxCount || (groups[r].length === maxCount && num > bestRank))) {
-                    maxCount = groups[r].length; bestRank = num;
+            if (room.center.count === 0) {
+                let bestRank = -1; let maxCount = 0;
+                for (let r in groups) {
+                    let num = Number(r);
+                    if (num !== JOKER && (groups[r].length > maxCount || (groups[r].length === maxCount && num > bestRank))) {
+                        maxCount = groups[r].length; bestRank = num;
+                    }
                 }
-            }
-            let pIndices = bestRank !== -1 ? groups[bestRank] : groups[JOKER];
-            let selectedCards = pIndices.map(i => player.hand[i]);
-            pIndices.sort((a, b) => b - a).forEach(i => player.hand.splice(i, 1));
-            executePlayLogic(roomId, room, player, selectedCards, bestRank !== -1 ? bestRank : JOKER);
-        } else {
-            let bestPlay = null; let maxRank = -1;
-            for (let r in groups) {
-                let num = Number(r);
-                if (num === JOKER || num >= room.center.rank) continue;
-                let avail = groups[num].length;
-                let jAvail = groups[JOKER] ? groups[JOKER].length : 0;
-                if (avail >= room.center.count) {
-                    if (num > maxRank) { maxRank = num; bestPlay = groups[num].slice(0, room.center.count); }
-                } else if (avail + jAvail >= room.center.count) {
-                    if (num > maxRank) { maxRank = num; bestPlay = [...groups[num], ...groups[JOKER].slice(0, room.center.count - avail)]; }
-                }
-            }
-
-            if (bestPlay) {
-                let selectedCards = bestPlay.map(i => player.hand[i]);
-                bestPlay.sort((a, b) => b - a).forEach(i => player.hand.splice(i, 1));
-                executePlayLogic(roomId, room, player, selectedCards, maxRank);
+                let pIndices = bestRank !== -1 ? groups[bestRank] : (groups[JOKER] || []);
+                if (pIndices.length === 0) return;
+                
+                let selectedCards = pIndices.map(i => player.hand[i]);
+                pIndices.sort((a, b) => b - a).forEach(i => player.hand.splice(i, 1));
+                executePlayLogic(roomId, room, player, selectedCards, bestRank !== -1 ? bestRank : JOKER);
             } else {
-                executePassLogic(roomId, room, player);
+                let bestPlay = null; let maxRank = -1;
+                for (let r in groups) {
+                    let num = Number(r);
+                    if (num === JOKER || num >= room.center.rank) continue;
+                    let avail = groups[num].length;
+                    let jAvail = groups[JOKER] ? groups[JOKER].length : 0;
+                    if (avail >= room.center.count) {
+                        if (num > maxRank) { maxRank = num; bestPlay = groups[num].slice(0, room.center.count); }
+                    } else if (avail + jAvail >= room.center.count) {
+                        if (num > maxRank) { maxRank = num; bestPlay = [...groups[num], ...groups[JOKER].slice(0, room.center.count - avail)]; }
+                    }
+                }
+
+                if (bestPlay) {
+                    let selectedCards = bestPlay.map(i => player.hand[i]);
+                    bestPlay.sort((a, b) => b - a).forEach(i => player.hand.splice(i, 1));
+                    executePlayLogic(roomId, room, player, selectedCards, maxRank);
+                } else {
+                    executePassLogic(roomId, room, player);
+                }
             }
-        }
+        } catch(e) { console.error("AI Turn Error:", e); }
     }, delay);
 }
 
