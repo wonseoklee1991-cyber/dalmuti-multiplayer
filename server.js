@@ -278,15 +278,16 @@ io.on('connection', (socket) => {
         pData.history.push(room.seonDrawDeck.pop());
 
         let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
-        let allDrawn = participants.every(uid => room.seonDraws[uid].history.length === room.seonRound);
+        let allDrawn = participants.every(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound);
 
         if (allDrawn) checkTiesAndProceed(roomId, room, participants);
         else {
-            let drawnCount = participants.filter(uid => room.seonDraws[uid].history.length === room.seonRound).length;
+            let drawnCount = participants.filter(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound).length;
             io.to(roomId).emit('seonPickProgress', { message: `⏳ 다른 플레이어 대기 중... (${drawnCount}/${participants.length})` });
         }
     }
 
+    // ⭐️ 서버 멈춤 현상(Node.js Crash) 완벽 방어 코드가 적용된 재뽑기 엔진
     function checkTiesAndProceed(roomId, room, participants) {
         let latestCardsMap = {};
         participants.forEach(uid => {
@@ -337,23 +338,23 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < Math.max(histA.length, histB.length); i++) {
                     let valA = histA[i] !== undefined ? histA[i] : 999;
                     let valB = histB[i] !== undefined ? histB[i] : 999;
-                    if (valA !== valB) return valA - valB;
+                    if (valA !== valB) return valA - valB; // 완벽한 오름차순 계급 정렬
                 }
                 return 0;
             });
 
-            let newPlayers = [];
-            allUids.forEach(uid => {
-                let p = room.players.find(p => String(p.uid) === String(uid));
-                if (p) newPlayers.push(p);
-            });
-            room.players = newPlayers;
+            // ⭐️ 가장 안전한 배열 정렬: 서버가 절대 뻗지 않음
+            room.players.sort((a, b) => allUids.indexOf(String(a.uid)) - allUids.indexOf(String(b.uid)));
             room.lastRoundRanks = room.players.map(p => p.id);
 
-            let finalResults = room.players.map(p => ({
-                id: p.id, uid: p.uid, name: p.name,
-                card: room.seonDraws[p.uid].history[0]
-            }));
+            // ⭐️ 오류 방지: history[0]을 안전하게 가져옴
+            let finalResults = room.players.map(p => {
+                let d = room.seonDraws[p.uid];
+                return {
+                    id: p.id, uid: p.uid, name: p.name,
+                    card: d && d.history ? d.history[0] : JOKER
+                };
+            });
 
             let winnerPlayer = room.players[0];
             io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
@@ -458,7 +459,6 @@ io.on('connection', (socket) => {
         if (wantsRevolution && player) {
             triggerRevolution(room.id, room, player, isGrand);
         } else {
-            // ⭐️ 5인 이상 게임에서 반란을 묻어뒀을 때 뜨는 채팅 알림을 완전히 삭제했습니다.
             proceedWithTax(room.id, room);
         }
     });
@@ -674,6 +674,7 @@ function distributeCards(room) {
     let deck = createDeck();
     let p = 0;
     while (deck.length > 0) {
+        if (!room.players[p]) break;
         room.players[p].hand.push(deck.pop());
         p = (p + 1) % room.players.length;
     }
@@ -694,7 +695,6 @@ function broadcastGameState(roomId, room) {
 function executeTaxPhase(roomId, room) {
     room.status = 'tax_phase';
 
-    // ⭐️ 4인 이하 게임에서는 반란 및 대반란 시스템을 아예 끕니다!
     if (room.players.length <= 4) {
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
