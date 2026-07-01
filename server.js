@@ -287,7 +287,6 @@ io.on('connection', (socket) => {
         }
     }
 
-    // ⭐️ 서버 멈춤 현상(Node.js Crash) 완벽 방어 코드가 적용된 재뽑기 엔진
     function checkTiesAndProceed(roomId, room, participants) {
         let latestCardsMap = {};
         participants.forEach(uid => {
@@ -338,16 +337,14 @@ io.on('connection', (socket) => {
                 for (let i = 0; i < Math.max(histA.length, histB.length); i++) {
                     let valA = histA[i] !== undefined ? histA[i] : 999;
                     let valB = histB[i] !== undefined ? histB[i] : 999;
-                    if (valA !== valB) return valA - valB; // 완벽한 오름차순 계급 정렬
+                    if (valA !== valB) return valA - valB;
                 }
                 return 0;
             });
 
-            // ⭐️ 가장 안전한 배열 정렬: 서버가 절대 뻗지 않음
             room.players.sort((a, b) => allUids.indexOf(String(a.uid)) - allUids.indexOf(String(b.uid)));
             room.lastRoundRanks = room.players.map(p => p.id);
 
-            // ⭐️ 오류 방지: history[0]을 안전하게 가져옴
             let finalResults = room.players.map(p => {
                 let d = room.seonDraws[p.uid];
                 return {
@@ -359,9 +356,12 @@ io.on('connection', (socket) => {
             let winnerPlayer = room.players[0];
             io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
+            // ⭐️ 서버 다운 완벽 방지 처리
             setTimeout(() => {
-                distributeCards(room);
-                startNormalRound(roomId, room);
+                if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
+                    distributeCards(rooms[roomId]);
+                    startNormalRound(roomId, rooms[roomId]);
+                }
             }, 4500);
         }
     }

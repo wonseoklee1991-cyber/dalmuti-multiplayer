@@ -60,7 +60,9 @@
         .ai-node.escaped-player .avatar { border: 3px solid #f1c40f; box-shadow: 0 0 10px #f1c40f; background: #333; }
         
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
-        .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
+        
+        /* ⭐️ 미니 카드 비율 수정 완료 */
+        .ai-mini-card { position: absolute; width: 12px; height: 23px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
         .pos-left-low   { top: 22%; left: max(15px, env(safe-area-inset-left)); }
         .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
@@ -93,41 +95,27 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 질문자님의 2D 캐릭터 이미지가 최우선으로 선명하게 보이게 설정 */
+        /* ⭐️ 카드 비율 356x684(약 1:1.92) 완벽 대응 ⭐️ */
         .card {
-            width: 54px; height: 78px;
-            background-color: #eaddcf;
+            width: 54px; height: 104px; /* 모바일 크기 최적화 */
             border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;
-            padding: 4px; cursor: pointer; position: relative;
+            cursor: pointer; position: relative;
             border: 2px solid #5c4033;
             box-shadow: 2px 2px 4px rgba(0,0,0,0.4), inset 0 0 8px rgba(139,69,19,0.2);
             transition: transform 0.15s, border-color 0.15s;
-            color: #3b2a1a;
-            font-family: 'Georgia', 'Times New Roman', serif;
-            
-            /* 이미지가 카드 안에 완벽하게 맞춰 들어가도록 설정 */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
         }
         .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5); z-index: 10; }
         
-        .card .number { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.85); display: inline-block; padding: 1px 4px; border-radius: 4px; align-self: flex-start;}
-        .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
-        .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 100%; text-shadow: 1px 1px 0px rgba(255,255,255,0.4); }
-
         .card.card-back {
-            background-color: #5c4033;
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E");
+            background-color: #5c4033 !important;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px) !important;
             border: 2px solid #f1c40f; color: transparent;
         }
         .card.card-back::after { content: "👑"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); background: none; padding:0; }
 
         @media screen and (min-width: 1024px) {
             .table-3d { max-width: 850px; height: 46vh; max-height: 420px; margin-top: 6vh; }
-            .card { width: 74px; height: 108px; border-radius: 8px; padding: 6px; }
-            .card .number { font-size: 16px; }
-            .card .center-content { font-size: 38px; }
+            .card { width: 74px; height: 142px; border-radius: 8px; } /* PC 화면 비율 최적화 */
             .hand .card { margin-left: -22px; }
             .ai-node .name { font-size: 14px; }
             .hand-scroll-area { padding-top: 60px; }
@@ -135,7 +123,6 @@
         
         .rank-1 { border-color: #ffd700; box-shadow: inset 0 0 15px rgba(218,165,32,0.8); }
         .rank-13 { border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
-        .rank-13 .center-content { color: #f1c40f; text-shadow: 1px 1px 0px #000; }
 
         #game-status { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
         
@@ -439,7 +426,6 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // ⭐️ 파이어베이스 키값 고정 박제!
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -664,22 +650,6 @@
             document.getElementById('step-1-nickname').classList.remove('hidden');
             document.getElementById('player-name').value = currentPlayerName;
         }
-
-        const cardThemeData = {
-            1: { icon: '👑', name: '대달무티' },
-            2: { icon: '🎩', name: '소달무티' },
-            3: { icon: '🦅', name: '대영주' },
-            4: { icon: '🗡️', name: '기사' },
-            5: { icon: '⛪', name: '수녀원장' },
-            6: { icon: '📜', name: '남작' },
-            7: { icon: '🍷', name: '재봉사' },
-            8: { icon: '⚒️', name: '석공' },
-            9: { icon: '🥖', name: '요리사' },
-            10: { icon: '🐑', name: '양치기' },
-            11: { icon: '⛏️', name: '광부' },
-            12: { icon: '🧹', name: '농노' },
-            13: { icon: '🃏', name: '광대' }
-        };
 
         const bgmAudio = new Audio('/bgm.mp3');
         bgmAudio.loop = true;
@@ -999,6 +969,7 @@
             });
         });
 
+        // ⭐️ 결과창 버그 수정: 재뽑기 혼란 방지 (첫 1라운드 대표 카드만 출력)
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -1015,28 +986,19 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 커스텀 이미지 카드를 완벽하게 불러오도록 수정된 함수
+        // ⭐️ 완벽하게 수정된 커스텀 이미지 카드 생성 로직 ⭐️
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
-            let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
-            let theme = cardThemeData[rank] || { icon: '', name: '' };
-            
-            // 질문자님의 public/assets 폴더에 있는 이미지를 무조건 불러옵니다!
+            // 💡 public/assets 폴더 안의 이미지를 무조건 가장 선명하게 불러옵니다!
             let customImageURL = `/assets/card_${rank}.png`;
 
-            c.innerHTML = `
-                <div class="number">${displayRank}</div>
-                <div class="center-content">
-                    <div style="font-size:26px; filter: drop-shadow(0px 0px 3px rgba(255,255,255,1));">${theme.icon}</div>
-                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px; background:rgba(255,255,255,0.8); padding: 2px 5px; border-radius:4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${theme.name}</div>
-                </div>
-                <div class="number bottom">${displayRank}</div>`;
+            // ⭐️ 카드 내부의 하얀 숫자와 이모티콘 텍스트를 완전히 싹 비웠습니다 (innerHTML 삭제)
+            c.innerHTML = ``;
             
-            // ⭐️ 이미지가 가장 선명하게 나오도록 배경 코팅(linear-gradient)을 완전히 제거했습니다!
-            c.style.background = `url('${customImageURL}') center/cover no-repeat`;
-            c.style.backgroundColor = '#eaddcf'; // 만약 이미지가 없을 때를 대비한 기본 색상
+            // ⭐️ 커스텀 이미지가 다른 CSS에 가려지지 않도록 inline style로 최우선 적용합니다.
+            c.style.background = `url('${customImageURL}') center/cover no-repeat #eaddcf`;
 
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -1059,9 +1021,9 @@
             myHand.forEach((rank, idx) => { container.appendChild(createCardHTML(rank, idx, true, false)); });
         });
 
+        // ⭐️ DOM 재생성 버그 완벽 수리 (innerHTML += 로 인한 스타일 날아감 방지)
         function renderOpponents(players) {
             const container = document.getElementById('opponents-container');
-            container.innerHTML = '';
             let others = players.filter(p => p.id !== socket.id && p.id !== myId);
             let totalOthers = others.length;
             
@@ -1072,12 +1034,13 @@
             else if (totalOthers === 6) positionPresets = ['pos-left-low', 'pos-left-mid', 'pos-left-high', 'pos-right-high', 'pos-right-mid', 'pos-right-low'];
             else positionPresets = ['pos-left-low', 'pos-left-mid', 'pos-left-high', 'pos-center-top', 'pos-right-high', 'pos-right-mid', 'pos-right-low'];
             
+            let htmlStr = '';
             others.forEach((p, idx) => {
                 let rIdx = window.lastRoundRanks ? window.lastRoundRanks.indexOf(p.id) : -1;
                 const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
                 let allocatedPos = positionPresets[idx] || 'pos-center-top';
 
-                container.innerHTML += `
+                htmlStr += `
                     <div class="ai-node ${allocatedPos}" id="node-${p.id}">
                         <div class="avatar" id="avatar-${p.id}"></div>
                         <div class="info">
@@ -1086,7 +1049,10 @@
                         </div>
                         <span class="count" id="count-text-${p.id}" style="margin-left:4px;">${p.cardCount}장</span>
                     </div>`;
-                
+            });
+            container.innerHTML = htmlStr;
+
+            others.forEach((p) => {
                 applyAvatarStyle(document.getElementById(`avatar-${p.id}`), p.avatar);
                 renderMiniCards(p.id, p.cardCount);
             });
@@ -1344,13 +1310,9 @@
             if(!cards || cards.length === 0) return '';
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
-                let display = c === 13 ? 'J' : c;
-                let theme = cardThemeData[c] || { icon: '', name: '' };
                 let customImageURL = `/assets/card_${c}.png`;
-                
-                return `<div class="card rank-${c}" style="width:38px; height:54px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/cover no-repeat; background-color: #eaddcf;">
-                    <div style="font-size:9px; font-weight:bold; background:rgba(255,255,255,0.85); display:inline-block; padding:1px 3px; border-radius:3px;">${display}</div>
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:18px; font-weight:900;">${theme.icon}</div>
+                // 세금 미니카드에서도 innerHTML(숫자)을 제거하고, 비율을 1:1.92 에 맞췄습니다.
+                return `<div class="card rank-${c}" style="width:38px; height:73px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/cover no-repeat #eaddcf;">
                 </div>`
             }).join('') + `</div>`;
         }
