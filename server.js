@@ -121,7 +121,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', handlePlayerExit);
     socket.on('leaveRoom', handlePlayerExit);
 
-    // ⭐️ 서버 멈춤 원천 차단: 클라이언트가 uid를 못 보내도 안전하게 임시 ID 생성
     socket.on('createRoom', ({ playerName, maxPlayers, betAmount, avatar, uid }) => {
         uid = uid || `guest_${socket.id}`;
         const roomId = Math.floor(1000 + Math.random() * 9000).toString();
@@ -275,7 +274,7 @@ io.on('connection', (socket) => {
         let pData = room.seonDraws[player.uid];
         if (!pData || pData.history.length >= room.seonRound) return;
 
-        if(room.seonDrawDeck.length === 0) room.seonDrawDeck = createDeck(); // 덱 소진 대비 안전장치
+        if(room.seonDrawDeck.length === 0) room.seonDrawDeck = createDeck();
         pData.history.push(room.seonDrawDeck.pop());
 
         let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
@@ -288,7 +287,6 @@ io.on('connection', (socket) => {
         }
     }
 
-    // ⭐️ 서버 멈춤 해결 및 시각적 오류 수정
     function checkTiesAndProceed(roomId, room, participants) {
         let latestCardsMap = {};
         participants.forEach(uid => {
@@ -325,12 +323,13 @@ io.on('connection', (socket) => {
                 
                 currentRoundTies.forEach(uid => {
                     let p = room.players.find(pl => pl.uid === uid);
-                    if (p && p.isAI) setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
+                    if (p && p.isAI) {
+                        setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1500);
+                    }
                 });
             }, 4000);
 
         } else {
-            // 그룹이 완벽하게 독립적으로 계산됨
             let allUids = Object.keys(room.seonDraws);
             allUids.sort((a, b) => {
                 let histA = room.seonDraws[a].history;
@@ -343,7 +342,6 @@ io.on('connection', (socket) => {
                 return 0;
             });
 
-            // ⭐️ 방어 코드: undefined 맵핑 방지!
             let newPlayers = [];
             allUids.forEach(uid => {
                 let p = room.players.find(p => String(p.uid) === String(uid));
@@ -352,7 +350,6 @@ io.on('connection', (socket) => {
             room.players = newPlayers;
             room.lastRoundRanks = room.players.map(p => p.id);
 
-            // ⭐️ 혼동 방지: 최종 결과창에서는 무조건 '1라운드의 첫 카드'만 표시!
             let finalResults = room.players.map(p => ({
                 id: p.id, uid: p.uid, name: p.name,
                 card: room.seonDraws[p.uid].history[0]
@@ -434,7 +431,7 @@ io.on('connection', (socket) => {
             room.lastRoundRanks.forEach(rId => {
                 newPlayersOrder.push(room.players.find(p => p.id === rId));
             });
-            room.players = newPlayersOrder;
+            room.players = newOrder = newPlayersOrder;
 
             distributeCards(room);
             executeTaxPhase(room.id, room);
@@ -461,7 +458,7 @@ io.on('connection', (socket) => {
         if (wantsRevolution && player) {
             triggerRevolution(room.id, room, player, isGrand);
         } else {
-            if(player) io.to(room.id).emit('chatMsg', `🤫 [${player.name}] 님이 반란을 조용히 넘겼습니다.`);
+            // ⭐️ 5인 이상 게임에서 반란을 묻어뒀을 때 뜨는 채팅 알림을 완전히 삭제했습니다.
             proceedWithTax(room.id, room);
         }
     });
@@ -493,7 +490,9 @@ io.on('connection', (socket) => {
 
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
-            setTimeout(() => { startNormalRound(room.id, room); }, 3500);
+            setTimeout(() => {
+                startNormalRound(room.id, room);
+            }, 3500);
         }
     });
 });
@@ -694,6 +693,14 @@ function broadcastGameState(roomId, room) {
 
 function executeTaxPhase(roomId, room) {
     room.status = 'tax_phase';
+
+    // ⭐️ 4인 이하 게임에서는 반란 및 대반란 시스템을 아예 끕니다!
+    if (room.players.length <= 4) {
+        room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        startNormalRound(roomId, room);
+        return;
+    }
+
     let revPlayer = null;
     let isGrand = false;
 

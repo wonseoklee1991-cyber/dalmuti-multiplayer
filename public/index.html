@@ -62,12 +62,13 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
+        /* ⭐️ 상단 겹침 방지를 위해 아바타들의 위치를 조금씩 내렸습니다. */
         .pos-left-low   { top: 22%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 2%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 2%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: 2%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 2%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 2%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 5%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 5%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 5%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 22%; right: max(15px, env(safe-area-inset-right)); }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(30px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.98) 55%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
@@ -77,10 +78,11 @@
         
         .btn-emote { background: #34495e; border: 2px solid #f1c40f; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-emote:active { transform: scale(0.9); }
-
-        .btn-pause { position: absolute; top: max(15px, env(safe-area-inset-top)); right: max(15px, env(safe-area-inset-right)); background: rgba(0,0,0,0.7); border: 2px solid #555; color: #fff; border-radius: 50%; width: 42px; height: 42px; font-size: 16px; display: flex; justify-content: center; align-items: center; z-index: 50; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.5); transition: transform 0.1s; }
-        .btn-pause:active { transform: scale(0.9); }
         
+        /* ⭐️ 일시정지 버튼 겹침 현상 원천 차단: 하단 왼쪽 HUD 안으로 위치 변경 */
+        .btn-pause-hud { background: #2c3e50; border: 2px solid #95a5a6; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 16px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
+        .btn-pause-hud:active { transform: scale(0.9); }
+
         #emote-menu { position: absolute; bottom: 100px; left: max(15px, env(safe-area-inset-left)); background: rgba(26,26,26,0.98); border: 2px solid #555; border-radius: 12px; padding: 15px; width: 280px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.8); z-index: 9999; pointer-events: auto; }
         .emote-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
         .emote-grid button { background: #333; border: 1px solid #555; border-radius: 8px; color: #fff; padding: 12px 0; font-size: 14px; cursor: pointer; transition: background 0.1s;}
@@ -93,10 +95,10 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
+        /* ⭐️ 카드 디자인 로직: 생성형 AI 이미지를 완벽하게 지원하는 오버레이 스타일 */
         .card {
             width: 54px; height: 78px;
             background-color: #eaddcf;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
             border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;
             padding: 4px; cursor: pointer; position: relative;
             border: 2px solid #5c4033;
@@ -104,9 +106,13 @@
             transition: transform 0.15s, border-color 0.15s;
             color: #3b2a1a;
             font-family: 'Georgia', 'Times New Roman', serif;
+            background-size: cover;
+            background-position: center;
         }
         .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5); z-index: 10; }
-        .card .number { font-size: 13px; font-weight: bold; }
+        
+        /* 커스텀 이미지 가독성을 위한 스타일 */
+        .card .number { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.7); display: inline-block; padding: 0 3px; border-radius: 3px;}
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 100%; text-shadow: 1px 1px 0px rgba(255,255,255,0.4); }
 
@@ -142,7 +148,9 @@
         .rank-13 { background-color: #333; color: #f1c40f; border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
         .rank-13 .center-content { color: #f1c40f; text-shadow: 1px 1px 0px #000; }
 
-        #game-status { position: absolute; top: 12%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        /* ⭐️ 상단 프로필과 겹치지 않게 게임 상태 알림창을 아래로 쭈욱 내렸습니다 (top: 28%) */
+        #game-status { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        
         #chat-toast-area { position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
@@ -222,7 +230,7 @@
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-size:13px; color:#aaa; font-weight:bold;">총 인원 설정:</span>
                     <select id="max-players" onchange="changeRoomSettings()" style="padding:4px; border-radius:4px; background:#333; color:#fff; border:1px solid #555; outline:none; font-size:13px;">
-                        <option value="4">4인 (세금 면제)</option>
+                        <option value="4">4인 (세금 면제/반란없음)</option>
                         <option value="5">5인 (세금 1장)</option>
                         <option value="6">6인 (세금 2,1장)</option>
                         <option value="7">7인 (세금 2,1장)</option>
@@ -297,7 +305,7 @@
 
     <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
-        <button class="btn-pause" onclick="togglePauseMenu()">⏸️</button>
+        <!-- 일시정지 버튼은 겹침을 막기 위해 아래 HUD-left로 이사했습니다! -->
         
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -328,6 +336,8 @@
             <div class="hud-layer">
                 <div class="hud-left">
                     <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
+                    <!-- ⭐️ 겹침 방지를 위해 여기로 이사 온 일시정지 버튼 -->
+                    <button class="btn-pause-hud" onclick="togglePauseMenu()">⏸️</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
                         <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
                         <span id="player-name-label" style="font-size:14px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
@@ -365,7 +375,7 @@
                     <span style="color:#fff; font-size:14px; font-weight:bold;">🔊 효과음 (SFX)</span>
                     <button class="btn" id="btn-sfx" style="padding:6px 12px; font-size:12px; margin:0; background:#e67e22; box-shadow:0 4px 0 #d35400;" onclick="toggleSFX()">ON</button>
                 </div>
-                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 버튼을 제공합니다)</div>
+                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 효과음 끄기 버튼을 제공합니다)</div>
             </div>
 
             <button class="btn" style="width:100%; margin:0 0 10px 0; background:#2ecc71; box-shadow:0 4px 0 #27ae60; color:#fff;" onclick="togglePauseMenu()">▶️ 다시 게임 진행</button>
@@ -434,7 +444,6 @@
         </div>
     </div>
 
-    <!-- ⭐️ 자바스크립트 로직 -->
     <script>
         const socket = io();
         let myId = null;
@@ -447,7 +456,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
-        // 👑 질문자님의 고유 파이어베이스 식별 키 세트
+        // ⭐️ 질문자님의 진짜 파이어베이스 키값 고정 박제!
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -485,7 +494,6 @@
             }
         });
 
-        // ⭐️ 실시간 동기화 렌더러
         socket.on('forceUIRenderSync', (data) => {
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.add('hidden');
@@ -662,6 +670,8 @@
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
                     document.getElementById('step-1-nickname').classList.add('hidden');
                     document.getElementById('step-2-action').classList.remove('hidden');
+                }).catch(err => {
+                    alert("프로필 저장 실패: " + err.message);
                 });
             }
         }
@@ -670,6 +680,24 @@
             document.getElementById('step-2-action').classList.add('hidden');
             document.getElementById('step-1-nickname').classList.remove('hidden');
             document.getElementById('player-name').value = currentPlayerName;
+            
+            document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
+            if (currentAvatar && currentAvatar.startsWith('data:image')) {
+                const previewEl = document.getElementById('avatar-preview-img');
+                previewEl.style.backgroundImage = `url(${currentAvatar})`;
+                previewEl.style.backgroundSize = 'cover';
+                previewEl.innerText = '';
+                previewEl.classList.add('selected');
+            } else {
+                let found = false;
+                document.querySelectorAll('.avatar-opt').forEach(opt => {
+                    if(opt.innerText === currentAvatar) {
+                        opt.classList.add('selected');
+                        found = true;
+                    }
+                });
+                if(!found) document.querySelectorAll('.avatar-opt')[0].classList.add('selected');
+            }
         }
 
         const cardThemeData = {
@@ -1006,7 +1034,7 @@
             });
         });
 
-        // ⭐️ 혼동 방지: 재뽑기 연출과 무관하게, 최종 결과창에서는 무조건 '첫판에 뽑은 대표 카드'만 보여줍니다!
+        // ⭐️ 결과창 버그 수정: 재뽑기 혼란 방지 (첫 1라운드 카드만 출력)
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -1084,21 +1112,28 @@
             }, 5500);
         });
 
+        // ⭐️ 커스텀 이미지 카드를 지원하도록 코드 구조 업데이트
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
             let theme = cardThemeData[rank] || { icon: '', name: '' };
+            
+            // ⭐️ 만약 챗GPT 등으로 그린 이미지를 public/assets 폴더에 넣으신다면 이 코드가 덮어씌웁니다!
+            let customImageURL = `/assets/card_${rank}.png`;
 
             c.innerHTML = `
                 <div class="number">${displayRank}</div>
                 <div class="center-content">
                     <div style="font-size:26px;">${theme.icon}</div>
-                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px;">${theme.name}</div>
+                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px; background:rgba(255,255,255,0.6); padding: 0 4px; border-radius:4px;">${theme.name}</div>
                 </div>
                 <div class="number bottom">${displayRank}</div>`;
             
+            // 나중에 생성된 이미지를 적용하시려면 아래 주석을 풀어주시면 됩니다.
+            // c.style.backgroundImage = `url('${customImageURL}'), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
+
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
                 c.onclick = () => alert('조커 카드는 세금으로 낼 수 없습니다!');
