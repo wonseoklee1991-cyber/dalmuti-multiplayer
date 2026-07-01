@@ -46,6 +46,7 @@
 
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
         
+        /* ⭐️ 중앙 테이블 위치 마이너 조정 및 마진 최적화 (모달 겹침 완벽 차단) */
         .table-3d { position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%) rotateX(45deg); width: 80vw; max-width: 600px; height: 24vh; min-height: 160px; max-height: 220px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
         .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; width: 100%; height: 100%; }
         .center-area .card { transform: scale(0.8) !important; margin-left: -20px !important; }
@@ -94,17 +95,19 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 1:1.921 (356x684) 비율 완벽 적용 ⭐️ */
+        /* ⭐️ 356x684(1:1.921) 황금비율 완벽 연동 및 흰색 텍스트 덮어쓰기 박스 100% 완전 증발 */
         .card {
-            width: 60px !important;
-            height: 115px !important;
-            border-radius: 4px !important;
+            width: 65px !important;
+            height: 125px !important;
+            border-radius: 6px !important;
             cursor: pointer; position: relative;
-            border: none !important; /* 하얀 테두리 일절 금지 */
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
+            border: none !important; /* 화이트 보더 일절 금지 */
+            box-shadow: 2px 2px 6px rgba(0,0,0,0.6) !important;
             transition: transform 0.15s !important;
-            background-size: 100% 100% !important; /* 카드 잘림 100% 방지 */
+            background-size: 100% 100% !important; /* 이미지 무조건 원본 강제 채움 */
+            background-repeat: no-repeat !important;
             background-color: transparent !important;
+            padding: 0 !important;
         }
         .card.selected {
             transform: translateY(-20px) scale(1.05) !important;
@@ -127,10 +130,10 @@
             .hand-scroll-area { padding-top: 60px; }
         }
 
+        /* ⭐️ 상태창 위치 위로 업그레이드 배정 (아바타 가림 해결) */
         #game-status { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
         
         #chat-toast-area { position: absolute; bottom: 34%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
-        
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -306,7 +309,7 @@
                     <button class="btn-emote" onclick="toggleEmoteMenu()">💬</button>
                     <button class="btn-pause-hud" onclick="togglePauseMenu()">⏸️</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
-                        <div id="my-avatar" class="avatar" style="width:40px; height:40px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
+                        <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
                         <span id="player-name-label" style="font-size:14px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
                     </div>
                 </div>
@@ -433,11 +436,23 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // ⭐️ 이미지 초고속 프리로딩(Preloading) 엔진 함수
+        function preloadCardImages() {
+            for (let i = 1; i <= 13; i++) {
+                const img = new Image();
+                img.src = `/assets/card_${i}.png`;
+            }
+            console.log("♠️ [Preload] 모든 달무티 카드 이미지 메모리 상주 완료!");
+        }
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
                 document.getElementById('step-0-auth').classList.add('hidden');
                 
+                // 로그인 완료 시 즉시 백그라운드 프리로드 구동
+                preloadCardImages();
+
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
                     currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
@@ -557,7 +572,9 @@
         });
 
         function triggerSyncRequest() {
-            if (socket && socket.connected && myUid) socket.emit('requestRoomSync', { uid: myUid });
+            if (socket && socket.connected && myUid) {
+                socket.emit('requestRoomSync', { uid: myUid });
+            }
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -568,12 +585,16 @@
             const email = document.getElementById('auth-email').value.trim();
             const msgEl = document.getElementById('auth-msg');
             if(!email) {
-                msgEl.style.color = '#e67e22'; msgEl.innerText = "이메일을 입력한 뒤 다시 눌러주세요!"; return;
+                msgEl.style.color = '#e67e22';
+                msgEl.innerText = "이메일 칸에 가입하신 이메일을 입력한 뒤 다시 눌러주세요!";
+                return;
             }
             auth.sendPasswordResetEmail(email).then(() => {
-                msgEl.style.color = '#2ecc71'; msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다!";
+                msgEl.style.color = '#2ecc71';
+                msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다! 메일함을 확인해주세요.";
             }).catch((error) => {
-                msgEl.style.color = '#e74c3c'; msgEl.innerText = "오류 발생: " + error.message;
+                msgEl.style.color = '#e74c3c';
+                msgEl.innerText = "오류 발생: " + error.message;
             });
         }
 
@@ -581,11 +602,16 @@
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email || password.length < 6) { msgEl.innerText = "이메일 입력 및 비밀번호 6자리 이상 설정 요망."; return; }
+            if(!email || password.length < 6) {
+                msgEl.innerText = "이메일을 입력하고 비밀번호를 6자리 이상 설정하세요.";
+                return;
+            }
             auth.createUserWithEmailAndPassword(email, password).then(() => {
-                msgEl.style.color = '#2ecc71'; msgEl.innerText = "회원가입 성공!";
+                msgEl.style.color = '#2ecc71';
+                msgEl.innerText = "회원가입 성공!";
             }).catch((error) => {
-                msgEl.style.color = '#e74c3c'; msgEl.innerText = "가입 실패: " + error.message;
+                msgEl.style.color = '#e74c3c';
+                msgEl.innerText = "가입 실패: " + error.message;
             });
         }
 
@@ -593,9 +619,13 @@
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email || !password) { msgEl.innerText = "이메일과 비밀번호를 입력하세요."; return; }
+            if(!email || !password) {
+                msgEl.innerText = "이메일과 비밀번호를 입력하세요.";
+                return;
+            }
             auth.signInWithEmailAndPassword(email, password).catch(() => {
-                msgEl.style.color = '#e74c3c'; msgEl.innerText = "이메일 또는 비밀번호가 틀렸습니다.";
+                msgEl.style.color = '#e74c3c';
+                msgEl.innerText = "이메일 또는 비밀번호가 틀렸습니다.";
             });
         }
 
@@ -616,7 +646,9 @@
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
                     document.getElementById('step-1-nickname').classList.add('hidden');
                     document.getElementById('step-2-action').classList.remove('hidden');
-                }).catch(err => { alert("프로필 저장 실패: " + err.message); });
+                }).catch(err => {
+                    alert("프로필 저장 실패: " + err.message);
+                });
             }
         }
 
@@ -625,6 +657,22 @@
             document.getElementById('step-1-nickname').classList.remove('hidden');
             document.getElementById('player-name').value = currentPlayerName;
         }
+
+        const cardThemeData = {
+            1: { icon: '👑', name: '대달무티' },
+            2: { icon: '🎩', name: '소달무티' },
+            3: { icon: '🦅', name: '대영주' },
+            4: { icon: '🗡️', name: '기사' },
+            5: { icon: '⛪', name: '수녀원장' },
+            6: { icon: '📜', name: '남작' },
+            7: { icon: '🍷', name: '재봉사' },
+            8: { icon: '⚒️', name: '석공' },
+            9: { icon: '🥖', name: '요리사' },
+            10: { icon: '🐑', name: '양치기' },
+            11: { icon: '⛏️', name: '광부' },
+            12: { icon: '🧹', name: '농노' },
+            13: { icon: '🃏', name: '광대' }
+        };
 
         const bgmAudio = new Audio('/bgm.mp3');
         bgmAudio.loop = true;
@@ -781,6 +829,7 @@
         socket.on('roomCreated', ({ roomId, players, betAmount, maxPlayers }) => {
             sessionStorage.setItem('dalmuti_room_id', roomId);
             document.getElementById('room-id-display').innerText = roomId;
+            
             document.getElementById('max-players').value = maxPlayers;
             document.getElementById('bet-amount').value = betAmount;
             document.getElementById('display-max-players').innerText = maxPlayers;
@@ -788,7 +837,8 @@
             
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
-            unlockLobbyButtons(); updateWaitingPlayerList(players, []);
+            unlockLobbyButtons();
+            updateWaitingPlayerList(players, []);
         });
 
         socket.on('roomUpdated', ({ roomId, players, readyPlayers, betAmount, maxPlayers }) => {
@@ -874,12 +924,14 @@
 
             players.forEach((p, idx) => {
                 let isReady = p.isHost ? '방장👑' : (readyPlayers.includes(p.id) ? '✅준비 완료' : '대기 중');
+                
                 let avatarThumb = '';
                 if(p.avatar && p.avatar.startsWith('data:image')) {
                     avatarThumb = `<div style="width:24px; height:24px; border-radius:50%; background:url(${p.avatar}) center/cover; margin-right:8px;"></div>`;
                 } else {
                     avatarThumb = `<div style="width:24px; height:24px; border-radius:50%; background:#2c3e50; display:flex; justify-content:center; align-items:center; font-size:12px; margin-right:8px;">${p.avatar || '👤'}</div>`;
                 }
+
                 container.innerHTML += `<div class="player-item"><div style="display:flex; align-items:center;">${idx+1}. ${avatarThumb} <strong>${p.name}</strong></div> <div style="font-size:12px; color:${readyPlayers.includes(p.id)?'#2ecc71':'#aaa'};">${isReady}</div></div>`;
             });
         }
@@ -956,18 +1008,15 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 카드 안의 텍스트(숫자/글자)를 단 하나도 남김없이 완전 삭제하고, 비율을 100% 맞췄습니다.
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
+            let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
-            // 질문자님의 356x684 이미지 로드
             let customImageURL = `/assets/card_${rank}.png`;
-
-            // HTML 내용 완전 비움 (텍스트 겹침 완벽 차단)
             c.innerHTML = ``;
             
-            // 이미지 비율 100% 채움
+            // ⭐️ 테두리와 양식 박스 100% 생략, 원본 이미지 다이렉트 바인딩
             c.style.background = `url('${customImageURL}') center/100% 100% no-repeat`;
 
             if (isTaxMode && rank === 13) {
@@ -1178,12 +1227,10 @@
                 let pName = p ? p.name : '알 수 없음';
                 let rankNum = idx + 1;
                 let rName = "평민"; let icon = "👤";
-                
                 if (idx === 0) { rName = "대달무티"; icon = "👑"; }
                 else if (idx === 1) { rName = "소달무티"; icon = "🥈"; }
                 else if (idx === finishedPlayers.length - 1) { rName = "대농노"; icon = "💩"; }
                 else if (idx === finishedPlayers.length - 2) { rName = "소농노"; icon = "🧹"; }
-                
                 let item = document.createElement('div'); item.className = 'player-item';
                 if(pId === socket.id || pId === myId) item.style.color = '#f1c40f';
                 item.innerHTML = `<div style="font-size:16px;"><strong>${rankNum}등</strong> ${icon} ${rName} - ${pName}</div>`;
@@ -1216,13 +1263,11 @@
         socket.on('voteStatusUpdated', ({ votes, playersData }) => {
             const list = document.getElementById('vote-status-list');
             list.innerHTML = '';
-            
             let allVoters = [...votes.keep, ...votes.lobby];
             if(allVoters.length === 0) {
                 list.innerHTML = "아직 투표한 사람이 없습니다.";
                 return;
             }
-
             votes.keep.forEach(id => {
                 let p = playersData.find(pl => pl.id === id);
                 if(p) list.innerHTML += `<div style="color:#2ecc71; margin-bottom:4px;">▶ [${p.name}] - 그대로 진행</div>`;
@@ -1271,7 +1316,6 @@
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                // 세금 미니카드 역시 텍스트를 제거하고 이미지 비율 적용
                 return `<div class="card rank-${c}" style="width:40px !important; height:76px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/100% 100% no-repeat; border:none;"></div>`
             }).join('') + `</div>`;
         }

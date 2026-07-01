@@ -190,6 +190,35 @@ io.on('connection', (socket) => {
         }
     });
 
+    function triggerSeonPhase(roomId, room, isTieBreaker) {
+        clearTimeout(room.seonTimer);
+
+        io.to(roomId).emit('seonDrawPhaseInit', { isTieBreaker, tiedPlayers: room.tiedPlayers });
+
+        let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
+        
+        participants.forEach(uid => {
+            let p = room.players.find(pl => pl.uid === uid);
+            // ⏳ AI 뽑기 템포 안정화: 1초 ~ 2초 사이 조절
+            if (p && p.isAI) {
+                setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1000);
+            }
+        });
+
+        // ⏱️ 모바일 강제 뽑기 타임아웃을 안전하게 10초로 연장
+        room.seonTimer = setTimeout(() => {
+            if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
+                participants.forEach(uid => {
+                    let pData = room.seonDraws[uid];
+                    if (pData && pData.history.length < room.seonRound) {
+                        let p = room.players.find(pl => pl.uid === uid);
+                        if (p) handleSeonPick(roomId, p.id);
+                    }
+                });
+            }
+        }, 10000);
+    }
+
     socket.on('startGame', () => {
         const room = getRoomBySocket(socket.id);
         if (!room) return;
@@ -212,25 +241,25 @@ io.on('connection', (socket) => {
 
         room.players.forEach(p => {
             room.seonDraws[p.uid] = { id: p.id, name: p.name, history: [], isAI: p.isAI };
-            if (p.isAI) setTimeout(() => { handleSeonPick(room.id, p.id); }, 500 + Math.random() * 700);
         });
 
-        io.to(room.id).emit('seonDrawPhaseInit', { isTieBreaker: false, tiedPlayers: [] });
+        triggerSeonPhase(room.id, room, false);
     });
 
     socket.on('pickSeonCard', () => {
         handleSeonPick(getRoomBySocket(socket.id)?.id, socket.id);
     });
 
-    // ⭐️ 무한 대기 프리징 방지를 위한 철통 방어 로직 추가
     function handleSeonPick(roomId, playerId) {
         try {
             const room = rooms[roomId];
             if (!room || room.status !== 'seon_drawing') return;
+            
             const player = room.players.find(p => p.id === playerId);
             if (!player) return;
 
             if (room.tiedPlayers.length > 0 && !room.tiedPlayers.includes(player.uid)) return;
+            
             let pData = room.seonDraws[player.uid];
             if (!pData || pData.history.length >= room.seonRound) return;
 
@@ -240,8 +269,10 @@ io.on('connection', (socket) => {
             let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
             let allDrawn = participants.every(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound);
 
-            if (allDrawn) checkTiesAndProceed(roomId, room, participants);
-            else {
+            if (allDrawn) {
+                clearTimeout(room.seonTimer);
+                checkTiesAndProceed(roomId, room, participants);
+            } else {
                 let drawnCount = participants.filter(uid => room.seonDraws[uid] && room.seonDraws[uid].history.length === room.seonRound).length;
                 io.to(roomId).emit('seonPickProgress', { message: `⏳ 다른 플레이어 대기 중... (${drawnCount}/${participants.length})` });
             }
@@ -268,21 +299,18 @@ io.on('connection', (socket) => {
                 room.tiedPlayers = currentRoundTies;
                 room.seonRound++;
                 
-                let drawResults = room.players.map(p => {
-                    let d = room.seonDraws[p.uid];
-                    return { id: p.id, uid: p.uid, name: p.name, card: d && d.history.length ? d.history[d.history.length - 1] : null };
-                }).filter(res => res.card !== null);
+                let drawResults = participants.map(uid => {
+                    let d = room.seonDraws[uid];
+                    return { id: d.id, uid: uid, name: d.name, card: d.history[d.history.length - 1] };
+                });
 
                 io.to(roomId).emit('seonTieOccurred', { drawResults, tiedPlayers: currentRoundTies });
 
+                // ⏳ 동률 발생 후 카드 정리 대기 시간: 2.5초 ➡️ 3.5초로 여유 있게 배치
                 setTimeout(() => {
                     if (!rooms[roomId] || rooms[roomId].status !== 'seon_drawing') return;
-                    io.to(roomId).emit('seonDrawPhaseInit', { isTieBreaker: true, tiedPlayers: currentRoundTies });
-                    currentRoundTies.forEach(uid => {
-                        let p = room.players.find(pl => pl.uid === uid);
-                        if (p && p.isAI) setTimeout(() => handleSeonPick(roomId, p.id), 500 + Math.random() * 800);
-                    });
-                }, 2500);
+                    triggerSeonPhase(roomId, room, true);
+                }, 3500);
 
             } else {
                 let allUids = Object.keys(room.seonDraws);
@@ -297,17 +325,15 @@ io.on('connection', (socket) => {
                     return 0;
                 });
 
-                // ⭐️ 게임 멈춤(Crash) 원천 차단: UID를 기반으로 안전하게 배열 재구성
                 let newPlayers = [];
                 allUids.forEach(uid => {
                     let p = room.players.find(p => String(p.uid) === String(uid));
                     if (p) newPlayers.push(p);
                 });
-                // 만약 에러로 인해 인원수가 부족해진다면 원본 유지 (Fail-safe)
+                
                 if(newPlayers.length === room.players.length) {
                     room.players = newPlayers;
                 }
-                
                 room.lastRoundRanks = room.players.map(p => p.id);
 
                 let finalResults = room.players.map(p => {
@@ -318,17 +344,15 @@ io.on('connection', (socket) => {
                 let winnerPlayer = room.players[0] || {id: null, name: "대달무티"};
                 io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
-                // ⭐️ 무조건 게임으로 넘어가도록 확실한 강제 전환
+                // ⏳ 선 뽑기 화면 감상 후 본게임 돌입 시간: 2초 ➡️ 3.5초로 최적화!
                 setTimeout(() => {
                     try {
                         if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                             distributeCards(rooms[roomId]);
                             startNormalRound(roomId, rooms[roomId]);
                         }
-                    } catch(err) {
-                        console.error("본게임 강제 전환 실패 방어:", err);
-                    }
-                }, 2500);
+                    } catch(err) { console.error("본게임 강제 전환 실패 방어:", err); }
+                }, 3500);
             }
         } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
@@ -450,7 +474,7 @@ io.on('connection', (socket) => {
 
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
-            setTimeout(() => { startNormalRound(room.id, room); }, 2000);
+            setTimeout(() => { startNormalRound(room.id, room); }, 3000);
         }
     });
 });
@@ -494,7 +518,8 @@ function handleAITurnIfNeeded(roomId, room) {
     const player = room.players[room.currentTurnIdx];
     if (!player || !player.isAI) return;
 
-    let delay = 600;
+    // ⏳ AI 생각 시간 안정화: 0.6초 ➡️ 1.1초로 조금 더 자연스럽게 패치
+    let delay = 1100;
     const activeHumans = room.players.filter(p => !p.isAI && !room.finishedPlayers.includes(p.id));
     if (activeHumans.length === 0) delay = 150;
 
@@ -664,11 +689,12 @@ function triggerRevolution(roomId, room, revPlayer, isGrand) {
         io.to(roomId).emit('revolutionAlert', { type: 'grand', playerName: revPlayer.name });
     } else io.to(roomId).emit('revolutionAlert', { type: 'normal', playerName: revPlayer.name });
 
+    // ⏳ 반란 서사 대기 시간 안정화: 4초 ➡️ 5.5초
     setTimeout(() => {
         room.players.forEach(p => p.hand.sort((a,b)=>a-b));
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
-    }, 4000);
+    }, 5500);
 }
 
 function proceedWithTax(roomId, room) {
@@ -717,29 +743,12 @@ function proceedWithTax(roomId, room) {
     if (!humanTaxWaiting) {
         io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
         io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
+        // ⏳ 세금 교환 모달 감상 시간 안정화: 2.5초 ➡️ 3.5초
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 2500);
+        }, 3500);
     } else io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
-}
-
-function startNormalRound(roomId, room) {
-    try {
-        room.status = 'playing';
-        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
-        room.players.forEach(p => { if(p.hand) p.hand.sort((a,b)=>a-b); });
-        room.currentTurnIdx = 0;
-        
-        io.to(roomId).emit('gameStarted', {
-            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
-            currentTurnId: room.players[0].id, lastRoundRanks: room.lastRoundRanks
-        });
-
-        room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-        notifyTurn(roomId, room.players[0].id);
-        handleAITurnIfNeeded(roomId, room);
-    } catch(err) { console.error("startNormalRound Error:", err); }
 }
 
 const PORT = process.env.PORT || 3000;
