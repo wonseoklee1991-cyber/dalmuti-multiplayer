@@ -63,11 +63,11 @@
         .ai-mini-card { position: absolute; width: 12px; height: 18px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
         .pos-left-low   { top: 22%; left: max(15px, env(safe-area-inset-left)); }
-        .pos-left-mid   { top: 2%; left: max(25px, env(safe-area-inset-left)); }
-        .pos-left-high  { top: 2%; left: 30%; --tx: -50%; }
-        .pos-center-top { top: 2%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 2%; left: 70%; --tx: -50%; }
-        .pos-right-mid  { top: 2%; right: max(25px, env(safe-area-inset-right)); }
+        .pos-left-mid   { top: 5%; left: max(25px, env(safe-area-inset-left)); }
+        .pos-left-high  { top: 5%; left: 30%; --tx: -50%; }
+        .pos-center-top { top: 5%; left: 50%; --tx: -50%; }
+        .pos-right-high { top: 5%; left: 70%; --tx: -50%; }
+        .pos-right-mid  { top: 5%; right: max(25px, env(safe-area-inset-right)); }
         .pos-right-low  { top: 22%; right: max(15px, env(safe-area-inset-right)); }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(30px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.98) 55%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
@@ -78,6 +78,7 @@
         .btn-emote { background: #34495e; border: 2px solid #f1c40f; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 18px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-emote:active { transform: scale(0.9); }
 
+        /* ⭐️ 일시정지 버튼 겹침 픽스: 우상단에서 제거하고 hud-left 내부로 이동 완료 */
         .btn-pause-hud { background: #2c3e50; border: 2px solid #95a5a6; color:#fff; border-radius: 50%; width: 42px; height: 42px; font-size: 16px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-pause-hud:active { transform: scale(0.9); }
         
@@ -93,10 +94,10 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 카드 이미지 업로드 지원을 위한 핵심 디자인 픽스 ⭐️ */
+        /* ⭐️ 2D 캐릭터 카드를 위한 CSS 변경 */
         .card {
             width: 54px; height: 78px;
-            background-color: #eaddcf; /* 이미지가 없을 때를 대비한 기본 양피지 색상 */
+            background-color: #eaddcf;
             border-radius: 6px; display: flex; flex-direction: column; justify-content: space-between;
             padding: 4px; cursor: pointer; position: relative;
             border: 2px solid #5c4033;
@@ -104,22 +105,16 @@
             transition: transform 0.15s, border-color 0.15s;
             color: #3b2a1a;
             font-family: 'Georgia', 'Times New Roman', serif;
-            
-            /* 이미지를 완벽하게 카드에 씌우는 옵션 */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
         }
         .card.selected { transform: translateY(-30px) !important; border-color: #e74c3c; border-width: 3px; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.5); z-index: 10; }
         
-        /* 커스텀 이미지 위에 글자가 잘 보이도록 반투명 흰색 배경을 깔아줍니다 */
-        .card .number { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.85); display: inline-block; padding: 1px 4px; border-radius: 4px; text-shadow: none; align-self: flex-start;}
+        .card .number { font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.85); display: inline-block; padding: 1px 4px; border-radius: 4px; align-self: flex-start;}
         .card .number.bottom { align-self: flex-end; transform: rotate(180deg); }
         .card .center-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: 100%; text-shadow: 1px 1px 0px rgba(255,255,255,0.4); }
 
         .card.card-back {
             background-color: #5c4033;
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E");
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px);
             border: 2px solid #f1c40f; color: transparent;
         }
         .card.card-back::after { content: "👑"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); background: none; padding:0; }
@@ -133,8 +128,14 @@
             .ai-node .name { font-size: 14px; }
             .hand-scroll-area { padding-top: 60px; }
         }
+        
+        .rank-1 { border-color: #ffd700; box-shadow: inset 0 0 15px rgba(218,165,32,0.8); }
+        .rank-13 { border-color: #f1c40f; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); }
+        .rank-13 .center-content { color: #f1c40f; text-shadow: 1px 1px 0px #000; }
 
-        #game-status { position: absolute; top: 28%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        /* ⭐️ 게임 알림창 겹침 완전 해결: top: 28% -> 40% 로 확 내렸습니다! */
+        #game-status { position: absolute; top: 40%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
+        
         #chat-toast-area { position: absolute; bottom: 30%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
@@ -150,6 +151,7 @@
         <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
     </div>
 
+    <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
@@ -199,6 +201,7 @@
         </div>
     </div>
 
+    <!-- 대기방 설정 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
@@ -246,6 +249,7 @@
         </div>
     </div>
 
+    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -253,6 +257,7 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
+    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
@@ -267,6 +272,7 @@
         </div>
     </div>
 
+    <!-- 반란 선택 모달 -->
     <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #e74c3c;">
             <div style="font-size:50px; margin-bottom:10px; animation: pulse 1s infinite;">🃏🃏</div>
@@ -279,6 +285,7 @@
         </div>
     </div>
 
+    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -327,6 +334,7 @@
         </div>
     </div>
 
+    <!-- 일시정지 모달창 -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -354,6 +362,7 @@
         </div>
     </div>
 
+    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -379,6 +388,7 @@
         </div>
     </div>
 
+    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -413,6 +423,7 @@
         </div>
     </div>
 
+    <!-- ⭐️ 자바스크립트 로직 -->
     <script>
         const socket = io();
         let myId = null;
@@ -425,6 +436,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
+        // 파이어베이스 키 고정
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -638,6 +650,8 @@
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
                     document.getElementById('step-1-nickname').classList.add('hidden');
                     document.getElementById('step-2-action').classList.remove('hidden');
+                }).catch(err => {
+                    alert("프로필 저장 실패: " + err.message);
                 });
             }
         }
@@ -998,7 +1012,7 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 커스텀 이미지 카드를 지원하는 로직 ⭐️
+        // ⭐️ 2D 캐릭터 지원을 위한 카드 디자인 핵심 렌더러 ⭐️
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
@@ -1006,19 +1020,26 @@
             
             let theme = cardThemeData[rank] || { icon: '', name: '' };
             
-            // 💡 여기서 내가 public/assets 폴더에 넣은 이미지를 가져와 카드에 씌웁니다!
-            let customImageURL = `/assets/card_${rank}.png`;
+            // 💡 무료 2D 캐릭터 생성 API (DiceBear)를 사용해 임시로 캐릭터 이미지를 씌워두었습니다!
+            // 나중에 직접 만든 이미지를 폴더에 넣고 경로를 "/assets/card_${rank}.png" 로 바꾸시면 됩니다.
+            const seedNames = {
+                1: 'King', 2: 'Duke', 3: 'Lord', 4: 'Knight', 5: 'Abbot',
+                6: 'Baron', 7: 'Tailor', 8: 'Mason', 9: 'Cook', 10: 'Shepherd',
+                11: 'Miner', 12: 'Peasant', 13: 'Joker'
+            };
+            let seed = seedNames[rank] || 'Player';
+            let customImageURL = `https://api.dicebear.com/7.x/adventurer/svg?seed=dalmuti_${seed}`;
 
             c.innerHTML = `
                 <div class="number">${displayRank}</div>
                 <div class="center-content">
-                    <div style="font-size:26px;">${theme.icon}</div>
-                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px; background:rgba(255,255,255,0.6); padding: 0 4px; border-radius:4px;">${theme.name}</div>
+                    <div style="font-size:26px; filter: drop-shadow(0px 0px 3px rgba(255,255,255,1));">${theme.icon}</div>
+                    <div style="font-size:11px; margin-top:2px; font-weight:900; color:#3b2a1a; letter-spacing:-0.5px; background:rgba(255,255,255,0.8); padding: 2px 5px; border-radius:4px; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">${theme.name}</div>
                 </div>
                 <div class="number bottom">${displayRank}</div>`;
             
-            // 💡 커스텀 이미지를 적용하시려면 아래 줄의 맨 앞 "// " 슬래시 두 개를 지워주세요!
-            // c.style.backgroundImage = `url('${customImageURL}'), url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`;
+            // 카드의 전체 배경에 2D 캐릭터 이미지를 씌웁니다. (글씨가 잘 보이도록 반투명 흰색 코팅)
+            c.style.backgroundImage = `linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4)), url('${customImageURL}')`;
 
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -1328,9 +1349,9 @@
             cards.map(c => {
                 let display = c === 13 ? 'J' : c;
                 let theme = cardThemeData[c] || { icon: '', name: '' };
-                return `<div class="card rank-${c}" style="width:38px; height:54px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
-                    <div style="font-size:9px; font-weight:bold;">${display}</div>
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:16px;">${theme.icon}</div>
+                return `<div class="card rank-${c}" style="width:38px; height:54px; border-width:1px; border-radius:4px; padding:2px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: #eaddcf;">
+                    <div style="font-size:9px; font-weight:bold; background:rgba(255,255,255,0.7); display:inline-block; padding:1px 3px; border-radius:3px;">${display}</div>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:18px; font-weight:900;">${theme.icon}</div>
                 </div>`
             }).join('') + `</div>`;
         }
