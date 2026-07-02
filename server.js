@@ -203,6 +203,7 @@ io.on('connection', (socket) => {
             }
         });
 
+        // ⭐️ 무한 대기 100% 차단: 유저가 안 누르면 3.5초 뒤 무조건 강제 뽑기 실행!
         room.seonTimer = setTimeout(() => {
             if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                 participants.forEach(uid => {
@@ -213,7 +214,7 @@ io.on('connection', (socket) => {
                     }
                 });
             }
-        }, 5000); // 강제 뽑기 5초 대기
+        }, 3500);
     }
 
     socket.on('startGame', () => {
@@ -276,7 +277,6 @@ io.on('connection', (socket) => {
         } catch (e) { console.error("handleSeonPick Error:", e); }
     }
 
-    // ⭐️ 서버 다운 원인인 setTimeout을 완전히 날리고 동기화 즉시 실행 엔진 도입
     function checkTiesAndProceed(roomId, room, participants) {
         try {
             let latestCardsMap = {};
@@ -299,20 +299,19 @@ io.on('connection', (socket) => {
                 room.tiedPlayers = currentRoundTies;
                 room.seonRound++;
                 
-                let drawResults = participants.map(uid => {
-                    let d = room.seonDraws[uid];
-                    return { id: d.id, uid: uid, name: d.name, card: d.history[d.history.length - 1] };
-                });
+                let drawResults = room.players.map(p => {
+                    let d = room.seonDraws[p.uid];
+                    return { id: p.id, uid: p.uid, name: p.name, card: d && d.history.length ? d.history[d.history.length - 1] : null };
+                }).filter(res => res.card !== null);
 
                 io.to(roomId).emit('seonTieOccurred', { drawResults, tiedPlayers: currentRoundTies });
 
                 setTimeout(() => {
                     if (!rooms[roomId] || rooms[roomId].status !== 'seon_drawing') return;
                     triggerSeonPhase(roomId, room, true);
-                }, 2000);
+                }, 2500);
 
             } else {
-                // 동률 없음: 즉시 서열 정렬 후 서버에서 바로 본게임 데이터 발송 (딜레이 없음!)
                 let allUids = Object.keys(room.seonDraws);
                 allUids.sort((a, b) => {
                     let histA = room.seonDraws[a] ? room.seonDraws[a].history : [];
@@ -342,14 +341,17 @@ io.on('connection', (socket) => {
                 });
 
                 let winnerPlayer = room.players[0] || {id: null, name: "대달무티"};
-                
-                // 클라이언트에게 결과 화면 전송
                 io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
-                // ⭐️ 서버는 즉각적으로 카드를 나눠주고 게임 시작 신호를 클라이언트 버퍼로 쏴버립니다.
-                // 화면 전환 딜레이는 클라이언트가 담당하므로 서버 프리징 0%.
-                distributeCards(room);
-                startNormalRound(roomId, room);
+                // ⭐️ 이중 딜레이 파괴 완료: 서버는 딱 3.5초만 세고 칼같이 본게임(gameStarted)으로 쏩니다!
+                setTimeout(() => {
+                    try {
+                        if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
+                            distributeCards(rooms[roomId]);
+                            startNormalRound(roomId, rooms[roomId]);
+                        }
+                    } catch(err) { console.error("본게임 강제 전환 실패 방어:", err); }
+                }, 3500);
             }
         } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
@@ -471,7 +473,7 @@ io.on('connection', (socket) => {
 
         if (room.taxLogs.length === expectedLogs) {
             io.to(room.id).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
-            setTimeout(() => { startNormalRound(room.id, room); }, 3000);
+            setTimeout(() => { startNormalRound(room.id, room); }, 2000);
         }
     });
 });
@@ -515,7 +517,7 @@ function handleAITurnIfNeeded(roomId, room) {
     const player = room.players[room.currentTurnIdx];
     if (!player || !player.isAI) return;
 
-    let delay = 1000;
+    let delay = 1100;
     const activeHumans = room.players.filter(p => !p.isAI && !room.finishedPlayers.includes(p.id));
     if (activeHumans.length === 0) delay = 150;
 
@@ -689,7 +691,7 @@ function triggerRevolution(roomId, room, revPlayer, isGrand) {
         room.players.forEach(p => p.hand.sort((a,b)=>a-b));
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
-    }, 5000);
+    }, 4000);
 }
 
 function proceedWithTax(roomId, room) {
@@ -741,7 +743,7 @@ function proceedWithTax(roomId, room) {
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 3000);
+        }, 2500);
     } else io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
 }
 

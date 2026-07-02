@@ -33,7 +33,15 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 10px; width: 100%; overflow-y: auto; margin-bottom: 15px; border: 1px solid #444; flex: 1; min-height: 80px;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
-        @keyframes bubblePop { 0% { opacity: 0; transform: translateX(-50%) scale(0.5); } 8% { opacity: 1; transform: translateX(-50%) scale(1.1); } 15% { opacity: 1; transform: translateX(-50%) scale(1); } 90% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(0.8); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @keyframes bubblePop {
+            0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+            8% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+            15% { opacity: 1; transform: translateX(-50%) scale(1); }
+            90% { opacity: 1; transform: translateX(-50%) scale(1); }
+            100% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+        }
         .emote-popup-anim { position: absolute; left: 50%; background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: bubblePop 5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f; }
 
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
@@ -81,7 +89,7 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 356x684(1:1.92) 비율 최적화 및 텍스트 삭제 */
+        /* ⭐️ 카드 비율 1:1.92(356x684) 100% 완전 밀착 및 텍스트 100% 삭제 */
         .card {
             width: 60px !important;
             height: 115px !important;
@@ -90,11 +98,15 @@
             border: none !important;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
             transition: transform 0.15s !important;
-            background-size: 100% 100% !important;
+            background-size: 100% 100% !important; /* 이미지 무조건 꽉 차게 */
             background-repeat: no-repeat !important;
             background-color: transparent !important;
             padding: 0 !important;
         }
+        /* 혹시라도 텍스트가 남아있을 경우를 대비해 CSS로 완전히 영구 삭제 */
+        .card .number { display: none !important; }
+        .card .center-content { display: none !important; }
+
         .card.selected { transform: translateY(-20px) scale(1.05) !important; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.8) !important; z-index: 10 !important; }
         .card.card-back { background-color: #5c4033 !important; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px) !important; border: 2px solid #f1c40f !important; }
         .card.card-back::after { content: "👑" !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); }
@@ -121,6 +133,7 @@
 
     <div id="orientation-warning"><h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2></div>
 
+    <!-- 로비 -->
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
         
@@ -165,6 +178,7 @@
         </div>
     </div>
 
+    <!-- 대기방 -->
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
             <h2 style="color: #f1c40f; margin-bottom:5px; margin-top:0;">🏠 대기실</h2>
@@ -202,6 +216,7 @@
         </div>
     </div>
 
+    <!-- 선 뽑기 -->
     <div id="seon-draw-screen" class="screen hidden" style="z-index: 100; background: rgba(17,17,17,0.97);">
         <h2 style="color: #f1c40f; font-size: 26px; margin-bottom: 5px;">🃏 최초 선(대달무티) 자격 검증</h2>
         <p id="seon-pick-guide" style="color: #fff; background:#c0392b; font-weight:bold; padding:6px 20px; border-radius:20px; font-size: 15px; margin-bottom: 30px; animation: pulse 1s infinite;">👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!</p>
@@ -209,12 +224,22 @@
         <h1 id="seon-winner-announcement" style="color: #2ecc71; font-size: 21px; text-align: center; font-weight: 900; min-height: 40px; text-shadow: 0 0 10px rgba(46,204,113,0.3);"></h1>
     </div>
 
+    <!-- 혁명 애니메이션 전용 스크린 -->
     <div id="revolution-screen" class="screen hidden" style="z-index: 105; background: rgba(180, 0, 0, 0.95); transition: opacity 0.5s;">
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
         <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
     </div>
 
+    <div id="round-loading-screen" class="screen hidden" style="z-index: 110; background: rgba(17,17,17,0.95);">
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div style="font-size: 50px; margin-bottom: 20px; animation: spin 1.5s linear infinite; display: inline-block;">⏳</div>
+            <h2 style="color: #2ecc71; margin-top: 0; margin-bottom: 10px; text-shadow: 0 0 10px rgba(46,204,113,0.5);">새로운 라운드 준비 중...</h2>
+            <p style="color: #aaa; font-size: 15px; margin: 0;">카드를 섞고 자리를 재배치하고 있습니다</p>
+        </div>
+    </div>
+
+    <!-- 반란 선택 모달 -->
     <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:320px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #e74c3c;">
             <div style="font-size:50px; margin-bottom:10px; animation: pulse 1s infinite;">🃏🃏</div>
@@ -227,6 +252,7 @@
         </div>
     </div>
 
+    <!-- 게임 화면 -->
     <div id="game-screen" class="screen hidden">
         <div id="game-status">접속 중...</div>
         <div id="chat-toast-area" class="hidden"></div>
@@ -267,6 +293,7 @@
         </div>
     </div>
 
+    <!-- 일시정지 모달창 -->
     <div id="pause-modal" class="screen hidden" style="z-index: 120; background: rgba(0,0,0,0.85);">
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
@@ -291,6 +318,7 @@
         </div>
     </div>
 
+    <!-- ⭐️ 세금 하사 모달: 넓게 반응하도록 확장 (잘림 원천 방지) -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -308,9 +336,10 @@
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
+    <!-- ⭐️ 세금 교환 명세서 (모바일 가로 꽉 차게 변경하여 잘림 방지) -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
-        <div style="background:#2c3e50; padding:25px 15px; border-radius:12px; width:85vw; max-width:400px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+        <div style="background:#2c3e50; padding:25px 15px; border-radius:12px; width:90vw; max-width:450px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
             <div id="tax-give-log" class="slide-left" style="font-size:15px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
             <div style="font-size:24px; margin-bottom:15px; color:#f1c40f;">↕️</div>
             <div id="tax-recv-log" class="slide-right" style="font-size:15px; color:#2ecc71; margin-bottom:25px; font-weight:bold;"></div>
@@ -318,6 +347,7 @@
         </div>
     </div>
 
+    <!-- 결과 창 -->
     <div id="result-screen" class="screen hidden" style="z-index:80; flex-direction:row; gap:20px; padding:15px; justify-content:center; align-items:stretch; background: rgba(20,20,20,0.98);">
         
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
@@ -375,10 +405,19 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        function preloadCardImages() {
+            for (let i = 1; i <= 13; i++) {
+                const img = new Image();
+                img.src = `/assets/card_${i}.png`;
+            }
+        }
+
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
                 document.getElementById('step-0-auth').classList.add('hidden');
+                preloadCardImages();
+
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
                     currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
@@ -437,7 +476,9 @@
                             document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
                             socket.emit('pickSeonCard');
                         };
-                    } else { backCard.style.opacity = '0.5'; }
+                    } else {
+                        backCard.style.opacity = '0.5';
+                    }
                     container.appendChild(backCard);
                 }
             }
@@ -492,8 +533,11 @@
         });
 
         function triggerSyncRequest() {
-            if (socket && socket.connected && myUid) socket.emit('requestRoomSync', { uid: myUid });
+            if (socket && socket.connected && myUid) {
+                socket.emit('requestRoomSync', { uid: myUid });
+            }
         }
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') triggerSyncRequest();
         });
@@ -501,7 +545,7 @@
         function resetPassword() {
             const email = document.getElementById('auth-email').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email) { msgEl.style.color = '#e67e22'; msgEl.innerText = "이메일을 입력해 주세요!"; return; }
+            if(!email) { msgEl.style.color = '#e67e22'; msgEl.innerText = "이메일을 입력한 뒤 다시 눌러주세요!"; return; }
             auth.sendPasswordResetEmail(email).then(() => { msgEl.style.color = '#2ecc71'; msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다!";
             }).catch((error) => { msgEl.style.color = '#e74c3c'; msgEl.innerText = "오류 발생: " + error.message; });
         }
@@ -787,15 +831,50 @@
                 let cardBox = document.createElement('div');
                 cardBox.style.display = 'flex'; cardBox.style.flexDirection = 'column'; cardBox.style.alignItems = 'center'; cardBox.style.gap = '8px';
                 let cardEl = createCardHTML(res.card, idx, false);
-                if (tiedPlayers.includes(res.uid)) { cardEl.style.boxShadow = '0 0 15px #e74c3c'; cardEl.style.transform = 'scale(1.1)'; }
-                else { cardEl.style.opacity = '0.4'; }
+                if (tiedPlayers.includes(res.uid)) {
+                    cardEl.style.boxShadow = '0 0 15px #e74c3c'; cardEl.style.transform = 'scale(1.1)';
+                } else { cardEl.style.opacity = '0.4'; }
                 let nameEl = document.createElement('div'); nameEl.style.fontSize = '13px'; nameEl.style.fontWeight = 'bold'; nameEl.innerText = res.name;
                 if(res.uid === myUid) nameEl.style.color = '#f1c40f';
                 cardBox.appendChild(cardEl); cardBox.appendChild(nameEl); container.appendChild(cardBox);
             });
         });
 
-        // ⭐️ 서버에서 즉시 전송한 데이터를 통해 클라이언트가 딜레이를 통제합니다.
+        // ⭐️ 서버에서 받은 본게임 시작 신호를 즉각적으로 렌더링하도록 `socket.on('gameStarted')` 코드를 완전히 개조했습니다!
+        socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
+            try {
+                document.getElementById('seon-draw-screen').classList.add('hidden');
+                document.getElementById('waiting-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('personal-tax-modal').classList.add('hidden');
+                document.getElementById('tax-give-modal').classList.add('hidden');
+                document.getElementById('tax-summary-modal').classList.add('hidden');
+                document.getElementById('revolution-prompt-modal').classList.add('hidden');
+                document.getElementById('round-loading-screen').classList.add('hidden');
+                
+                document.getElementById('btn-vote-keep').style.opacity = '1';
+                document.getElementById('btn-vote-lobby').style.opacity = '1';
+                
+                document.getElementById('game-screen').classList.remove('hidden');
+                
+                window.lastRoundRanks = lastRoundRanks || [];
+                
+                document.getElementById('my-avatar').style.border = 'none';
+                document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
+                document.getElementById('player-name-label').style.color = '#fff';
+                
+                document.getElementById('center-area').innerHTML = '';
+
+                let rankIdx = window.lastRoundRanks.indexOf(socket.id);
+                if(rankIdx === -1) rankIdx = window.lastRoundRanks.indexOf(myId);
+                const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+                document.getElementById('player-name-label').innerText = `나(${currentPlayerName}) ${badges[rankIdx] || ''}`;
+
+                renderOpponents(players);
+                updateTurnState(currentTurnId);
+            } catch(e) { console.error("본게임 전환 에러:", e); }
+        });
+
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -812,14 +891,13 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 카드 안의 모든 텍스트 요소를 완전히 삭제하고 오직 원본 이미지만을 렌더링합니다!
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
             let customImageURL = `/assets/card_${rank}.png`;
 
-            // HTML 내용 완전 비움 (숫자, 텍스트, 이모티콘 겹침 원천 차단)
+            // 모든 텍스트 요소를 완전히 삭제하여 이미지만 나오게 설정
             c.innerHTML = ``;
             
             // 이미지 비율 강제 대응 (100% 100%)
@@ -838,47 +916,6 @@
             }
             return c;
         }
-
-        // ⭐️ 서버 다운 방지를 위해 클라이언트 단에서 딜레이를 주고 본게임을 시작합니다.
-        socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
-            const initGameUI = () => {
-                document.getElementById('seon-draw-screen').classList.add('hidden');
-                document.getElementById('waiting-screen').classList.add('hidden');
-                document.getElementById('result-screen').classList.add('hidden');
-                document.getElementById('personal-tax-modal').classList.add('hidden');
-                document.getElementById('tax-give-modal').classList.add('hidden');
-                document.getElementById('tax-summary-modal').classList.add('hidden');
-                document.getElementById('revolution-prompt-modal').classList.add('hidden');
-                document.getElementById('round-loading-screen').classList.add('hidden');
-                
-                document.getElementById('btn-vote-keep').style.opacity = '1';
-                document.getElementById('btn-vote-lobby').style.opacity = '1';
-                
-                document.getElementById('game-screen').classList.remove('hidden');
-                window.lastRoundRanks = lastRoundRanks || [];
-                
-                document.getElementById('my-avatar').style.border = 'none';
-                document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
-                document.getElementById('player-name-label').style.color = '#fff';
-                
-                document.getElementById('center-area').innerHTML = '';
-
-                let rankIdx = window.lastRoundRanks.indexOf(socket.id);
-                if(rankIdx === -1) rankIdx = window.lastRoundRanks.indexOf(myId);
-                const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
-                document.getElementById('player-name-label').innerText = `나(${currentPlayerName}) ${badges[rankIdx] || ''}`;
-
-                renderOpponents(players);
-                updateTurnState(currentTurnId);
-            };
-
-            // 선뽑기 화면이 떠 있다면 결과 감상을 위해 3.5초 대기 후 전환
-            if (!document.getElementById('seon-draw-screen').classList.contains('hidden')) {
-                setTimeout(initGameUI, 3500);
-            } else {
-                initGameUI();
-            }
-        });
 
         socket.on('yourHand', (hand) => {
             myHand = hand || [];
@@ -1165,7 +1202,7 @@
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                // 세금 미니카드에서도 텍스트를 제거하고 이미지 비율 1:1.92 강제 적용
+                // 세금 미니카드 비율 강제 맞춤
                 return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/100% 100% no-repeat; border:none; margin:0 !important; transform:none !important;"></div>`
             }).join('') + `</div>`;
         }
