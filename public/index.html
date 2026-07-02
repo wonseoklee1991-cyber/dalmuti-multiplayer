@@ -13,7 +13,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
         .hidden { display: none !important; }
-        .btn { padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
+        .btn { padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
         .btn:active { transform: translateY(4px); box-shadow: none; }
         .btn.pass { background-color: #e74c3c; box-shadow: 0 4px 0 #c0392b; color: white; }
         .btn.back { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; color: white; }
@@ -85,7 +85,8 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 1:1.92 해상도 완벽 대응. 투명화/글자 겹침 영구 차단 */
+        /* ⭐️ 아이폰/사파리 카드 투명화 완전 차단 ⭐️ */
+        /* background 속성을 개별 분리하여 오류 없이 가장 먼저 회색 배경을 깔아줍니다. */
         .card {
             width: 65px !important;
             height: 125px !important;
@@ -95,9 +96,7 @@
             box-sizing: border-box !important;
             box-shadow: 2px 2px 6px rgba(0,0,0,0.6) !important;
             transition: transform 0.15s !important;
-            background-color: #333 !important; /* 로딩 전 빈 공간 방어 색상 */
-            background-size: 100% 100% !important;
-            background-repeat: no-repeat !important;
+            background-color: #2c3e50 !important; /* 이미지 로딩 실패 시 든든한 방어막 */
             padding: 0 !important;
         }
         .card .number { display: none !important; }
@@ -287,7 +286,7 @@
                     <button class="btn-pause-hud" onclick="togglePauseMenu()">⏸️</button>
                     <div class="player-info-container" style="display:flex; align-items:center; gap:8px;">
                         <div id="my-avatar" class="avatar" style="width:36px; height:36px; background:#e67e22; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; transition:all 0.3s; position:relative; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">🧑‍💻</div>
-                        <span id="player-name-label" style="font-size:14px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
+                        <span id="player-name-label" style="font-size:13px; font-weight:bold; transition:all 0.3s; margin-right:5px;">나</span>
                     </div>
                 </div>
                 
@@ -414,6 +413,8 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
+        // 🚨 스마트폰 메모리 폭발의 주범이었던 프리로드를 완전히 삭제했습니다!
+        
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
@@ -534,7 +535,9 @@
         });
 
         function triggerSyncRequest() {
-            if (socket && socket.connected && myUid) socket.emit('requestRoomSync', { uid: myUid });
+            if (socket && socket.connected && myUid) {
+                socket.emit('requestRoomSync', { uid: myUid });
+            }
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -840,7 +843,6 @@
             });
         });
 
-        // ⭐️ 서버에서 즉시 전송한 데이터를 통해 클라이언트가 딜레이 없이 바로 렌더링합니다!
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -857,22 +859,21 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
-        // ⭐️ 모든 텍스트 요소를 완전히 비우고 카드 테두리만 강조하는 함수
+        // ⭐️ iOS Safari CSS 크래시 방지 및 기본 배경색(회색) 완벽 탑재
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
             let customImageURL = `/assets/card_${rank}.png`;
 
-            // 텍스트 완전 박멸
+            // 모든 하얀 글씨 박스와 이모티콘 텍스트를 영구 삭제합니다.
             c.innerHTML = ``;
             
-            // 이미지 강제 반영, 백그라운드 색상은 로딩 중에만 회색(#333)으로 보이게
+            // ⭐️ 백그라운드 속성을 안전하게 개별 분리하여 오류를 차단합니다.
             c.style.backgroundImage = `url('${customImageURL}')`;
-            c.style.backgroundSize = `100% 100%`;
             c.style.backgroundPosition = `center`;
+            c.style.backgroundSize = `100% 100%`;
             c.style.backgroundRepeat = `no-repeat`;
-            c.style.backgroundColor = `#333`;
 
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -888,10 +889,9 @@
             return c;
         }
 
-        // ⭐️ 서버에서 보내는 즉각적인 신호를 캐치하여 바로 화면을 전환시킵니다.
+        // ⭐️ 서버에서 보낸 `gameStarted` 신호를 받는 즉시 오류 없이 안전하게 렌더링
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             try {
-                // 선뽑기 창을 포함한 모든 팝업창을 칼같이 닫아버립니다.
                 document.getElementById('seon-draw-screen').classList.add('hidden');
                 document.getElementById('waiting-screen').classList.add('hidden');
                 document.getElementById('result-screen').classList.add('hidden');
@@ -904,7 +904,6 @@
                 document.getElementById('btn-vote-keep').style.opacity = '1';
                 document.getElementById('btn-vote-lobby').style.opacity = '1';
                 
-                // 본 게임 화면 즉시 오픈!
                 document.getElementById('game-screen').classList.remove('hidden');
                 
                 window.lastRoundRanks = lastRoundRanks || [];
@@ -922,7 +921,10 @@
 
                 renderOpponents(players);
                 updateTurnState(currentTurnId);
-            } catch(e) { console.error("본게임 전환 에러:", e); }
+            } catch(e) {
+                console.error("본게임 전환 에러:", e);
+                alert("본게임 로딩 중 오류가 발생했습니다. 브라우저를 새로고침 해주세요.");
+            }
         });
 
         socket.on('yourHand', (hand) => {
@@ -979,7 +981,7 @@
 
             for(let j=0; j<count; j++) {
                 let rot = startAngle + (step * j);
-                cardArea.innerHTML += `<div class="ai-mini-card" style="transform: rotate(${rot}deg); left: ${j * 2}px;"></div>`;
+                cardArea.innerHTML += `<div class="ai-mini-card" style="transform: rotate(${rot}deg); left: ${j * 2}px; background-color: #eaddcf;"></div>`;
             }
             cardArea.style.width = `${12 + (count-1)*2}px`;
         }
@@ -1205,13 +1207,13 @@
             }
         });
 
+        // ⭐️ 세금 미니카드 CSS 안전성 강화 (텍스트 제거 유지)
         function generateMiniCardsHTML(cards) {
             if(!cards || cards.length === 0) return '';
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                // 세금 미니카드 비율 강제 맞춤
-                return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background-image: url('${customImageURL}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: #333; margin:0 !important; transform:none !important;"></div>`
+                return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background-image: url('${customImageURL}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: #2c3e50; border:none; margin:0 !important; transform:none !important;"></div>`
             }).join('') + `</div>`;
         }
 

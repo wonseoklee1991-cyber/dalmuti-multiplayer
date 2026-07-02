@@ -203,7 +203,7 @@ io.on('connection', (socket) => {
             }
         });
 
-        // ⏱️ 강제 뽑기 타이머: 4초 대기 (서버 충돌 방지)
+        // 자동 강제 진행 타이머
         room.seonTimer = setTimeout(() => {
             if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                 participants.forEach(uid => {
@@ -343,15 +343,14 @@ io.on('connection', (socket) => {
                 let winnerPlayer = room.players[0] || {id: null, name: "대달무티"};
                 io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
-                // ⭐️ 이중 딜레이 완전 삭제: 서버는 딜레이 없이 3.5초 뒤 바로 본게임을 시작시킵니다.
                 setTimeout(() => {
                     try {
                         if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                             distributeCards(rooms[roomId]);
                             startNormalRound(roomId, rooms[roomId]);
                         }
-                    } catch(err) { console.error("본게임 전환 실패 방어:", err); }
-                }, 3500);
+                    } catch(err) { console.error("본게임 강제 전환 실패 방어:", err); }
+                }, 3000);
             }
         } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
@@ -691,7 +690,7 @@ function triggerRevolution(roomId, room, revPlayer, isGrand) {
         room.players.forEach(p => p.hand.sort((a,b)=>a-b));
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
-    }, 5500);
+    }, 4000);
 }
 
 function proceedWithTax(roomId, room) {
@@ -743,26 +742,8 @@ function proceedWithTax(roomId, room) {
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 3500);
+        }, 3000);
     } else io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
-}
-
-function startNormalRound(roomId, room) {
-    try {
-        room.status = 'playing';
-        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
-        room.players.forEach(p => { if(p.hand) p.hand.sort((a,b)=>a-b); });
-        room.currentTurnIdx = 0;
-        
-        io.to(roomId).emit('gameStarted', {
-            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
-            currentTurnId: room.players[0].id, lastRoundRanks: room.lastRoundRanks
-        });
-
-        room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
-        notifyTurn(roomId, room.players[0].id);
-        handleAITurnIfNeeded(roomId, room);
-    } catch(err) { console.error("startNormalRound Error:", err); }
 }
 
 const PORT = process.env.PORT || 3000;
