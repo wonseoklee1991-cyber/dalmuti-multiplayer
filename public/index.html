@@ -33,20 +33,11 @@
         .player-list { background: rgba(0,0,0,0.4); padding: 10px 15px; border-radius: 10px; width: 100%; overflow-y: auto; margin-bottom: 15px; border: 1px solid #444; flex: 1; min-height: 80px;}
         .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; font-size: 15px; align-items: center;}
         
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        @keyframes bubblePop {
-            0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
-            8% { opacity: 1; transform: translateX(-50%) scale(1.1); }
-            15% { opacity: 1; transform: translateX(-50%) scale(1); }
-            90% { opacity: 1; transform: translateX(-50%) scale(1); }
-            100% { opacity: 0; transform: translateX(-50%) scale(0.8); }
-        }
+        @keyframes bubblePop { 0% { opacity: 0; transform: translateX(-50%) scale(0.5); } 8% { opacity: 1; transform: translateX(-50%) scale(1.1); } 15% { opacity: 1; transform: translateX(-50%) scale(1); } 90% { opacity: 1; transform: translateX(-50%) scale(1); } 100% { opacity: 0; transform: translateX(-50%) scale(0.8); } }
         .emote-popup-anim { position: absolute; left: 50%; background: rgba(255,255,255,0.95); color: #000; padding: 6px 12px; border-radius: 15px; font-size: 14px; font-weight: bold; white-space: nowrap; pointer-events: none; z-index: 9999; animation: bubblePop 5s ease-out forwards; box-shadow: 0 4px 8px rgba(0,0,0,0.5); border: 2px solid #f1c40f; }
 
         #game-screen { z-index: 1; background: radial-gradient(circle at top, #2b2b2b, #111); perspective: 1000px; }
         
-        /* ⭐️ 중앙 테이블 위치 마이너 조정 및 마진 최적화 (모달 겹침 완벽 차단) */
         .table-3d { position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%) rotateX(45deg); width: 80vw; max-width: 600px; height: 24vh; min-height: 160px; max-height: 220px; background: radial-gradient(circle, #2d8659, #1b4d3e); border: 15px solid #5c4033; border-radius: 25px; transform-style: preserve-3d; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
         .center-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) translateZ(10px); display: flex; justify-content: center; align-items: center; z-index: 2; width: 100%; height: 100%; }
         .center-area .card { transform: scale(0.8) !important; margin-left: -20px !important; }
@@ -64,12 +55,8 @@
         .ai-cards-container { display: flex; align-items: center; justify-content: center; position: relative; height: 18px; width: 60px; margin-top: 4px; }
         .ai-mini-card { position: absolute; width: 12px; height: 23px; background: #fff; border-radius: 2px; border: 1px solid #666; box-shadow: 1px 1px 2px rgba(0,0,0,0.4); transform-origin: bottom center; }
 
-        .pos-left-low   { top: 25%; left: 2%; }
-        .pos-left-mid   { top: 8%; left: 5%; }
-        .pos-left-high  { top: 5%; left: 28%; --tx: -50%; }
-        .pos-center-top { top: 4%; left: 50%; --tx: -50%; }
-        .pos-right-high { top: 5%; left: 72%; --tx: -50%; }
-        .pos-right-mid  { top: 8%; right: 5%; }
+        .pos-left-low   { top: 25%; left: 2%; } .pos-left-mid   { top: 8%; left: 5%; } .pos-left-high  { top: 5%; left: 28%; --tx: -50%; }
+        .pos-center-top { top: 4%; left: 50%; --tx: -50%; } .pos-right-high { top: 5%; left: 72%; --tx: -50%; } .pos-right-mid  { top: 8%; right: 5%; }
         .pos-right-low  { top: 25%; right: 2%; }
 
         .player-ui { position: absolute; bottom: 0; left: 0; width: 100%; padding-bottom: max(30px, env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(0,0,0,0.98) 55%, transparent); display: flex; flex-direction: column; align-items: center; z-index: 5; pointer-events: none; }
@@ -79,7 +66,6 @@
         
         .btn-emote { background: #34495e; border: 2px solid #f1c40f; color:#fff; border-radius: 50%; width: 38px; height: 38px; font-size: 15px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-emote:active { transform: scale(0.9); }
-
         .btn-pause-hud { background: #2c3e50; border: 2px solid #95a5a6; color:#fff; border-radius: 50%; width: 38px; height: 38px; font-size: 15px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6); transition: transform 0.1s; }
         .btn-pause-hud:active { transform: scale(0.9); }
         
@@ -95,31 +81,22 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 356x684(1:1.921) 황금비율 완벽 연동 및 흰색 텍스트 덮어쓰기 박스 100% 완전 증발 */
+        /* ⭐️ 356x684(1:1.92) 비율 최적화 및 텍스트 삭제 */
         .card {
-            width: 65px !important;
-            height: 125px !important;
-            border-radius: 6px !important;
+            width: 60px !important;
+            height: 115px !important;
+            border-radius: 4px !important;
             cursor: pointer; position: relative;
-            border: none !important; /* 화이트 보더 일절 금지 */
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.6) !important;
+            border: none !important;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
             transition: transform 0.15s !important;
-            background-size: 100% 100% !important; /* 이미지 무조건 원본 강제 채움 */
+            background-size: 100% 100% !important;
             background-repeat: no-repeat !important;
             background-color: transparent !important;
             padding: 0 !important;
         }
-        .card.selected {
-            transform: translateY(-20px) scale(1.05) !important;
-            box-shadow: 0 10px 20px rgba(231, 76, 60, 0.8) !important;
-            z-index: 10 !important;
-        }
-
-        .card.card-back {
-            background-color: #5c4033 !important;
-            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px) !important;
-            border: 2px solid #f1c40f !important;
-        }
+        .card.selected { transform: translateY(-20px) scale(1.05) !important; box-shadow: 0 10px 20px rgba(231, 76, 60, 0.8) !important; z-index: 10 !important; }
+        .card.card-back { background-color: #5c4033 !important; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px) !important; border: 2px solid #f1c40f !important; }
         .card.card-back::after { content: "👑" !important; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; display: block; filter: drop-shadow(0 0 5px #000); }
 
         @media screen and (min-width: 1024px) {
@@ -130,9 +107,7 @@
             .hand-scroll-area { padding-top: 60px; }
         }
 
-        /* ⭐️ 상태창 위치 위로 업그레이드 배정 (아바타 가림 해결) */
         #game-status { position: absolute; top: 14%; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 5px 18px; border-radius: 20px; font-size: 13px; font-weight: bold; color: #f1c40f; z-index: 20; border: 1px solid rgba(241, 196, 15, 0.4); text-align: center; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events:none; }
-        
         #chat-toast-area { position: absolute; bottom: 34%; left: 50%; transform: translateX(-50%); width: 70vw; max-width: 420px; background: rgba(0,0,0,0.85); color: #f1c40f; font-weight: bold; border: 1px solid rgba(241,196,15,0.3); padding: 8px 16px; border-radius: 12px; text-align: center; font-size: 14px; z-index: 99; pointer-events: none; box-shadow: 0 6px 15px rgba(0,0,0,0.6); }
         .tax-log-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; text-align: center; font-size: 14px; }
         
@@ -144,9 +119,7 @@
 </head>
 <body>
 
-    <div id="orientation-warning">
-        <h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2>
-    </div>
+    <div id="orientation-warning"><h2 style="color: #f1c40f; margin-bottom: 10px;">🔄 화면을 가로로 돌려주세요!</h2></div>
 
     <div id="lobby-screen" class="screen">
         <h1 style="color: #f1c40f; font-size: 32px; margin-bottom: 25px;">👑 위대한 달무티 멀티</h1>
@@ -157,9 +130,7 @@
             <input type="password" id="auth-password" placeholder="비밀번호 (6자리 이상)">
             <button class="btn" onclick="loginUser()">로그인</button>
             <button class="btn back" onclick="registerUser()">새로 회원가입</button>
-            <div style="text-align: center; margin-top: 5px;">
-                <span style="color:#3498db; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="resetPassword()">비밀번호를 잊으셨나요?</span>
-            </div>
+            <div style="text-align: center; margin-top: 5px;"><span style="color:#3498db; font-size:13px; text-decoration:underline; cursor:pointer;" onclick="resetPassword()">비밀번호를 잊으셨나요?</span></div>
             <p id="auth-msg" style="color:#e74c3c; font-size:12px; text-align:center; margin:0; margin-top:5px;"></p>
         </div>
 
@@ -170,10 +141,7 @@
                 <div class="avatar-opt" onclick="selectAvatar(this, '🦊')">🦊</div>
                 <div class="avatar-opt" onclick="selectAvatar(this, '🐰')">🐰</div>
                 <div class="avatar-opt" onclick="selectAvatar(this, '🐶')">🐶</div>
-                <label class="avatar-opt" id="avatar-preview-img" style="overflow: hidden; display:flex; justify-content:center; align-items:center; background:#444; font-size:15px; border:2px dashed #95a5a6; cursor:pointer;" title="내 앨범에서 사진 선택">
-                    📷
-                    <input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
-                </label>
+                <label class="avatar-opt" id="avatar-preview-img" style="overflow: hidden; display:flex; justify-content:center; align-items:center; background:#444; font-size:15px; border:2px dashed #95a5a6; cursor:pointer;" title="내 앨범에서 사진 선택">📷<input type="file" accept="image/*" style="display:none;" onchange="handleImageUpload(event)"></label>
             </div>
             <input type="text" id="player-name" placeholder="사용할 닉네임 입력" maxlength="8">
             <button class="btn" onclick="saveProfileAndGoToStep2()">프로필 저장 완료</button>
@@ -198,20 +166,14 @@
     </div>
 
     <div id="waiting-screen" class="screen hidden" style="flex-direction: row; gap: 20px; padding: 15px; justify-content: center; align-items: stretch; background: rgba(20,20,20,0.98);">
-        
         <div style="flex: 1; max-width: 400px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; padding-right: 10px;">
             <h2 style="color: #f1c40f; margin-bottom:5px; margin-top:0;">🏠 대기실</h2>
             <h3 style="background:#333; padding:8px 20px; border-radius:8px; margin-top:0; margin-bottom:10px;">방 코드: <span id="room-id-display" style="color:#e74c3c;">0000</span></h3>
-            
             <div id="host-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 100%;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-size:13px; color:#aaa; font-weight:bold;">총 인원 설정:</span>
                     <select id="max-players" onchange="changeRoomSettings()" style="padding:4px; border-radius:4px; background:#333; color:#fff; border:1px solid #555; outline:none; font-size:13px;">
-                        <option value="4">4인 (세금/반란 면제)</option>
-                        <option value="5">5인 (세금 1장)</option>
-                        <option value="6">6인 (세금 2,1장)</option>
-                        <option value="7">7인 (세금 2,1장)</option>
-                        <option value="8">8인 (세금 3,2,1장)</option>
+                        <option value="4">4인 (세금/반란 면제)</option><option value="5">5인 (세금 1장)</option><option value="6">6인 (세금 2,1장)</option><option value="7">7인 (세금 2,1장)</option><option value="8">8인 (세금 3,2,1장)</option>
                     </select>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -220,20 +182,16 @@
                 </div>
                 <div id="settings-lock-msg" style="color:#e74c3c; font-size:11px; text-align:center; margin-top:6px; display:none;">누군가 준비하여 설정이 잠겼습니다.</div>
             </div>
-
             <div id="guest-settings-panel" style="background:#222; padding:10px 15px; border-radius:8px; border:1px solid #444; margin-bottom:15px; display:none; width: 100%; text-align:center;">
                 <p style="color:#2ecc71; font-weight:bold; font-size:14px; margin:0;">[ <span id="display-max-players">4</span>인 방 / 판돈 <span id="display-bet-amount">1000</span>원 ]</p>
             </div>
-
             <div class="player-list" id="waiting-player-list"></div>
-
             <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
                 <button class="btn hidden" id="btn-start-game" onclick="startGame()">게임 시작하기</button>
                 <button class="btn" style="background:#2ecc71; box-shadow: 0 4px 0 #27ae60;" id="btn-ready-toggle" onclick="toggleReady()">준비하기</button>
                 <button class="btn back" onclick="leaveLobby()">나가기</button>
             </div>
         </div>
-
         <div id="waiting-chat-panel" style="width: 320px; display:flex; flex-direction:column; background:#222; border: 1px solid #444; border-radius: 12px; padding: 15px;">
             <h3 style="color:#f1c40f; margin-top:0; margin-bottom:10px; text-align:center;">💬 대기 대화방</h3>
             <div id="waiting-chat-log" style="flex:1; overflow-y:auto; font-size:14px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; padding-right:5px; border-bottom:1px solid #444; padding-bottom:10px; text-align:left;"></div>
@@ -255,14 +213,6 @@
         <h1 id="rev-title" style="color: #fff; font-size: 45px; margin-bottom: 10px; text-shadow: 0 0 20px #fff;"></h1>
         <h3 id="rev-subtitle" style="color: #f1c40f; font-size: 20px; text-align: center; line-height: 1.5;"></h3>
         <div style="font-size: 80px; margin-top: 30px; animation: pulse 1s infinite;">🃏🃏</div>
-    </div>
-
-    <div id="round-loading-screen" class="screen hidden" style="z-index: 110; background: rgba(17,17,17,0.95);">
-        <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
-            <div style="font-size: 50px; margin-bottom: 20px; animation: spin 1.5s linear infinite; display: inline-block;">⏳</div>
-            <h2 style="color: #2ecc71; margin-top: 0; margin-bottom: 10px; text-shadow: 0 0 10px rgba(46,204,113,0.5);">새로운 라운드 준비 중...</h2>
-            <p style="color: #aaa; font-size: 15px; margin: 0;">카드를 섞고 자리를 재배치하고 있습니다</p>
-        </div>
     </div>
 
     <div id="revolution-prompt-modal" class="screen hidden" style="z-index: 115; background: rgba(0,0,0,0.95);">
@@ -287,15 +237,7 @@
         
         <div id="emote-menu" class="hidden">
             <div class="emote-grid">
-                <button onclick="sendEmote('빨리!')">빨리!</button>
-                <button onclick="sendEmote('스겜!')">스겜!</button>
-                <button onclick="sendEmote('🥱 하암~')">🥱 하암~</button>
-                <button onclick="sendEmote('🤬')">🤬</button>
-                <button onclick="sendEmote('💖')">💖</button>
-                <button onclick="sendEmote('🤮')">🤮</button>
-                <button onclick="sendEmote('😵‍💫')">😵‍💫</button>
-                <button onclick="sendEmote('👏')">👏</button>
-                <button onclick="sendEmote('👀')">👀</button>
+                <button onclick="sendEmote('빨리!')">빨리!</button><button onclick="sendEmote('스겜!')">스겜!</button><button onclick="sendEmote('🥱 하암~')">🥱 하암~</button><button onclick="sendEmote('🤬')">🤬</button><button onclick="sendEmote('💖')">💖</button><button onclick="sendEmote('🤮')">🤮</button><button onclick="sendEmote('😵‍💫')">😵‍💫</button><button onclick="sendEmote('👏')">👏</button><button onclick="sendEmote('👀')">👀</button>
             </div>
             <div class="chat-input-container">
                 <input type="text" id="chat-input" placeholder="직접 대화 입력..." maxlength="20" style="flex:1; padding:10px; border-radius:6px; background:#222; color:#fff; border:1px solid #f1c40f; font-size:14px;" onkeypress="if(event.keyCode===13) sendCustomChat()">
@@ -329,7 +271,6 @@
         <div style="background:#2c3e50; padding:25px; border-radius:12px; width:280px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); border: 2px solid #f1c40f;">
             <h2 style="color:#f1c40f; margin-top:0; margin-bottom:5px;">⏸️ 일시정지</h2>
             <p style="color:#ccc; font-size:13px; margin-bottom:20px;">게임을 잠시 멈춥니다.</p>
-
             <div style="display:flex; flex-direction: column; gap: 10px; background:#111; padding:15px; border-radius:8px; margin-bottom:15px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <span style="color:#fff; font-size:14px; font-weight:bold;">🎵 배경음악 (BGM)</span>
@@ -344,9 +285,7 @@
                     <span style="color:#fff; font-size:14px; font-weight:bold;">🔊 효과음 (SFX)</span>
                     <button class="btn" id="btn-sfx" style="padding:6px 12px; font-size:12px; margin:0; background:#e67e22; box-shadow:0 4px 0 #d35400;" onclick="toggleSFX()">ON</button>
                 </div>
-                <div style="font-size:11px; color:#aaa; text-align:left; line-height:1.4;">(웹 브라우저 특성상 기기의 무음 모드를 감지할 수 없어 버튼을 제공합니다)</div>
             </div>
-
             <button class="btn" style="width:100%; margin:0 0 10px 0; background:#2ecc71; box-shadow:0 4px 0 #27ae60; color:#fff;" onclick="togglePauseMenu()">▶️ 다시 게임 진행</button>
             <button class="btn pass" style="width:100%; margin:0;" onclick="leaveGameFromPause()">🚪 대기 화면으로 나가기</button>
         </div>
@@ -355,9 +294,11 @@
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
-        <div class="hand-scroll-area" style="pointer-events: auto; padding-top:20px; padding-bottom:15px; margin-bottom:10px;">
-            <div id="tax-hand" class="hand"></div>
+        
+        <div style="width:100%; max-width:100vw; overflow-x:auto; padding:30px 15px; margin-bottom:10px;">
+            <div id="tax-hand" class="hand" style="margin:0 auto; justify-content:center;"></div>
         </div>
+        
         <p style="color:#aaa; font-size:13px; margin-top:0; margin-bottom:10px;">(조커 카드는 세금으로 하사할 수 없습니다)</p>
         <button class="btn" id="btn-submit-tax" disabled onclick="submitTaxHand()">카드 하사하기</button>
     </div>
@@ -369,7 +310,7 @@
 
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
-        <div style="background:#2c3e50; padding:25px; border-radius:12px; width:340px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6); overflow:hidden;">
+        <div style="background:#2c3e50; padding:25px 15px; border-radius:12px; width:85vw; max-width:400px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
             <div id="tax-give-log" class="slide-left" style="font-size:15px; color:#e74c3c; margin-bottom:15px; font-weight:bold;"></div>
             <div style="font-size:24px; margin-bottom:15px; color:#f1c40f;">↕️</div>
             <div id="tax-recv-log" class="slide-right" style="font-size:15px; color:#2ecc71; margin-bottom:25px; font-weight:bold;"></div>
@@ -382,14 +323,12 @@
         <div id="result-left-panel" style="flex:1; max-width:400px; display:flex; flex-direction:column; overflow-y:auto; padding-right:10px;">
             <h1 style="color:#f1c40f; margin-bottom:10px; text-align:center; font-size:26px;">🎉 게임 종료 (순위표)</h1>
             <div class="rank-list" id="final-rank-list" style="background:#222; padding:15px; border-radius:10px; margin-bottom:15px;"></div>
-            
             <div id="ledger-section" style="background:#2c3e50; padding:15px; border-radius:10px; text-align:center; margin-bottom:15px;">
                 <h3 style="color:#2ecc71; margin-top:0; margin-bottom:10px;">💰 누적 정산소 (<span id="ledger-bet-amount"></span>원)</h3>
                 <div id="round-log" style="font-size:14px; margin-bottom:10px; color:#fff;"></div>
                 <hr style="border:0; border-top:1px solid #555; margin:10px 0;">
                 <div id="cumulative-balances" style="font-size:15px; font-weight:bold; color:#f1c40f; line-height: 1.5;"></div>
             </div>
-
             <div id="vote-panel" style="background:#111; padding:15px; border-radius:10px; text-align:center; border: 1px solid #444;">
                 <h3 style="color:#fff; margin-top:0; margin-bottom:10px; font-size:16px;">다음 라운드 진행 방식 선택 (만장일치 필요)</h3>
                 <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
@@ -400,7 +339,6 @@
                 </div>
             </div>
         </div>
-
         <div id="result-right-panel" style="width: 320px; display:flex; flex-direction:column; background:#222; border: 1px solid #444; border-radius: 12px; padding: 15px;">
             <h3 style="color:#f1c40f; margin-top:0; margin-bottom:10px; text-align:center;">💬 대기 대화방</h3>
             <div id="result-chat-log" style="flex:1; overflow-y:auto; font-size:14px; margin-bottom:10px; display:flex; flex-direction:column; gap:6px; padding-right:5px; border-bottom:1px solid #444; padding-bottom:10px;"></div>
@@ -423,6 +361,7 @@
         let currentAvatar = "🧑‍💻";
         window.currentFinishedPlayers = [];
 
+        // 질문자님 파이어베이스 고정 키
         const firebaseConfig = {
             apiKey: "AIzaSyC7bKX8VgfR2_bzC2KWAdK6ac3ieJaTCxg",
             authDomain: "dalmuti-multi.firebaseapp.com",
@@ -436,35 +375,18 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // ⭐️ 이미지 초고속 프리로딩(Preloading) 엔진 함수
-        function preloadCardImages() {
-            for (let i = 1; i <= 13; i++) {
-                const img = new Image();
-                img.src = `/assets/card_${i}.png`;
-            }
-            console.log("♠️ [Preload] 모든 달무티 카드 이미지 메모리 상주 완료!");
-        }
-
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
                 document.getElementById('step-0-auth').classList.add('hidden');
-                
-                // 로그인 완료 시 즉시 백그라운드 프리로드 구동
-                preloadCardImages();
-
                 if (user.displayName) {
                     currentPlayerName = user.displayName;
                     currentAvatar = localStorage.getItem('dalmuti_avatar_' + user.uid) || '🧑‍💻';
-                    
                     document.getElementById('display-nickname').innerText = currentPlayerName;
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
-                    
                     document.getElementById('step-1-nickname').classList.add('hidden');
                     document.getElementById('step-2-action').classList.remove('hidden');
-                } else {
-                    document.getElementById('step-1-nickname').classList.remove('hidden');
-                }
+                } else { document.getElementById('step-1-nickname').classList.remove('hidden'); }
             } else {
                 document.getElementById('step-0-auth').classList.remove('hidden');
                 document.getElementById('step-1-nickname').classList.add('hidden');
@@ -515,9 +437,7 @@
                             document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
                             socket.emit('pickSeonCard');
                         };
-                    } else {
-                        backCard.style.opacity = '0.5';
-                    }
+                    } else { backCard.style.opacity = '0.5'; }
                     container.appendChild(backCard);
                 }
             }
@@ -572,11 +492,8 @@
         });
 
         function triggerSyncRequest() {
-            if (socket && socket.connected && myUid) {
-                socket.emit('requestRoomSync', { uid: myUid });
-            }
+            if (socket && socket.connected && myUid) socket.emit('requestRoomSync', { uid: myUid });
         }
-
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') triggerSyncRequest();
         });
@@ -584,49 +501,26 @@
         function resetPassword() {
             const email = document.getElementById('auth-email').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email) {
-                msgEl.style.color = '#e67e22';
-                msgEl.innerText = "이메일 칸에 가입하신 이메일을 입력한 뒤 다시 눌러주세요!";
-                return;
-            }
-            auth.sendPasswordResetEmail(email).then(() => {
-                msgEl.style.color = '#2ecc71';
-                msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다! 메일함을 확인해주세요.";
-            }).catch((error) => {
-                msgEl.style.color = '#e74c3c';
-                msgEl.innerText = "오류 발생: " + error.message;
-            });
+            if(!email) { msgEl.style.color = '#e67e22'; msgEl.innerText = "이메일을 입력해 주세요!"; return; }
+            auth.sendPasswordResetEmail(email).then(() => { msgEl.style.color = '#2ecc71'; msgEl.innerText = "비밀번호 재설정 메일을 보냈습니다!";
+            }).catch((error) => { msgEl.style.color = '#e74c3c'; msgEl.innerText = "오류 발생: " + error.message; });
         }
 
         function registerUser() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email || password.length < 6) {
-                msgEl.innerText = "이메일을 입력하고 비밀번호를 6자리 이상 설정하세요.";
-                return;
-            }
-            auth.createUserWithEmailAndPassword(email, password).then(() => {
-                msgEl.style.color = '#2ecc71';
-                msgEl.innerText = "회원가입 성공!";
-            }).catch((error) => {
-                msgEl.style.color = '#e74c3c';
-                msgEl.innerText = "가입 실패: " + error.message;
-            });
+            if(!email || password.length < 6) { msgEl.innerText = "이메일 및 6자리 이상 비밀번호를 설정하세요."; return; }
+            auth.createUserWithEmailAndPassword(email, password).then(() => { msgEl.style.color = '#2ecc71'; msgEl.innerText = "회원가입 성공!";
+            }).catch((error) => { msgEl.style.color = '#e74c3c'; msgEl.innerText = "가입 실패: " + error.message; });
         }
 
         function loginUser() {
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
             const msgEl = document.getElementById('auth-msg');
-            if(!email || !password) {
-                msgEl.innerText = "이메일과 비밀번호를 입력하세요.";
-                return;
-            }
-            auth.signInWithEmailAndPassword(email, password).catch(() => {
-                msgEl.style.color = '#e74c3c';
-                msgEl.innerText = "이메일 또는 비밀번호가 틀렸습니다.";
-            });
+            if(!email || !password) { msgEl.innerText = "이메일과 비밀번호를 입력하세요."; return; }
+            auth.signInWithEmailAndPassword(email, password).catch(() => { msgEl.style.color = '#e74c3c'; msgEl.innerText = "이메일 또는 비밀번호가 틀렸습니다."; });
         }
 
         function logoutUser() {
@@ -646,9 +540,7 @@
                     applyAvatarStyle(document.getElementById('my-avatar'), currentAvatar);
                     document.getElementById('step-1-nickname').classList.add('hidden');
                     document.getElementById('step-2-action').classList.remove('hidden');
-                }).catch(err => {
-                    alert("프로필 저장 실패: " + err.message);
-                });
+                }).catch(err => alert("프로필 저장 실패: " + err.message));
             }
         }
 
@@ -658,56 +550,27 @@
             document.getElementById('player-name').value = currentPlayerName;
         }
 
-        const cardThemeData = {
-            1: { icon: '👑', name: '대달무티' },
-            2: { icon: '🎩', name: '소달무티' },
-            3: { icon: '🦅', name: '대영주' },
-            4: { icon: '🗡️', name: '기사' },
-            5: { icon: '⛪', name: '수녀원장' },
-            6: { icon: '📜', name: '남작' },
-            7: { icon: '🍷', name: '재봉사' },
-            8: { icon: '⚒️', name: '석공' },
-            9: { icon: '🥖', name: '요리사' },
-            10: { icon: '🐑', name: '양치기' },
-            11: { icon: '⛏️', name: '광부' },
-            12: { icon: '🧹', name: '농노' },
-            13: { icon: '🃏', name: '광대' }
-        };
-
-        const bgmAudio = new Audio('/bgm.mp3');
-        bgmAudio.loop = true;
-        bgmAudio.volume = 0.4;
-        const sfxCard = new Audio('/card.mp3');
-        const sfxTurn = new Audio('/turn.mp3');
-
-        let isBgmPlaying = false;
-        let isSfxPlaying = true;
+        const bgmAudio = new Audio('/bgm.mp3'); bgmAudio.loop = true; bgmAudio.volume = 0.4;
+        const sfxCard = new Audio('/card.mp3'); const sfxTurn = new Audio('/turn.mp3');
+        let isBgmPlaying = false; let isSfxPlaying = true;
 
         function toggleBGM() {
             isBgmPlaying = !isBgmPlaying;
             if(isBgmPlaying) {
-                bgmAudio.play().catch(e => console.log('BGM 파일 없음'));
-                document.getElementById('btn-bgm').innerText = 'ON';
-                document.getElementById('btn-bgm').style.background = '#e67e22';
-                document.getElementById('btn-bgm').style.boxShadow = '0 4px 0 #d35400';
+                bgmAudio.play().catch(e=>{});
+                document.getElementById('btn-bgm').innerText = 'ON'; document.getElementById('btn-bgm').style.background = '#e67e22'; document.getElementById('btn-bgm').style.boxShadow = '0 4px 0 #d35400';
             } else {
                 bgmAudio.pause();
-                document.getElementById('btn-bgm').innerText = 'OFF';
-                document.getElementById('btn-bgm').style.background = '#3498db';
-                document.getElementById('btn-bgm').style.boxShadow = '0 4px 0 #2980b9';
+                document.getElementById('btn-bgm').innerText = 'OFF'; document.getElementById('btn-bgm').style.background = '#3498db'; document.getElementById('btn-bgm').style.boxShadow = '0 4px 0 #2980b9';
             }
         }
         
         function toggleSFX() {
             isSfxPlaying = !isSfxPlaying;
             if(isSfxPlaying) {
-                document.getElementById('btn-sfx').innerText = 'ON';
-                document.getElementById('btn-sfx').style.background = '#e67e22';
-                document.getElementById('btn-sfx').style.boxShadow = '0 4px 0 #d35400';
+                document.getElementById('btn-sfx').innerText = 'ON'; document.getElementById('btn-sfx').style.background = '#e67e22'; document.getElementById('btn-sfx').style.boxShadow = '0 4px 0 #d35400';
             } else {
-                document.getElementById('btn-sfx').innerText = 'OFF';
-                document.getElementById('btn-sfx').style.background = '#3498db';
-                document.getElementById('btn-sfx').style.boxShadow = '0 4px 0 #2980b9';
+                document.getElementById('btn-sfx').innerText = 'OFF'; document.getElementById('btn-sfx').style.background = '#3498db'; document.getElementById('btn-sfx').style.boxShadow = '0 4px 0 #2980b9';
             }
         }
 
@@ -729,8 +592,7 @@
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
+                    const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
                     canvas.width = 80; canvas.height = 80;
                     const minSize = Math.min(img.width, img.height);
                     ctx.drawImage(img, (img.width - minSize) / 2, (img.height - minSize) / 2, minSize, minSize, 0, 0, 80, 80);
@@ -748,11 +610,8 @@
         function applyAvatarStyle(el, avatarData) {
             if (!el) return;
             if (avatarData && avatarData.startsWith('data:image')) {
-                el.style.backgroundImage = `url(${avatarData})`;
-                el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; el.innerText = '';
-            } else {
-                el.style.backgroundImage = 'none'; el.innerText = avatarData || '👤';
-            }
+                el.style.backgroundImage = `url(${avatarData})`; el.style.backgroundSize = 'cover'; el.style.backgroundPosition = 'center'; el.innerText = '';
+            } else { el.style.backgroundImage = 'none'; el.innerText = avatarData || '👤'; }
         }
 
         socket.on('connect', () => {
@@ -764,26 +623,16 @@
             }
         });
 
-        function goToStep3() {
-            document.getElementById('step-2-action').classList.add('hidden');
-            document.getElementById('step-3-join').classList.remove('hidden');
-        }
-
-        function createRoomReq() {
-            document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
-            socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: 4, betAmount: 1000, avatar: currentAvatar, uid: myUid });
-        }
-
+        function goToStep3() { document.getElementById('step-2-action').classList.add('hidden'); document.getElementById('step-3-join').classList.remove('hidden'); }
+        function createRoomReq() { document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true); socket.emit('createRoom', { playerName: currentPlayerName, maxPlayers: 4, betAmount: 1000, avatar: currentAvatar, uid: myUid }); }
         function joinRoom() {
             const code = document.getElementById('room-code-input').value.trim();
             if(!code) return alert('방 번호 4자리를 입력해주세요.');
             document.querySelectorAll('#lobby-screen .btn').forEach(b => b.disabled = true);
             socket.emit('joinRoom', { roomId: code, playerName: currentPlayerName, avatar: currentAvatar, uid: myUid });
         }
-
         function changeRoomSettings() {
-            let m = document.getElementById('max-players').value;
-            let b = document.getElementById('bet-amount').value;
+            let m = document.getElementById('max-players').value; let b = document.getElementById('bet-amount').value;
             socket.emit('updateRoomSettings', { maxPlayers: m, betAmount: b });
         }
 
@@ -800,18 +649,9 @@
         function startGame() { socket.emit('startGame'); }
         function toggleEmoteMenu() { document.getElementById('emote-menu').classList.toggle('hidden'); }
         
-        function sendCustomChat() {
-            let val = document.getElementById('chat-input').value.trim();
-            if(val) { sendEmote(val); document.getElementById('chat-input').value = ''; }
-        }
-        function sendResultChat() {
-            let val = document.getElementById('result-chat-input').value.trim();
-            if(val) { sendEmote(val); document.getElementById('result-chat-input').value = ''; }
-        }
-        function sendWaitingChat() {
-            let val = document.getElementById('waiting-chat-input').value.trim();
-            if(val) { sendEmote(val); document.getElementById('waiting-chat-input').value = ''; }
-        }
+        function sendCustomChat() { let val = document.getElementById('chat-input').value.trim(); if(val) { sendEmote(val); document.getElementById('chat-input').value = ''; } }
+        function sendResultChat() { let val = document.getElementById('result-chat-input').value.trim(); if(val) { sendEmote(val); document.getElementById('result-chat-input').value = ''; } }
+        function sendWaitingChat() { let val = document.getElementById('waiting-chat-input').value.trim(); if(val) { sendEmote(val); document.getElementById('waiting-chat-input').value = ''; } }
         function sendEmote(emote) { socket.emit('sendEmote', emote); document.getElementById('emote-menu').classList.add('hidden'); }
         function submitVote(type) {
             document.getElementById('btn-vote-keep').style.opacity = type === 'keep' ? '1' : '0.4';
@@ -829,31 +669,19 @@
         socket.on('roomCreated', ({ roomId, players, betAmount, maxPlayers }) => {
             sessionStorage.setItem('dalmuti_room_id', roomId);
             document.getElementById('room-id-display').innerText = roomId;
-            
             document.getElementById('max-players').value = maxPlayers;
             document.getElementById('bet-amount').value = betAmount;
             document.getElementById('display-max-players').innerText = maxPlayers;
             document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString();
-            
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
-            unlockLobbyButtons();
-            updateWaitingPlayerList(players, []);
+            unlockLobbyButtons(); updateWaitingPlayerList(players, []);
         });
 
         socket.on('roomUpdated', ({ roomId, players, readyPlayers, betAmount, maxPlayers }) => {
-            if(roomId) {
-                sessionStorage.setItem('dalmuti_room_id', roomId);
-                document.getElementById('room-id-display').innerText = roomId;
-            }
-            if(maxPlayers) {
-                document.getElementById('max-players').value = maxPlayers;
-                document.getElementById('display-max-players').innerText = maxPlayers;
-            }
-            if(betAmount !== undefined) {
-                document.getElementById('bet-amount').value = betAmount;
-                document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString();
-            }
+            if(roomId) { sessionStorage.setItem('dalmuti_room_id', roomId); document.getElementById('room-id-display').innerText = roomId; }
+            if(maxPlayers) { document.getElementById('max-players').value = maxPlayers; document.getElementById('display-max-players').innerText = maxPlayers; }
+            if(betAmount !== undefined) { document.getElementById('bet-amount').value = betAmount; document.getElementById('display-bet-amount').innerText = Number(betAmount).toLocaleString(); }
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
             unlockLobbyButtons(); updateWaitingPlayerList(players, readyPlayers || []);
@@ -872,9 +700,7 @@
             
             document.getElementById('lobby-screen').classList.add('hidden');
             document.getElementById('waiting-screen').classList.remove('hidden');
-            
-            document.getElementById('btn-vote-keep').style.opacity = '1';
-            document.getElementById('btn-vote-lobby').style.opacity = '1';
+            document.getElementById('btn-vote-keep').style.opacity = '1'; document.getElementById('btn-vote-lobby').style.opacity = '1';
             updateWaitingPlayerList(players, []);
         });
 
@@ -888,78 +714,59 @@
             let isSomeoneReady = readyPlayers.length > 0;
             
             if(me.isHost) {
-                document.getElementById('host-settings-panel').style.display = 'block';
-                document.getElementById('guest-settings-panel').style.display = 'none';
-                document.getElementById('max-players').disabled = isSomeoneReady;
-                document.getElementById('bet-amount').disabled = isSomeoneReady;
+                document.getElementById('host-settings-panel').style.display = 'block'; document.getElementById('guest-settings-panel').style.display = 'none';
+                document.getElementById('max-players').disabled = isSomeoneReady; document.getElementById('bet-amount').disabled = isSomeoneReady;
                 document.getElementById('settings-lock-msg').style.display = isSomeoneReady ? 'block' : 'none';
-                
-                document.getElementById('btn-start-game').classList.remove('hidden');
-                document.getElementById('btn-ready-toggle').classList.add('hidden');
+                document.getElementById('btn-start-game').classList.remove('hidden'); document.getElementById('btn-ready-toggle').classList.add('hidden');
                 
                 if (readyPlayers.length >= humanCount - 1) {
-                    document.getElementById('btn-start-game').disabled = false;
-                    document.getElementById('btn-start-game').innerText = '게임 시작하기';
+                    document.getElementById('btn-start-game').disabled = false; document.getElementById('btn-start-game').innerText = '게임 시작하기';
                 } else {
-                    document.getElementById('btn-start-game').disabled = true;
-                    document.getElementById('btn-start-game').innerText = `시작 대기 (${readyPlayers.length}/${humanCount-1}명 준비)`;
+                    document.getElementById('btn-start-game').disabled = true; document.getElementById('btn-start-game').innerText = `시작 대기 (${readyPlayers.length}/${humanCount-1}명 준비)`;
                 }
             } else {
-                document.getElementById('host-settings-panel').style.display = 'none';
-                document.getElementById('guest-settings-panel').style.display = 'block';
-                document.getElementById('btn-start-game').classList.add('hidden');
-                document.getElementById('btn-ready-toggle').classList.remove('hidden');
+                document.getElementById('host-settings-panel').style.display = 'none'; document.getElementById('guest-settings-panel').style.display = 'block';
+                document.getElementById('btn-start-game').classList.add('hidden'); document.getElementById('btn-ready-toggle').classList.remove('hidden');
             }
 
             let readyBtn = document.getElementById('btn-ready-toggle');
             if (readyPlayers.includes(me.id)) {
-                readyBtn.innerText = '준비 완료 취소';
-                readyBtn.style.background = '#e74c3c';
-                readyBtn.style.boxShadow = '0 4px 0 #c0392b';
+                readyBtn.innerText = '준비 완료 취소'; readyBtn.style.background = '#e74c3c'; readyBtn.style.boxShadow = '0 4px 0 #c0392b';
             } else {
-                readyBtn.innerText = '준비하기';
-                readyBtn.style.background = '#2ecc71';
-                readyBtn.style.boxShadow = '0 4px 0 #27ae60';
+                readyBtn.innerText = '준비하기'; readyBtn.style.background = '#2ecc71'; readyBtn.style.boxShadow = '0 4px 0 #27ae60';
             }
 
             players.forEach((p, idx) => {
                 let isReady = p.isHost ? '방장👑' : (readyPlayers.includes(p.id) ? '✅준비 완료' : '대기 중');
-                
                 let avatarThumb = '';
                 if(p.avatar && p.avatar.startsWith('data:image')) {
                     avatarThumb = `<div style="width:24px; height:24px; border-radius:50%; background:url(${p.avatar}) center/cover; margin-right:8px;"></div>`;
                 } else {
                     avatarThumb = `<div style="width:24px; height:24px; border-radius:50%; background:#2c3e50; display:flex; justify-content:center; align-items:center; font-size:12px; margin-right:8px;">${p.avatar || '👤'}</div>`;
                 }
-
                 container.innerHTML += `<div class="player-item"><div style="display:flex; align-items:center;">${idx+1}. ${avatarThumb} <strong>${p.name}</strong></div> <div style="font-size:12px; color:${readyPlayers.includes(p.id)?'#2ecc71':'#aaa'};">${isReady}</div></div>`;
             });
         }
 
         socket.on('seonDrawPhaseInit', ({ isTieBreaker, tiedPlayers }) => {
             document.getElementById('waiting-screen').classList.add('hidden');
-            const screen = document.getElementById('seon-draw-screen');
-            screen.classList.remove('hidden');
+            const screen = document.getElementById('seon-draw-screen'); screen.classList.remove('hidden');
             const guide = document.getElementById('seon-pick-guide');
-            guide.innerText = "👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!";
-            guide.style.background = "#c0392b";
+            guide.innerText = "👇 아래의 뒷면 카드 중 한 장을 직접 터치해 뒤집으세요!"; guide.style.background = "#c0392b";
             document.getElementById('seon-winner-announcement').innerText = '';
-            const container = document.getElementById('seon-cards-container');
-            container.innerHTML = '';
+            const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
 
             let isMyTurnToPick = !isTieBreaker || tiedPlayers.includes(myUid);
             if (!isMyTurnToPick) {
-                guide.innerText = "⏳ 동률인 플레이어들이 재뽑기를 진행 중입니다...";
-                guide.style.background = "#34495e";
+                guide.innerText = "⏳ 동률인 플레이어들이 재뽑기를 진행 중입니다..."; guide.style.background = "#34495e";
             }
             for(let i=0; i<8; i++) {
                 let backCard = document.createElement('div');
                 backCard.className = "card card-back";
                 if (isMyTurnToPick) {
                     backCard.onclick = () => {
-                        backCard.style.borderColor = "#2ecc71"; guide.innerText = "⏳ 결과를 기다리는 중입니다...";
-                        guide.style.background = "#34495e"; document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null);
-                        socket.emit('pickSeonCard');
+                        backCard.style.borderColor = "#2ecc71"; guide.innerText = "⏳ 결과를 기다리는 중입니다..."; guide.style.background = "#34495e";
+                        document.querySelectorAll('.card.card-back').forEach(c => c.onclick = null); socket.emit('pickSeonCard');
                     };
                 } else { backCard.style.opacity = '0.5'; }
                 container.appendChild(backCard);
@@ -968,30 +775,27 @@
 
         socket.on('seonPickProgress', ({ message }) => {
             const guide = document.getElementById('seon-pick-guide');
-            if(guide.innerText.includes("기다리는 중") || guide.innerText.includes("대기 중") || guide.innerText.includes("터치해")) {
-                guide.innerText = message;
-            }
+            if(guide.innerText.includes("기다리는 중") || guide.innerText.includes("대기 중") || guide.innerText.includes("터치해")) guide.innerText = message;
         });
 
         socket.on('seonTieOccurred', ({ drawResults, tiedPlayers }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             const guide = document.getElementById('seon-pick-guide');
-            guide.innerText = "⚠️ 동률 발생! 같은 카드를 뽑은 유저들은 재뽑기를 합니다!";
-            guide.style.background = "#e67e22";
+            guide.innerText = "⚠️ 동률 발생! 같은 카드를 뽑은 유저들은 재뽑기를 합니다!"; guide.style.background = "#e67e22";
 
             drawResults.forEach((res, idx) => {
                 let cardBox = document.createElement('div');
                 cardBox.style.display = 'flex'; cardBox.style.flexDirection = 'column'; cardBox.style.alignItems = 'center'; cardBox.style.gap = '8px';
                 let cardEl = createCardHTML(res.card, idx, false);
-                if (tiedPlayers.includes(res.uid)) {
-                    cardEl.style.boxShadow = '0 0 15px #e74c3c'; cardEl.style.transform = 'scale(1.1)';
-                } else { cardEl.style.opacity = '0.4'; }
+                if (tiedPlayers.includes(res.uid)) { cardEl.style.boxShadow = '0 0 15px #e74c3c'; cardEl.style.transform = 'scale(1.1)'; }
+                else { cardEl.style.opacity = '0.4'; }
                 let nameEl = document.createElement('div'); nameEl.style.fontSize = '13px'; nameEl.style.fontWeight = 'bold'; nameEl.innerText = res.name;
                 if(res.uid === myUid) nameEl.style.color = '#f1c40f';
                 cardBox.appendChild(cardEl); cardBox.appendChild(nameEl); container.appendChild(cardBox);
             });
         });
 
+        // ⭐️ 서버에서 즉시 전송한 데이터를 통해 클라이언트가 딜레이를 통제합니다.
         socket.on('seonDrawResults', ({ drawResults, winnerId, winnerName }) => {
             const container = document.getElementById('seon-cards-container'); container.innerHTML = '';
             document.getElementById('seon-pick-guide').innerText = "🎉 선 뽑기 완료! 서열에 맞춰 자리가 배치됩니다.";
@@ -1008,15 +812,17 @@
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
         });
 
+        // ⭐️ 카드 안의 모든 텍스트 요소를 완전히 삭제하고 오직 원본 이미지만을 렌더링합니다!
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
-            let displayRank = rank === 13 ? 'J' : rank;
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
             let customImageURL = `/assets/card_${rank}.png`;
+
+            // HTML 내용 완전 비움 (숫자, 텍스트, 이모티콘 겹침 원천 차단)
             c.innerHTML = ``;
             
-            // ⭐️ 테두리와 양식 박스 100% 생략, 원본 이미지 다이렉트 바인딩
+            // 이미지 비율 강제 대응 (100% 100%)
             c.style.background = `url('${customImageURL}') center/100% 100% no-repeat`;
 
             if (isTaxMode && rank === 13) {
@@ -1032,6 +838,47 @@
             }
             return c;
         }
+
+        // ⭐️ 서버 다운 방지를 위해 클라이언트 단에서 딜레이를 주고 본게임을 시작합니다.
+        socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
+            const initGameUI = () => {
+                document.getElementById('seon-draw-screen').classList.add('hidden');
+                document.getElementById('waiting-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.add('hidden');
+                document.getElementById('personal-tax-modal').classList.add('hidden');
+                document.getElementById('tax-give-modal').classList.add('hidden');
+                document.getElementById('tax-summary-modal').classList.add('hidden');
+                document.getElementById('revolution-prompt-modal').classList.add('hidden');
+                document.getElementById('round-loading-screen').classList.add('hidden');
+                
+                document.getElementById('btn-vote-keep').style.opacity = '1';
+                document.getElementById('btn-vote-lobby').style.opacity = '1';
+                
+                document.getElementById('game-screen').classList.remove('hidden');
+                window.lastRoundRanks = lastRoundRanks || [];
+                
+                document.getElementById('my-avatar').style.border = 'none';
+                document.getElementById('my-avatar').style.boxShadow = '0 2px 5px rgba(0,0,0,0.5)';
+                document.getElementById('player-name-label').style.color = '#fff';
+                
+                document.getElementById('center-area').innerHTML = '';
+
+                let rankIdx = window.lastRoundRanks.indexOf(socket.id);
+                if(rankIdx === -1) rankIdx = window.lastRoundRanks.indexOf(myId);
+                const badges = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+                document.getElementById('player-name-label').innerText = `나(${currentPlayerName}) ${badges[rankIdx] || ''}`;
+
+                renderOpponents(players);
+                updateTurnState(currentTurnId);
+            };
+
+            // 선뽑기 화면이 떠 있다면 결과 감상을 위해 3.5초 대기 후 전환
+            if (!document.getElementById('seon-draw-screen').classList.contains('hidden')) {
+                setTimeout(initGameUI, 3500);
+            } else {
+                initGameUI();
+            }
+        });
 
         socket.on('yourHand', (hand) => {
             myHand = hand || [];
@@ -1227,10 +1074,12 @@
                 let pName = p ? p.name : '알 수 없음';
                 let rankNum = idx + 1;
                 let rName = "평민"; let icon = "👤";
+                
                 if (idx === 0) { rName = "대달무티"; icon = "👑"; }
                 else if (idx === 1) { rName = "소달무티"; icon = "🥈"; }
                 else if (idx === finishedPlayers.length - 1) { rName = "대농노"; icon = "💩"; }
                 else if (idx === finishedPlayers.length - 2) { rName = "소농노"; icon = "🧹"; }
+                
                 let item = document.createElement('div'); item.className = 'player-item';
                 if(pId === socket.id || pId === myId) item.style.color = '#f1c40f';
                 item.innerHTML = `<div style="font-size:16px;"><strong>${rankNum}등</strong> ${icon} ${rName} - ${pName}</div>`;
@@ -1316,7 +1165,8 @@
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                return `<div class="card rank-${c}" style="width:40px !important; height:76px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/100% 100% no-repeat; border:none;"></div>`
+                // 세금 미니카드에서도 텍스트를 제거하고 이미지 비율 1:1.92 강제 적용
+                return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background: url('${customImageURL}') center/100% 100% no-repeat; border:none; margin:0 !important; transform:none !important;"></div>`
             }).join('') + `</div>`;
         }
 

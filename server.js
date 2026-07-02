@@ -192,20 +192,17 @@ io.on('connection', (socket) => {
 
     function triggerSeonPhase(roomId, room, isTieBreaker) {
         clearTimeout(room.seonTimer);
-
         io.to(roomId).emit('seonDrawPhaseInit', { isTieBreaker, tiedPlayers: room.tiedPlayers });
 
         let participants = room.tiedPlayers.length > 0 ? room.tiedPlayers : room.players.map(p => p.uid);
         
         participants.forEach(uid => {
             let p = room.players.find(pl => pl.uid === uid);
-            // ⏳ AI 뽑기 템포 안정화: 1초 ~ 2초 사이 조절
             if (p && p.isAI) {
-                setTimeout(() => handleSeonPick(roomId, p.id), 1000 + Math.random() * 1000);
+                setTimeout(() => handleSeonPick(roomId, p.id), 500 + Math.random() * 800);
             }
         });
 
-        // ⏱️ 모바일 강제 뽑기 타임아웃을 안전하게 10초로 연장
         room.seonTimer = setTimeout(() => {
             if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                 participants.forEach(uid => {
@@ -216,7 +213,7 @@ io.on('connection', (socket) => {
                     }
                 });
             }
-        }, 10000);
+        }, 5000); // 강제 뽑기 5초 대기
     }
 
     socket.on('startGame', () => {
@@ -279,6 +276,7 @@ io.on('connection', (socket) => {
         } catch (e) { console.error("handleSeonPick Error:", e); }
     }
 
+    // ⭐️ 서버 다운 원인인 setTimeout을 완전히 날리고 동기화 즉시 실행 엔진 도입
     function checkTiesAndProceed(roomId, room, participants) {
         try {
             let latestCardsMap = {};
@@ -292,7 +290,9 @@ io.on('connection', (socket) => {
 
             let currentRoundTies = [];
             for (let card in latestCardsMap) {
-                if (latestCardsMap[card].length > 1) currentRoundTies.push(...latestCardsMap[card]);
+                if (latestCardsMap[card].length > 1) {
+                    currentRoundTies.push(...latestCardsMap[card]);
+                }
             }
 
             if (currentRoundTies.length > 0) {
@@ -306,13 +306,13 @@ io.on('connection', (socket) => {
 
                 io.to(roomId).emit('seonTieOccurred', { drawResults, tiedPlayers: currentRoundTies });
 
-                // ⏳ 동률 발생 후 카드 정리 대기 시간: 2.5초 ➡️ 3.5초로 여유 있게 배치
                 setTimeout(() => {
                     if (!rooms[roomId] || rooms[roomId].status !== 'seon_drawing') return;
                     triggerSeonPhase(roomId, room, true);
-                }, 3500);
+                }, 2000);
 
             } else {
+                // 동률 없음: 즉시 서열 정렬 후 서버에서 바로 본게임 데이터 발송 (딜레이 없음!)
                 let allUids = Object.keys(room.seonDraws);
                 allUids.sort((a, b) => {
                     let histA = room.seonDraws[a] ? room.seonDraws[a].history : [];
@@ -342,17 +342,14 @@ io.on('connection', (socket) => {
                 });
 
                 let winnerPlayer = room.players[0] || {id: null, name: "대달무티"};
+                
+                // 클라이언트에게 결과 화면 전송
                 io.to(roomId).emit('seonDrawResults', { drawResults: finalResults, winnerId: winnerPlayer.id, winnerName: winnerPlayer.name });
 
-                // ⏳ 선 뽑기 화면 감상 후 본게임 돌입 시간: 2초 ➡️ 3.5초로 최적화!
-                setTimeout(() => {
-                    try {
-                        if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
-                            distributeCards(rooms[roomId]);
-                            startNormalRound(roomId, rooms[roomId]);
-                        }
-                    } catch(err) { console.error("본게임 강제 전환 실패 방어:", err); }
-                }, 3500);
+                // ⭐️ 서버는 즉각적으로 카드를 나눠주고 게임 시작 신호를 클라이언트 버퍼로 쏴버립니다.
+                // 화면 전환 딜레이는 클라이언트가 담당하므로 서버 프리징 0%.
+                distributeCards(room);
+                startNormalRound(roomId, room);
             }
         } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
@@ -518,8 +515,7 @@ function handleAITurnIfNeeded(roomId, room) {
     const player = room.players[room.currentTurnIdx];
     if (!player || !player.isAI) return;
 
-    // ⏳ AI 생각 시간 안정화: 0.6초 ➡️ 1.1초로 조금 더 자연스럽게 패치
-    let delay = 1100;
+    let delay = 1000;
     const activeHumans = room.players.filter(p => !p.isAI && !room.finishedPlayers.includes(p.id));
     if (activeHumans.length === 0) delay = 150;
 
@@ -689,12 +685,11 @@ function triggerRevolution(roomId, room, revPlayer, isGrand) {
         io.to(roomId).emit('revolutionAlert', { type: 'grand', playerName: revPlayer.name });
     } else io.to(roomId).emit('revolutionAlert', { type: 'normal', playerName: revPlayer.name });
 
-    // ⏳ 반란 서사 대기 시간 안정화: 4초 ➡️ 5.5초
     setTimeout(() => {
         room.players.forEach(p => p.hand.sort((a,b)=>a-b));
         room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
         startNormalRound(roomId, room);
-    }, 5500);
+    }, 5000);
 }
 
 function proceedWithTax(roomId, room) {
@@ -743,12 +738,29 @@ function proceedWithTax(roomId, room) {
     if (!humanTaxWaiting) {
         io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
         io.to(roomId).emit('taxPhasePersonalResults', { taxLogs: room.taxLogs });
-        // ⏳ 세금 교환 모달 감상 시간 안정화: 2.5초 ➡️ 3.5초
         setTimeout(() => {
             room.players.forEach(p => { if(!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
             startNormalRound(roomId, room);
-        }, 3500);
+        }, 3000);
     } else io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
+}
+
+function startNormalRound(roomId, room) {
+    try {
+        room.status = 'playing';
+        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+        room.players.forEach(p => { if(p.hand) p.hand.sort((a,b)=>a-b); });
+        room.currentTurnIdx = 0;
+        
+        io.to(roomId).emit('gameStarted', {
+            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
+            currentTurnId: room.players[0].id, lastRoundRanks: room.lastRoundRanks
+        });
+
+        room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        notifyTurn(roomId, room.players[0].id);
+        handleAITurnIfNeeded(roomId, room);
+    } catch(err) { console.error("startNormalRound Error:", err); }
 }
 
 const PORT = process.env.PORT || 3000;
