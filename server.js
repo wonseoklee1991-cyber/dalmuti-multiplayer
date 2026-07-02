@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
             players: [{ id: socket.id, name: playerName, avatar: avatar || '🧑‍💻', uid: uid, hand: [], hasPassed: false, isHost: true, isAI: false }],
             currentTurnIdx: 0, center: { cards: [], count: 0, rank: 99, ownerId: null },
             status: 'lobby', finishedPlayers: [], lastRoundRanks: [], taxLogs: [],
-            readyPlayers: [], transactions: [], votes: { keep: [], lobby: [] }
+            readyPlayers: [], transactions: [], votes: { keep: [], lobby: [] }, seonLock: false
         };
         socket.join(roomId);
         socket.emit('roomCreated', { roomId, players: rooms[roomId].players, betAmount: rooms[roomId].betAmount, maxPlayers: rooms[roomId].maxPlayers });
@@ -203,7 +203,6 @@ io.on('connection', (socket) => {
             }
         });
 
-        // 자동 강제 진행 타이머
         room.seonTimer = setTimeout(() => {
             if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
                 participants.forEach(uid => {
@@ -232,6 +231,7 @@ io.on('connection', (socket) => {
         }
 
         room.status = 'seon_drawing';
+        room.seonLock = false;
         room.seonDrawDeck = createDeck();
         room.seonDraws = {};
         room.tiedPlayers = [];
@@ -277,8 +277,11 @@ io.on('connection', (socket) => {
         } catch (e) { console.error("handleSeonPick Error:", e); }
     }
 
+    // ⭐️ 서버 이중 잠금(seonLock)으로 블랙화면 꼬임 완벽 봉쇄
     function checkTiesAndProceed(roomId, room, participants) {
         try {
+            if (room.seonLock) return; // 중복 실행 절대 차단
+
             let latestCardsMap = {};
             participants.forEach(uid => {
                 if(!room.seonDraws[uid]) return;
@@ -290,9 +293,7 @@ io.on('connection', (socket) => {
 
             let currentRoundTies = [];
             for (let card in latestCardsMap) {
-                if (latestCardsMap[card].length > 1) {
-                    currentRoundTies.push(...latestCardsMap[card]);
-                }
+                if (latestCardsMap[card].length > 1) currentRoundTies.push(...latestCardsMap[card]);
             }
 
             if (currentRoundTies.length > 0) {
@@ -312,6 +313,9 @@ io.on('connection', (socket) => {
                 }, 2500);
 
             } else {
+                // 서열 완료! 잠금장치 가동
+                room.seonLock = true;
+
                 let allUids = Object.keys(room.seonDraws);
                 allUids.sort((a, b) => {
                     let histA = room.seonDraws[a] ? room.seonDraws[a].history : [];
@@ -345,12 +349,13 @@ io.on('connection', (socket) => {
 
                 setTimeout(() => {
                     try {
-                        if (rooms[roomId] && rooms[roomId].status === 'seon_drawing') {
+                        if (rooms[roomId]) {
+                            room.seonLock = false;
                             distributeCards(rooms[roomId]);
                             startNormalRound(roomId, rooms[roomId]);
                         }
-                    } catch(err) { console.error("본게임 강제 전환 실패 방어:", err); }
-                }, 3000);
+                    } catch(err) { console.error("본게임 전환 에러:", err); }
+                }, 3500);
             }
         } catch(e) { console.error("checkTiesAndProceed Error:", e); }
     }
@@ -744,6 +749,24 @@ function proceedWithTax(roomId, room) {
             startNormalRound(roomId, room);
         }, 3000);
     } else io.to(roomId).emit('taxPhaseWaiting', { taxLogs: room.taxLogs });
+}
+
+function startNormalRound(roomId, room) {
+    try {
+        room.status = 'playing';
+        room.center = { cards: [], count: 0, rank: 99, ownerId: null };
+        room.players.forEach(p => { if(p.hand) p.hand.sort((a,b)=>a-b); });
+        room.currentTurnIdx = 0;
+        
+        io.to(roomId).emit('gameStarted', {
+            players: room.players.map(p => ({ id: p.id, name: p.name, avatar: p.avatar, cardCount: p.hand ? p.hand.length : 0, isAI: p.isAI })),
+            currentTurnId: room.players[0].id, lastRoundRanks: room.lastRoundRanks
+        });
+
+        room.players.forEach(p => { if (!p.isAI) io.to(p.id).emit('yourHand', p.hand); });
+        notifyTurn(roomId, room.players[0].id);
+        handleAITurnIfNeeded(roomId, room);
+    } catch(err) { console.error("startNormalRound Error:", err); }
 }
 
 const PORT = process.env.PORT || 3000;

@@ -13,7 +13,7 @@
         * { box-sizing: border-box; font-family: 'Pretendard', sans-serif; user-select: none; }
         body { margin: 0; padding: 0; background-color: #1a1a1a; color: #fff; height: 100vh; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
         .hidden { display: none !important; }
-        .btn { padding: 10px 18px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
+        .btn { padding: 8px 14px; font-size: 13px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background-color: #f1c40f; color: #333; box-shadow: 0 4px 0 #d4ac0d; transition: all 0.1s; }
         .btn:active { transform: translateY(4px); box-shadow: none; }
         .btn.pass { background-color: #e74c3c; box-shadow: 0 4px 0 #c0392b; color: white; }
         .btn.back { background-color: #95a5a6; box-shadow: 0 4px 0 #7f8c8d; color: white; }
@@ -85,8 +85,7 @@
         .hand .card { margin-left: -15px; flex-shrink: 0; box-shadow: -5px 0px 12px rgba(0,0,0,0.5); }
         .hand .card:first-child { margin-left: 0; }
 
-        /* ⭐️ 아이폰/사파리 카드 투명화 완전 차단 ⭐️ */
-        /* background 속성을 개별 분리하여 오류 없이 가장 먼저 회색 배경을 깔아줍니다. */
+        /* ⭐️ 모바일 호환성 100% 최적화 적용: 배경 속성 분리로 블랙 아웃 완전 차단 */
         .card {
             width: 65px !important;
             height: 125px !important;
@@ -96,8 +95,9 @@
             box-sizing: border-box !important;
             box-shadow: 2px 2px 6px rgba(0,0,0,0.6) !important;
             transition: transform 0.15s !important;
-            background-color: #2c3e50 !important; /* 이미지 로딩 실패 시 든든한 방어막 */
+            background-color: #2c3e50 !important; /* 이미지 없을 시 안전 방어색 지정 */
             padding: 0 !important;
+            overflow: hidden;
         }
         .card .number { display: none !important; }
         .card .center-content { display: none !important; }
@@ -326,7 +326,7 @@
         </div>
     </div>
 
-    <!-- ⭐️ 세금 하사 모달: 넓게 반응하도록 확장 및 패딩 여유 확보 -->
+    <!-- 세금 하사 모달 -->
     <div id="tax-give-modal" class="screen hidden" style="z-index:90; background:rgba(0,0,0,0.95);">
         <h2 style="color:#f1c40f; margin-bottom:5px;">👑 세금 하사 페이즈</h2>
         <div id="tax-received-info" class="tax-log-item" style="width:90vw; max-width:500px; padding:10px; margin-bottom:0;"></div>
@@ -344,7 +344,7 @@
         <div class="rank-list" id="tax-summary-list" style="background:#222; padding:20px; border-radius:10px; width:340px;"></div>
     </div>
 
-    <!-- ⭐️ 세금 교환 명세서 (모바일 가로 꽉 차게 변경하여 잘림 방지) -->
+    <!-- 세금 교환 명세서 -->
     <div id="personal-tax-modal" class="screen hidden" style="z-index:95; background:rgba(0,0,0,0.92);">
         <h2 style="color:#f1c40f; margin-bottom:20px;">📜 세금 교환 명세서</h2>
         <div style="background:#2c3e50; padding:25px 15px; border-radius:12px; width:90vw; max-width:450px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
@@ -413,8 +413,6 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // 🚨 스마트폰 메모리 폭발의 주범이었던 프리로드를 완전히 삭제했습니다!
-        
         auth.onAuthStateChanged((user) => {
             if (user) {
                 myUid = user.uid;
@@ -535,9 +533,7 @@
         });
 
         function triggerSyncRequest() {
-            if (socket && socket.connected && myUid) {
-                socket.emit('requestRoomSync', { uid: myUid });
-            }
+            if (socket && socket.connected && myUid) socket.emit('requestRoomSync', { uid: myUid });
         }
 
         document.addEventListener('visibilitychange', () => {
@@ -857,23 +853,34 @@
                 cardBox.appendChild(cardEl); cardBox.appendChild(nameEl); container.appendChild(cardBox);
             });
             setTimeout(() => { document.getElementById('seon-winner-announcement').innerText = `👑 [${winnerName}]님이 대달무티 선을 획득했습니다!`; }, 600);
+
+            // ⭐️ 클라이언트 자가 치유(Fallback) 엔진 가동: 5초 뒤에도 화면이 안 바뀌면 스스로 멱살 잡고 게임 화면을 엽니다.
+            window.seonFallbackTimer = setTimeout(() => {
+                if (!document.getElementById('seon-draw-screen').classList.contains('hidden')) {
+                    console.log("🚨 서버 동기화 지연 감지: 클라이언트 강제 동기화 시도");
+                    triggerSyncRequest();
+                }
+            }, 5000);
         });
 
-        // ⭐️ iOS Safari CSS 크래시 방지 및 기본 배경색(회색) 완벽 탑재
+        // ⭐️ 블랙 화면 및 투명화 현상 원천 차단을 위해 background 개별 분리
         function createCardHTML(rank, index, isClickable = true, isTaxMode = false) {
             let c = document.createElement('div');
             c.className = `card rank-${rank}`;
             
             let customImageURL = `/assets/card_${rank}.png`;
 
-            // 모든 하얀 글씨 박스와 이모티콘 텍스트를 영구 삭제합니다.
+            // 모든 텍스트/숫자/이모티콘 완전 박멸 (투명한 배경만 남음)
             c.innerHTML = ``;
             
-            // ⭐️ 백그라운드 속성을 안전하게 개별 분리하여 오류를 차단합니다.
+            // CSS 에러 방지를 위해 속성을 가장 안전하게 개별로 지정합니다.
             c.style.backgroundImage = `url('${customImageURL}')`;
             c.style.backgroundPosition = `center`;
             c.style.backgroundSize = `100% 100%`;
             c.style.backgroundRepeat = `no-repeat`;
+            
+            // 이미지가 없거나 늦게 뜰 때 투명(Black Screen)해지는 것을 방지하는 기본 바탕색
+            c.style.backgroundColor = `#2c3e50`;
 
             if (isTaxMode && rank === 13) {
                 c.style.opacity = '0.4';
@@ -889,9 +896,11 @@
             return c;
         }
 
-        // ⭐️ 서버에서 보낸 `gameStarted` 신호를 받는 즉시 오류 없이 안전하게 렌더링
+        // ⭐️ 본게임 신호가 오면 무조건 모든 팝업을 박살 내고 게임 화면을 띄웁니다.
         socket.on('gameStarted', ({ players, currentTurnId, lastRoundRanks }) => {
             try {
+                clearTimeout(window.seonFallbackTimer); // 자가 치유 타이머 해제
+
                 document.getElementById('seon-draw-screen').classList.add('hidden');
                 document.getElementById('waiting-screen').classList.add('hidden');
                 document.getElementById('result-screen').classList.add('hidden');
@@ -904,6 +913,7 @@
                 document.getElementById('btn-vote-keep').style.opacity = '1';
                 document.getElementById('btn-vote-lobby').style.opacity = '1';
                 
+                // 본 게임 화면 강제 노출
                 document.getElementById('game-screen').classList.remove('hidden');
                 
                 window.lastRoundRanks = lastRoundRanks || [];
@@ -921,10 +931,7 @@
 
                 renderOpponents(players);
                 updateTurnState(currentTurnId);
-            } catch(e) {
-                console.error("본게임 전환 에러:", e);
-                alert("본게임 로딩 중 오류가 발생했습니다. 브라우저를 새로고침 해주세요.");
-            }
+            } catch(e) { console.error("본게임 전환 에러:", e); }
         });
 
         socket.on('yourHand', (hand) => {
@@ -981,7 +988,7 @@
 
             for(let j=0; j<count; j++) {
                 let rot = startAngle + (step * j);
-                cardArea.innerHTML += `<div class="ai-mini-card" style="transform: rotate(${rot}deg); left: ${j * 2}px; background-color: #eaddcf;"></div>`;
+                cardArea.innerHTML += `<div class="ai-mini-card" style="transform: rotate(${rot}deg); left: ${j * 2}px;"></div>`;
             }
             cardArea.style.width = `${12 + (count-1)*2}px`;
         }
@@ -1207,13 +1214,12 @@
             }
         });
 
-        // ⭐️ 세금 미니카드 CSS 안전성 강화 (텍스트 제거 유지)
         function generateMiniCardsHTML(cards) {
             if(!cards || cards.length === 0) return '';
             return `<div style="display:flex; gap:10px; justify-content:center; align-items:center; margin-top:5px; margin-bottom:10px;">` +
             cards.map(c => {
                 let customImageURL = `/assets/card_${c}.png`;
-                return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background-image: url('${customImageURL}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: #2c3e50; border:none; margin:0 !important; transform:none !important;"></div>`
+                return `<div class="card rank-${c}" style="width:50px !important; height:96px !important; border-radius:4px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); background-image: url('${customImageURL}'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; background-color: #2c3e50; margin:0 !important; transform:none !important;"></div>`
             }).join('') + `</div>`;
         }
 
